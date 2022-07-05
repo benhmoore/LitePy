@@ -168,7 +168,12 @@ def test_attach():
     user_b.attach(product_b)
 
     assert user_a.child().username == "jane"
-    assert user_a.bank_account().account_number == 999999
+    assert user_a.child().username == "jane"
+
+    # Test Many-To-Many relationships using Pivot Table
+    assert user_b.cars()[0].make == "VW"
+    assert car_1.owners()[0].username == "jane"
+
     assert bank_acc.holder().username == "john"
     assert user_b.parent().username == "john"
     assert len(user_b.products()) == 2

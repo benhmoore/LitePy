@@ -40,16 +40,22 @@ else:
     user_1 = User.findOrFail(1)
 
 if len(Account.all().where([['username','=','bhm128']])) == 0:
-    pg_about = Account.create({
+    acc_1 = Account.create({
         'username': 'bhm128',
         'password': '123',
     })
 else:
     acc_1 = Account.all().where([['username','=','bhm128']])[0]
 
-
 acc_1.attach(user_1)
-# user_1.attach(acc_1)
-# pg_home.detach(pg_about)
+print(user_1.account().username)
+acc_1.detach(user_1)
+
+user_1.attach(acc_1)
+print(user_1.account().username)
+user_1.detach(acc_1)
 
 # print(user_1.account().username)
+
+# user_1.attach(acc_1)
+# pg_home.detach(pg_about)
