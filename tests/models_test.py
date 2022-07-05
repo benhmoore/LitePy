@@ -66,11 +66,11 @@ LiteTable.create_table(test_db, 'cars', {
 
 # Pivot table
 LiteTable.create_table(test_db, 'car_user', {
-    'car_id': 'INTEGER',
-    'user_id': 'INTEGER',
+    'cid': 'INTEGER',
+    'uid': 'INTEGER',
 },"id",{
-    "car_id":['cars','id'],
-    "user_id":['user','id']
+    "cid":['cars','id'],
+    "uid":['users','id']
 })
 
 # Bank Account table

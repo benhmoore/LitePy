@@ -4,6 +4,23 @@ from lite.liteexceptions import *
 
 class LiteTable:
 
+    def get_foreign_key_references(self):
+        self.cursor.execute(f'PRAGMA foreign_key_list({self.table_name})')
+        foreign_keys = self.cursor.fetchall()
+
+        foreign_key_map = {}
+
+        for fkey in foreign_keys:
+            table_name = fkey[2]
+            foreign_key = fkey[3]
+            local_key = fkey[4]
+
+            if table_name not in foreign_key_map: foreign_key_map[table_name] = {}
+
+            foreign_key_map[table_name][local_key] = foreign_key
+            
+        return foreign_key_map
+
     @staticmethod
     def exists(database_path, table_name=None):
         if os.path.exists(database_path):
