@@ -20,8 +20,12 @@ class Lite:
             raise EnvFileNotFound()
     
     def get_database_path():
-        env = Lite.get_env()
-        if 'DB_DATABASE' in env:
-            return env['DB_DATABASE']
-        else:
-            raise DatabaseNotFoundError('')
+        db_path = os.environ.get('DB_DATABASE')
+        if db_path is not None: # Look for database path in environment variables first
+            return db_path
+        else: # Otherwise, pull from .env file
+            env = Lite.get_env()
+            if 'DB_DATABASE' in env:
+                return env['DB_DATABASE']
+            else:
+                raise DatabaseNotFoundError('')

@@ -2,6 +2,7 @@ import pytest, sqlite3, os
 from lite.litemodel import LiteModel
 from lite.litetable import LiteTable
 
+# os.environ['DB_DATABASE'] = 'tests_database.db'
 
 # Setup database
 test_db = 'tests_database.db'
