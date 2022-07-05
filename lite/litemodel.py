@@ -58,6 +58,47 @@ class LiteModel:
         else:
             return noun + 's'
 
+    def __get_table_name(self):
+        return self.__pluralize(self.__class__.__name__.lower())
+
+    def __has_column(self, column_name):
+        if column_name in self.table_columns:
+            return True
+        else:
+            return False
+
+    def __get_foreign_key_references(self):
+        self.table.cursor.execute(f'PRAGMA foreign_key_list({self.table_name})')
+        foreign_keys = self.table.cursor.fetchall()
+
+        foreign_key_map = {}
+
+        for fkey in foreign_keys:
+            table_name = fkey[2]
+            foreign_key = fkey[3]
+            local_key = fkey[4]
+
+            if table_name not in foreign_key_map: foreign_key_map[table_name] = {}
+
+            foreign_key_map[table_name][local_key] = foreign_key
+            
+        return foreign_key_map
+
+    def __get_foreign_key_from_model(self, model, local_key:str='id'):
+        self_fkey = f'{model.__name__.lower()}_id'
+        model_table_name = self.__pluralize(model.__name__.lower())
+        if model_table_name in self.FOREIGN_KEY_MAP:
+            self_fkey = self.FOREIGN_KEY_MAP[model_table_name][local_key]
+
+        return self_fkey
+
+    def __get_foreign_key_from_instance(self, model_instance, local_key:str='id'):
+        self_fkey = f'{model_instance.__class__.__name__.lower()}_id'
+        if model_instance.table_name in self.FOREIGN_KEY_MAP:
+            self_fkey = self.FOREIGN_KEY_MAP[model_instance.table_name][local_key]
+
+        return self_fkey
+
     def __pivot_table_exists(self, model):
         # Check to see if pivot table exists - - -
         # Derive pivot table name from conventions
@@ -85,8 +126,9 @@ class LiteModel:
         self.database_path = Lite.get_database_path()
 
         # Derive table name from class name
-        self.table_name = self.__pluralize(self.__class__.__name__.lower())
+        self.table_name = self.__get_table_name()
         self.table = LiteTable(self.database_path, self.table_name)
+        self.FOREIGN_KEY_MAP = self.__get_foreign_key_references()
 
         if id is not None:
 
@@ -160,50 +202,77 @@ class LiteModel:
         else:
             raise Exception('Could not locate model that was created.')
 
-    def attach(self, model_instance):
+    def attach(self, model_instance, local_key:str='id'):
+        
 
-        model_a_cols = self.table_columns
-        model_b_cols = model_instance.table_columns
+        # model_a_cols = self.table_columns
+        # model_b_cols = model_instance.table_columns
+
+        # Derive 
+        self_fkey = model_instance.__get_foreign_key_from_instance(self)
+        model_fkey = self.__get_foreign_key_from_instance(model_instance)
+
+        if self.__has_column(model_fkey):
+            setattr(self, model_fkey, model_instance.id)
+            self.save()
+        else:
+            print("Setting", self_fkey, "on", model_instance.table_name)
+            setattr(model_instance, self_fkey, self.id)
+            
+            model_instance.save()
+
 
         # Derive foreign and local keys if none are provided
-        model_a_fkey = f'{self.__class__.__name__.lower()}_id'
-        model_b_fkey = f'{model_instance.__class__.__name__.lower()}_id'
+        # model_a_fkey = f'{self.__class__.__name__.lower()}_id'
+        # model_b_fkey = f'{model_instance.__class__.__name__.lower()}_id'
 
-        pivot_table_name = self.__pivot_table_exists(model_instance)
-        if pivot_table_name: # Is a many-to-many relationship
+        # pivot_table_name = self.__pivot_table_exists(model_instance)
+        # if pivot_table_name: # Is a many-to-many relationship
             
-            pivot_table = LiteTable(Lite.get_database_path(),pivot_table_name)
+        #     pivot_table = LiteTable(Lite.get_database_path(),pivot_table_name)
 
-            # Make sure this relationship doesn't already exist
-            relationships = pivot_table.select([
-                [model_a_fkey,'=',self.id],
-                [model_b_fkey,'=',model_instance.id]
-            ])
+        #     # Make sure this relationship doesn't already exist
+        #     relationships = pivot_table.select([
+        #         [model_a_fkey,'=',self.id],
+        #         [model_b_fkey,'=',model_instance.id]
+        #     ])
 
-            if len(relationships) == 0:
-                pivot_table.insert({
-                    model_a_fkey: self.id,
-                    model_b_fkey: model_instance.id
-                })
-                print(Fore.GREEN, "Attached models via pivot table.", Fore.RESET)
-            else:
-                print(Fore.GREEN, "This relationship already exists in pivot table.", Fore.RESET)
+        #     if len(relationships) == 0:
+        #         pivot_table.insert({
+        #             model_a_fkey: self.id,
+        #             model_b_fkey: model_instance.id
+        #         })
+        #         print(Fore.GREEN, "Attached models via pivot table.", Fore.RESET)
+        #     else:
+        #         print(Fore.GREEN, "This relationship already exists in pivot table.", Fore.RESET)
 
-            return True
+        #     return True
             
-        else:
+        # else:
 
-            if model_b_fkey in model_a_cols:
-                setattr(self, model_b_fkey, model_instance.id)
-                self.save()
-            elif model_a_fkey in model_b_cols:
-                setattr(model_instance, model_a_fkey, self.id)
-                model_instance.save()
+        
+        
+        # elif model_a_fkey in model_b_cols:
+        #     setattr(model_instance, model_a_fkey, self.id)
+        #     model_instance.save()
 
-            print(Fore.GREEN, "Attached models", Fore.RESET)
-            return True
+        print(Fore.GREEN, "Attached models", Fore.RESET)
+        return True
 
-    def detach(self, model_instance):
+    def detach(self, model_instance, local_key:str='id'):
+
+        # Get self foreign key
+        self_fkey = f'{model_instance.__class__.__name__.lower()}_id'
+        if model_instance.table_name in self.FOREIGN_KEY_MAP:
+            self_fkey = self.FOREIGN_KEY_MAP[model_instance.table_name][local_key]
+
+        print("Self Foreign key:", self_fkey, "references", model_instance.table_name, local_key)
+
+        setattr(self, self_fkey, None)
+        self.save()
+
+        return
+
         model_a_cols = self.table_columns
         model_b_cols = model_instance.table_columns
 
@@ -251,7 +320,7 @@ class LiteModel:
     def belongsTo(self, model, foreign_key=None, local_key=None):
 
         # Derive foreign and local keys if none are provided
-        if not foreign_key: foreign_key = f'{model.__name__.lower()}_id'
+        if not foreign_key: foreign_key = self.__get_foreign_key_from_model(model)
         # if not local_key: local_key = "id"
 
         # Get database row ID of parent model
@@ -302,8 +371,10 @@ class LiteModel:
         child_table_name = self.__pluralize(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
-        if not foreign_key: foreign_key = f'{self.__class__.__name__.lower()}_id'
+        if not foreign_key: foreign_key = self.__get_foreign_key_from_instance(self)
         # if not local_key: local_key = f'{model.__name__.lower()}_id'
+
+        print("Has one", foreign_key)
 
         child_table = LiteTable(self.database_path, child_table_name)
         child_ids = child_table.select([
