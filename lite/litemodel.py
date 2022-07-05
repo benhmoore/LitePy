@@ -251,26 +251,26 @@ class LiteModel:
     def belongsTo(self, model, foreign_key=None, local_key=None):
 
         # Derive foreign and local keys if none are provided
-        if not foreign_key: foreign_key = 'id'
-        if not local_key: local_key = f'{model.__name__.lower()}_id'
+        if not foreign_key: foreign_key = f'{model.__name__.lower()}_id'
+        # if not local_key: local_key = "id"
 
         # Get database row ID of parent model
-        parent_model_id = getattr(self, local_key)
+        parent_model_id = getattr(self, foreign_key)
 
         return model.findOrFail(parent_model_id)
 
-    def belongsToMany(self, model, self_key=None, local_key=None):
+    def belongsToMany(self, model, self_key=None, model_key=None):
 
-        # Derive foreign key if none is provided
+        # Derive keys if none are provided
         if not self_key: self_key = f'{self.__class__.__name__.lower()}_id'
-        sibling_key = f'{model.__name__.lower()}_id'
+        if not model_key: model_key = f'{model.__name__.lower()}_id'
 
         # Check to see if pivot table exists - - -
         pivot_table_name = self.__pivot_table_exists(model)
         if pivot_table_name:
 
             # Assume relationship is many-to-many
-            self.table.cursor.execute(f'SELECT {sibling_key} FROM {pivot_table_name} WHERE {self_key} = {self.id}')
+            self.table.cursor.execute(f'SELECT {model_key} FROM {pivot_table_name} WHERE {self_key} = {self.id}')
             relationships = self.table.cursor.fetchall()
 
             siblings_collection = []
@@ -303,9 +303,8 @@ class LiteModel:
 
         # Derive foreign and local keys if none are provided
         if not foreign_key: foreign_key = f'{self.__class__.__name__.lower()}_id'
-        if not local_key: local_key = f'{model.__name__.lower()}_id'
+        # if not local_key: local_key = f'{model.__name__.lower()}_id'
 
-        print(child_table_name, foreign_key)
         child_table = LiteTable(self.database_path, child_table_name)
         child_ids = child_table.select([
             [foreign_key,'=',self.id]
@@ -322,7 +321,7 @@ class LiteModel:
 
         # Derive foreign and local keys if none are provided
         if not foreign_key: foreign_key = f'{self.__class__.__name__.lower()}_id'
-        if not local_key: local_key = f'{model.__name__.lower()}_id'
+        # if not local_key: local_key = f'{model.__name__.lower()}_id'
 
         
         child_table = LiteTable(self.database_path, child_table_name)
