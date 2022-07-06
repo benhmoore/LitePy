@@ -1,4 +1,5 @@
 import os
+from lite.litetable import LiteTable
 from lite.liteexceptions import EnvFileNotFound, DatabaseNotFoundError
 
 class Lite:
@@ -19,6 +20,7 @@ class Lite:
         else:
             raise EnvFileNotFound()
     
+    @staticmethod
     def get_database_path():
         db_path = os.environ.get('DB_DATABASE')
         if db_path is not None: # Look for database path in environment variables first
@@ -29,3 +31,9 @@ class Lite:
                 return env['DB_DATABASE']
             else:
                 raise DatabaseNotFoundError('')
+
+    @staticmethod
+    def config():
+        """Returns a LiteTable referencing the config table."""
+
+        return LiteTable(Lite.get_database_path(),'config')

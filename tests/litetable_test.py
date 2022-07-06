@@ -12,6 +12,11 @@ except: pass
 LiteTable.create_database(test_db)
 
 # Test LiteTable Module - - - - - - -
+
+# Test .create_database()
+def test_create_database():
+    assert LiteTable.create_database(test_db) == True
+    
 @pytest.mark.parametrize("table_name,expected", [
     ('table_a', True),
     ('table_b', True),
@@ -37,10 +42,6 @@ def test_delete_nonexistant_table():
 ])
 def test_exists(table_name, expected):
     assert LiteTable.exists(test_db, table_name) == expected
-
-# Test .create_database()
-def test_create_database():
-    assert LiteTable.create_database(test_db) == True
 
 # Test .insert()
 @pytest.mark.parametrize("columns, expected", [

@@ -4,7 +4,6 @@ from colorama import Fore, Back, Style
 class LiteServer:
     """A collection of SQLite helper functions
     """
-
     def __init__(self):
         self.connection = None
         self.cursor = None

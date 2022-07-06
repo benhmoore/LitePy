@@ -2,6 +2,8 @@ import sqlite3, os
 from colorama import Fore, Back, Style
 from lite.liteexceptions import *
 
+import pkg_resources # Used to store the version of Lite used to create a database.
+
 class LiteTable:
 
     def get_foreign_key_references(self):
@@ -45,8 +47,14 @@ class LiteTable:
 
         if not os.path.exists(database_path):  
             # If it doesn't, create it
-            print(Fore.YELLOW,"Creating local application database...",Fore.RESET)
+            print(Fore.YELLOW,"Creating Lite database. Lite version:", pkg_resources.get_distribution("lite").version, Fore.RESET)
             open(database_path, 'a').close() # Create DB file
+
+            # Create SQL log table
+            LiteTable.create_table(database_path,'query_log', {
+                "query": "TEXT NOT NULL",
+                "query_values": "TEXT"
+            }, 'id')
 
             # Create config table
             LiteTable.create_table(database_path,'config', {
@@ -54,11 +62,8 @@ class LiteTable:
                 "value": "TEXT"
             }, 'id')
 
-            # Create SQL log table
-            LiteTable.create_table(database_path,'query_log', {
-                "query": "TEXT NOT NULL",
-                "query_values": "TEXT"
-            }, 'id')
+            configTable = LiteTable(database_path, 'config')
+            configTable.insert({"key": "lite_version", "value": pkg_resources.get_distribution("lite").version})
         
         return True
 
