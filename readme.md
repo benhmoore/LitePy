@@ -1,0 +1,1 @@
+To setup a development environment, clone this repository, and run 'pip install -e .' within the base directory
