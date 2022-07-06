@@ -232,7 +232,7 @@ class LiteModel:
         
         return model_list
 
-    def attach(self, model_instance, local_key:str='id'):
+    def attach(self, model_instance, self_fkey=None, model_fkey=None):
         
         pivot_table_name = self.__pivot_table_exists(model_instance)
         if pivot_table_name: # Is a many-to-many relationship
@@ -241,8 +241,9 @@ class LiteModel:
             # Derive foreign keys
             foreign_keys = pivot_table.get_foreign_key_references()
 
-            self_fkey = foreign_keys[self.table_name]['id']
-            model_fkey = foreign_keys[model_instance.table_name]['id']
+            # user should provide a self and model foreign keys if the pivot table associates two rows from the *same* table
+            if not self_fkey: self_fkey = foreign_keys[self.table_name]['id']
+            if not model_fkey: model_fkey = foreign_keys[model_instance.table_name]['id']
 
             # Make sure this relationship doesn't already exist
             relationships = pivot_table.select([
