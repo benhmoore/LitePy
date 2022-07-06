@@ -24,3 +24,8 @@ class ModelNotFoundError(BaseException):
     """Raised when the model doesn't exist in the table"""
     def __init__(self, model_id):
         print(Fore.RED, f'Model with id = "{model_id}" does not exist.', Fore.RESET)
+
+class RelationshipError(BaseException):
+    """Raised when an error occurs during attachment or detachment between models."""
+    def __init__(self, message):
+        print(Fore.RED, message, Fore.RESET)

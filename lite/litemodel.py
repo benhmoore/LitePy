@@ -14,6 +14,18 @@ class LiteCollection:
     def __len__(self):
         return len(self.list)
 
+    def __eq__(self, other):
+        if other.__class__.__name__ == 'LiteCollection':
+            if self.list == other.list:
+                return True
+            else:
+                return False
+        elif other.__class__.__name__ == 'list':
+            if self.list == other:
+                return True
+            else:
+                return False
+
     def __getitem__(self, item):
         return self.list[item]
 
@@ -151,7 +163,7 @@ class LiteModel:
 
     @classmethod
     def findOrFail(self, id):
-        """Returns LiteModel with matching id."""
+        """Returns LiteModel with matching id or throws exception."""
         
         database_path = Lite.get_database_path()
         table_name = self.__pluralize(self,self.__name__.lower())
@@ -163,6 +175,14 @@ class LiteModel:
             return self(id) # Return LiteModel
         else:
             raise ModelNotFoundError(id)
+
+    @classmethod
+    def find(self, id):
+        """Returns LiteModel with matching id or None."""
+        try:
+            return self.findOrFail(id)
+        except ModelNotFoundError:
+            return None
 
     @classmethod
     def all(self):
@@ -202,6 +222,16 @@ class LiteModel:
         else:
             raise Exception('Could not locate model that was created.')
 
+    @classmethod
+    def createMany(self,column_list:list):
+        """Creates multiple new entries in the database."""
+        
+        model_list = []
+        for column_set in column_list:
+            model_list.append(self.create(column_set))
+        
+        return model_list
+
     def attach(self, model_instance, local_key:str='id'):
         
         pivot_table_name = self.__pivot_table_exists(model_instance)
@@ -227,7 +257,7 @@ class LiteModel:
                 })
                 print(Fore.GREEN, "Attached models via pivot table.", Fore.RESET)
             else:
-                print(Fore.GREEN, "This relationship already exists in pivot table.", Fore.RESET)
+                raise RelationshipError(f"This relationship already exists.")
 
             return True
             
@@ -238,13 +268,17 @@ class LiteModel:
             model_fkey = self.__get_foreign_key_from_instance(model_instance)
 
             if self.__has_column(model_fkey):
-                setattr(self, model_fkey, model_instance.id)
-                self.save()
+                if getattr(self, model_fkey) == None:
+                    setattr(self, model_fkey, model_instance.id)
+                    self.save()
+                else:
+                    raise RelationshipError(f"There is a pre-existing relationship. Remove it with .detach() before proceeding.")
             else:
-                print("Setting", self_fkey, "on", model_instance.table_name)
-                setattr(model_instance, self_fkey, self.id)
-                
-                model_instance.save()
+                if getattr(model_instance, self_fkey) == None:
+                    setattr(model_instance, self_fkey, self.id)
+                    model_instance.save()
+                else:
+                    raise RelationshipError(f"There is a pre-existing relationship. Remove it with .detach() before proceeding.")
 
         # elif model_a_fkey in model_b_cols:
         #     setattr(model_instance, model_a_fkey, self.id)
@@ -252,6 +286,10 @@ class LiteModel:
 
         print(Fore.GREEN, "Attached models", Fore.RESET)
         return True
+
+    def attachMany(self, model_instances, local_key:str='id'):
+        for model_instance in model_instances:
+            self.attach(model_instance)
 
     def detach(self, model_instance, local_key:str='id'):
         
@@ -277,13 +315,21 @@ class LiteModel:
             model_fkey = self.__get_foreign_key_from_instance(model_instance)
 
             if self.__has_column(model_fkey):
-                setattr(self, model_fkey, None)
-                self.save()
+                if (getattr(self, model_fkey) == model_instance.id):
+                    setattr(self, model_fkey, None)
+                    self.save()
+                else:
+                    raise RelationshipError(f"Relationship does not exist. Cannot detach.")
             else:
-                setattr(model_instance, self_fkey, None)
-                model_instance.save()
+                if (getattr(model_instance, self_fkey) == self.id):
+                    setattr(model_instance, self_fkey, None)
+                    model_instance.save()
+                else:
+                    raise RelationshipError(f"Relationship does not exist. Cannot detach.")
 
-        print("Detached models")
+    def detachMany(self, model_instances, local_key:str='id'):
+        for model_instance in model_instances:
+            self.detach(model_instance)
 
     def save(self):
         update_columns = {}
@@ -305,7 +351,7 @@ class LiteModel:
         # Get database row ID of parent model
         parent_model_id = getattr(self, foreign_key)
 
-        return model.findOrFail(parent_model_id)
+        return model.find(parent_model_id)
 
     def belongsToMany(self, model): # Many-to-many
 
@@ -327,7 +373,7 @@ class LiteModel:
         siblings_collection = []
         for rel in relationships:
             try: 
-                sibling = model.findOrFail(rel[0])
+                sibling = model.find(rel[0])
             except ModelNotFoundError: 
                 print("Error occured!")
                 continue
@@ -336,14 +382,11 @@ class LiteModel:
         return LiteCollection(siblings_collection)
 
     def hasOne(self, model, foreign_key=None, local_key=None): # One-to-one
-
         child_table_name = self.__pluralize(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
-        if not foreign_key: foreign_key = self.__get_foreign_key_from_instance(self)
-        # if not local_key: local_key = f'{model.__name__.lower()}_id'
-
-        print("Has one", foreign_key)
+        model_instance = model()
+        if not foreign_key: foreign_key = model_instance.__get_foreign_key_from_instance(self)
 
         child_table = LiteTable(self.database_path, child_table_name)
         child_ids = child_table.select([
@@ -351,7 +394,7 @@ class LiteModel:
         ],['id'])
         
         if len(child_ids) > 0:
-            return model.findOrFail(child_ids[0][0])
+            return model.find(child_ids[0][0])
         else:
             return None
 
@@ -360,9 +403,8 @@ class LiteModel:
         child_table_name = self.__pluralize(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
-        if not foreign_key: foreign_key = f'{self.__class__.__name__.lower()}_id'
-        # if not local_key: local_key = f'{model.__name__.lower()}_id'
-
+        model_instance = model()
+        if not foreign_key: foreign_key = model_instance.__get_foreign_key_from_instance(self)
         
         child_table = LiteTable(self.database_path, child_table_name)
         child_rows = child_table.select([
@@ -372,5 +414,7 @@ class LiteModel:
         children_collection = []
         for row in child_rows:
             children_collection.append(model(row[0]))
+
+        print("LIST OF CHILDREN: ", children_collection)
 
         return LiteCollection(children_collection)

@@ -2,13 +2,12 @@ import pytest, sqlite3, os
 from lite.litemodel import LiteModel
 from lite.litetable import LiteTable
 
-# os.environ['DB_DATABASE'] = 'tests_database.db'
+os.environ['DB_DATABASE'] = 'pytest.db'
 
 # Setup database
-test_db = 'tests_database.db'
-try:
-    os.remove('tests_database.db')
-except Exception: pass
+test_db = 'pytest.db'
+try: os.remove('pytest.db')
+except: pass
 
 LiteTable.create_database(test_db)
 
