@@ -20,7 +20,7 @@ class TableNotFoundError(BaseException):
     def __init__(self, table_name):
         print(Fore.RED, f'Table "{table_name}" does not exist in this database.', Fore.RESET)
 
-class ModelNotFoundError(BaseException):
+class ModelInstanceNotFoundError(BaseException):
     """Raised when the model doesn't exist in the table"""
     def __init__(self, model_id):
         print(Fore.RED, f'Model with id = "{model_id}" does not exist.', Fore.RESET)

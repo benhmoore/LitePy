@@ -174,14 +174,14 @@ class LiteModel:
         if len(rows) > 0:
             return self(id) # Return LiteModel
         else:
-            raise ModelNotFoundError(id)
+            raise ModelInstanceNotFoundError(id)
 
     @classmethod
     def find(self, id):
         """Returns LiteModel with matching id or None."""
         try:
             return self.findOrFail(id)
-        except ModelNotFoundError:
+        except ModelInstanceNotFoundError:
             return None
 
     @classmethod
@@ -332,6 +332,17 @@ class LiteModel:
         for model_instance in model_instances:
             self.detach(model_instance)
 
+    def delete(self):
+        if self.id == None: raise ModelInstanceNotFoundError(self.id) # cannot delete a model instance that isn't saved in database
+        self.table.delete([['id','=',self.id]])
+
+        # Since the python object instance cannot be removed from memory manually,
+        # set all attributes to None
+        for column in self.table_columns: setattr(self, column, None)
+
+        return True
+        
+
     def save(self):
         update_columns = {}
         for column in self.table_columns:
@@ -375,7 +386,7 @@ class LiteModel:
         for rel in relationships:
             try: 
                 sibling = model.find(rel[0])
-            except ModelNotFoundError: 
+            except ModelInstanceNotFoundError: 
                 print("Error occured!")
                 continue
             siblings_collection.append(sibling)

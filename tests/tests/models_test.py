@@ -1,6 +1,7 @@
 import pytest, sqlite3, os
 from lite.litemodel import LiteModel
 from lite.litetable import LiteTable
+from lite.liteexceptions import *
 
 os.environ['DB_DATABASE'] = 'pytest.db'
 
@@ -205,3 +206,23 @@ def test_save():
     user_temp = User.findOrFail(1)
 
     assert user_temp.password == 'xyz'
+
+# Test .delete()
+def test_delete():
+
+    # Make sure model instance exists
+    user_a = User.findOrFail(1)
+    assert user_a.username == 'john'
+
+    user_a.delete()
+
+    # Trying to delete a model instance twice should raise an exception
+    with pytest.raises(ModelInstanceNotFoundError):
+        user_a.delete()
+
+    # The model shouldn't be found, since it should have been deleted.
+    with pytest.raises(ModelInstanceNotFoundError):
+        temp_user = User.findOrFail(1)
+
+    # the python object should be cleared of the deleted model instance's data
+    assert user_a.username == None
