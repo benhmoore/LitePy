@@ -1,5 +1,5 @@
 import pytest, sqlite3, os
-from lite.litemodel import LiteModel
+from lite.litemodel import LiteModel, LiteCollection
 from lite.litetable import LiteTable
 from lite.liteexceptions import *
 
@@ -16,34 +16,34 @@ LiteTable.create_database(test_db)
 # Create models for tests
 class User(LiteModel):
     
-    def parent(self):
+    def parent(self) -> LiteModel:
         return self.belongsTo(User,'user_id')
 
-    def child(self):
+    def child(self) -> LiteModel:
         return self.hasOne(User)
 
-    def cars(self):
+    def cars(self) -> LiteCollection:
         return self.belongsToMany(Car)
 
-    def bank_account(self):
+    def bank_account(self) -> LiteModel:
         return self.hasOne(Bank_Account)
 
-    def products(self):
+    def products(self) -> LiteCollection:
         return self.hasMany(Product)
 
 class Car(LiteModel):
     
-    def owners(self):
+    def owners(self) -> LiteCollection:
         return self.belongsToMany(User)
 
 class Bank_Account(LiteModel):
     
-    def holder(self):
+    def holder(self) -> LiteModel:
         return self.belongsTo(User)
 
 class Product(LiteModel):
     
-    def owner(self):
+    def owner(self) -> LiteModel:
         return self.belongsTo(User)
 
 
@@ -226,3 +226,43 @@ def test_delete():
 
     # the python object should be cleared of the deleted model instance's data
     assert user_a.username == None
+
+# Path finding tests
+def test_find_path():
+
+    user_a, user_b, user_c = User.createMany([
+        {
+            'username': 'a',
+            'password': 'p'
+        },
+        {
+            'username': 'b',
+            'password': 'p'
+        },
+        {
+            'username': 'c',
+            'password': 'p'
+        }
+    ])
+
+
+    car_1, car_2 = Car.all()
+
+    user_a.attach(car_2)
+    car_2.attach(user_b)
+
+    user_b.attach(car_1)
+    car_1.attach(user_c)
+
+    acc_1 = Bank_Account.create({
+        'account_number':'6969'
+    })
+
+    print("User 2 cars", user_b.cars())
+
+    assert user_a.findPath(car_1) != False
+    assert car_2.findPath(user_a) != False
+    assert user_a.findPath(user_b) != False
+    assert len(user_a.findPath(acc_1)) == 6
+
+    # assert False == True

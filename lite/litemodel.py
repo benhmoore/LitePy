@@ -1,4 +1,4 @@
-import re # used for pluralizing class names to derive table name
+import re, typing # used for pluralizing class names to derive table name
 from lite.litetable import LiteTable
 from lite.liteexceptions import *
 from lite.lite import Lite
@@ -45,6 +45,12 @@ class LiteCollection:
             self.list.append(model_instance)
         else:
             raise DuplicateModelInstance(model_instance)
+
+    def join(self, lite_collection):
+        """Merges a LiteCollection into the current one."""
+        
+        self.list += lite_collection.list
+
 
     def remove(self, model_instance):
         """Removes a model instance from the collection."""
@@ -205,6 +211,37 @@ class LiteModel:
                 
             # Store list of all table column names. This is used for save()
             self.table_columns = [column[1] for column in columns]
+
+    def __get_relationship_methods(self):
+        """Returns a list of method names that should define relationships between model instances."""
+
+        # First, find all unique methods for the current model instance
+        instance_variables = set(filter(lambda x: x.startswith('_') == False, dir(self)))
+        default_variables = set(filter(lambda x: x.startswith('_') == False, dir(LiteModel)))
+
+        unique_variables = instance_variables - default_variables
+        unique_methods = []
+
+        for i_var in unique_variables:
+            try: 
+                getattr(getattr(self, i_var), '__call__')
+                unique_methods.append(i_var)
+            except: continue
+                
+
+        # These unique methods should contain any relationship definitions (i.e. calling hasOne, hasMany, belongsToMany, etc.)
+        # To find these relationship definitions, we look for methods that return either a LiteCollection or LiteModel:
+
+        relationship_definitions = []
+        for method in unique_methods:
+            method_signature = typing.get_type_hints(getattr(self, method))
+
+            if "return" in method_signature:
+                if method_signature['return'] == LiteCollection or method_signature['return'] == LiteModel:
+                    relationship_definitions.append(method)
+
+        return relationship_definitions
+
 
     @classmethod
     def findOrFail(self, id):
@@ -520,3 +557,51 @@ class LiteModel:
             children_collection.append(model(row[0]))
 
         return LiteCollection(children_collection)
+
+    def findPath(self, to_model_instance, max_depth:int=20, _path:list=None, _explored:list=None):
+        """Attempts to find a path to the model using BFS."""
+
+        print("Current path", _path, "Looking for", to_model_instance.id, )
+
+        if not _path: _path = []
+        if not _explored: _explored = []
+
+        _path.append(self)
+        if len(_path) > max_depth:
+            print("Reached max depth!")
+            return False
+
+        # Get relationship definition methods
+        rel_methods = self.__get_relationship_methods()
+
+        rel_results = LiteCollection()
+        
+        for method in rel_methods:
+            result = getattr(self, method)()
+            if result:
+                if type(result) == LiteCollection:
+                    try: rel_results.join(result)
+                    except: pass
+                else:
+                    try: rel_results.add(result)
+                    except: pass
+
+        print("Results from calling all relation methods on", self, rel_results)
+
+        if to_model_instance in rel_results:
+            _path.append(to_model_instance)
+            print("Found path!",_path)
+            return _path
+
+        _explored.append(self)
+        
+        for result_model in rel_results:
+            if result_model: 
+                if result_model != self:
+
+                    if result_model not in _explored:
+                        return result_model.findPath(to_model_instance, max_depth, _path, _explored)
+        return False
+
+        
+
