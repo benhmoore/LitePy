@@ -13,19 +13,19 @@ if not os.path.exists('scratch.db'):
 
     LiteTable.create_database('scratch.db')
 
-    LiteTable.create_table( 'scratch.db', 'users', {
+    LiteTable.create_table('users', {
         'name': 'TEXT',
         'acc_id': 'TEXT'
     },"id",{
         'acc_id':['accounts','id'],
     })
 
-    LiteTable.create_table( 'scratch.db', 'accounts', {
+    LiteTable.create_table('accounts', {
         'username': 'TEXT',
         'password': 'TEXT',
     })
 
-    LiteTable.create_table( 'scratch.db', 'pets', {
+    LiteTable.create_table('pets', {
         'name': 'TEXT',
         'type': 'TEXT',
         'owner_id': 'INTEGER'

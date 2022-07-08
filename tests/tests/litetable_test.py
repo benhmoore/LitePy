@@ -22,18 +22,18 @@ def test_create_database():
     ('table_b', True),
 ])
 def test_create_tables(table_name, expected):
-    assert LiteTable.create_table(test_db, table_name, {'name':'TEXT'}) == expected
+    assert LiteTable.create_table(table_name, {'name':'TEXT'}) == expected
 
 @pytest.mark.parametrize("table_name,expected", [
     ('table_b', True),
 ])
 def test_delete_tables(table_name, expected):
-    assert LiteTable.delete_table(test_db, table_name) == expected
+    assert LiteTable.delete_table(table_name) == expected
 
 # .delete_table() should only remove a table if it exists.
 # It should not raise an exception
 def test_delete_nonexistant_table():
-    assert LiteTable.delete_table(test_db, 'table_b') == True
+    assert LiteTable.delete_table('table_b') == True
 
 # Test .exists()
 @pytest.mark.parametrize("table_name,expected", [
@@ -41,7 +41,7 @@ def test_delete_nonexistant_table():
     ('table_b', False),
 ])
 def test_exists(table_name, expected):
-    assert LiteTable.exists(test_db, table_name) == expected
+    assert LiteTable.exists(table_name) == expected
 
 # Test .insert()
 @pytest.mark.parametrize("columns, expected", [
@@ -50,12 +50,12 @@ def test_exists(table_name, expected):
     ({'name':'apple'}, True),
 ])
 def test_insert(columns, expected):
-    table = LiteTable(test_db, 'table_a')
+    table = LiteTable('table_a')
     assert table.insert(columns) == True
 
 # Test .update()
 def test_update():
-    table = LiteTable(test_db, 'table_a')
+    table = LiteTable('table_a')
     assert table.update({'name':'testing987'},[['id','=',1]]) == True
 
 # Test .select()
@@ -68,7 +68,7 @@ def test_update():
     # ('table_b', False),
 ])
 def test_select(where_columns, expected):
-    table = LiteTable(test_db, 'table_a')
+    table = LiteTable('table_a')
     assert len(table.select(where_columns)) == expected
 
 # Test .delete()
@@ -77,6 +77,6 @@ def test_select(where_columns, expected):
     ([['name','=','orange']], 2),
 ])
 def test_delete(where_columns, expected):
-    table = LiteTable(test_db, 'table_a')
+    table = LiteTable('table_a')
     table.delete(where_columns)
     assert len(table.select([])) == expected

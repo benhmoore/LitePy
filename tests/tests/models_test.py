@@ -50,7 +50,7 @@ class Product(LiteModel):
 # Create tables for tests - - - - -
 
 # Users table
-LiteTable.create_table(test_db, 'users', {
+LiteTable.create_table('users', {
     'username': 'TEXT',
     'password': 'TEXT',
     'user_id': 'INTEGER'   
@@ -60,13 +60,13 @@ LiteTable.create_table(test_db, 'users', {
 
 # Cars table
 # A car can belong to  one or more people, and one person may own multiple cars
-LiteTable.create_table(test_db, 'cars', {
+LiteTable.create_table('cars', {
     'make': 'TEXT',
     'model': 'TEXT',
 })
 
 # Pivot table
-LiteTable.create_table(test_db, 'car_user', {
+LiteTable.create_table('car_user', {
     'cid': 'INTEGER',
     'uid': 'INTEGER',
 },"id",{
@@ -75,7 +75,7 @@ LiteTable.create_table(test_db, 'car_user', {
 })
 
 # Bank Account table
-LiteTable.create_table(test_db, 'bank_accounts',{
+LiteTable.create_table('bank_accounts',{
     'account_number': 'INTEGER',
     'routing_number': 'INTEGER',
     'user_id': 'INTEGER',
@@ -84,7 +84,7 @@ LiteTable.create_table(test_db, 'bank_accounts',{
 })
 
 # Products table
-LiteTable.create_table(test_db, 'products',{
+LiteTable.create_table('products',{
     'manufacturer': 'TEXT',
     'user_id': 'INTEGER'
 },"id",{

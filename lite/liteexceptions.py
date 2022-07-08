@@ -29,3 +29,8 @@ class RelationshipError(BaseException):
     """Raised when an error occurs during attachment or detachment between models."""
     def __init__(self, message):
         print(Fore.RED, message, Fore.RESET)
+
+class DuplicateModelInstance(BaseException):
+    """Raised when an error occurs when more than one of the same model instance are added to a collection."""
+    def __init__(self, message):
+        print(Fore.RED, message, Fore.RESET)

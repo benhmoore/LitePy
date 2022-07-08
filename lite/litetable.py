@@ -1,6 +1,7 @@
 import sqlite3, os
 from colorama import Fore, Back, Style
 from lite.liteexceptions import *
+from lite.lite import Lite
 
 import pkg_resources # Used to store the version of Lite used to create a database.
 
@@ -24,11 +25,12 @@ class LiteTable:
         return foreign_key_map
 
     @staticmethod
-    def exists(database_path, table_name=None):
+    def exists(table_name=None):
+        database_path = Lite.get_database_path()
         if os.path.exists(database_path):
             if table_name:
                 try: 
-                    tbl = LiteTable(database_path, table_name)
+                    tbl = LiteTable(table_name)
                 except TableNotFoundError:
                     return False
                 return True
@@ -36,6 +38,19 @@ class LiteTable:
                 return True
         else:
             return False
+
+    @staticmethod
+    def is_pivot_table(table_name):
+        temp_table = LiteTable(table_name)
+        temp_table.cursor.execute(f'PRAGMA table_info({table_name})')
+
+        table_columns = [column[1] for column in temp_table.cursor.fetchall()]
+        table_columns.remove('id')
+
+        if len(table_columns) != 2: return False
+        if len(temp_table.get_foreign_key_references()) != 2: return False
+
+        return True
                 
     @staticmethod
     def create_database(database_path):
@@ -51,24 +66,26 @@ class LiteTable:
             open(database_path, 'a').close() # Create DB file
 
             # Create SQL log table
-            LiteTable.create_table(database_path,'query_log', {
+            LiteTable.create_table('query_log', {
                 "query": "TEXT NOT NULL",
                 "query_values": "TEXT"
             }, 'id')
 
             # Create config table
-            LiteTable.create_table(database_path,'config', {
+            LiteTable.create_table('config', {
                 "key": "TEXT NOT NULL UNIQUE",
                 "value": "TEXT"
             }, 'id')
 
-            configTable = LiteTable(database_path, 'config')
+            configTable = LiteTable('config')
             configTable.insert({"key": "lite_version", "value": pkg_resources.get_distribution("lite").version})
         
         return True
 
     @staticmethod
-    def create_table(database_path, table_name:str, columns:dict, primary_key:str="id", foreign_keys:dict={}):
+    def create_table(table_name:str, columns:dict, primary_key:str="id", foreign_keys:dict={}):
+        database_path = Lite.get_database_path()
+        
         table_desc = []
         for column_name in columns:
             table_desc.append(f'"{column_name}"	{columns[column_name]}')
@@ -95,13 +112,22 @@ class LiteTable:
         return True
 
     @staticmethod
-    def delete_table(database_path:str, table_name:str):
+    def delete_table(table_name:str):
+        database_path = Lite.get_database_path()
         temp_connection = sqlite3.connect(database_path)
         temp_cursor = temp_connection.cursor()
 
         temp_cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
 
         return True
+
+    def get_all_table_names(self):
+        """Returns a list of all tables in current database."""
+        self.cursor.execute("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name")
+        names = [row[0] for row in self.cursor.fetchall()]
+        return names;
+
+        
 
     def execute_and_commit(self, sql_str:str, values=(),should_log=True):
         """Executes and commits an sql query. Logs query.
@@ -122,7 +148,7 @@ class LiteTable:
                 
             self.log.append([sql_str,safe_values])
 
-            insertTable = LiteTable(self.database_path, 'query_log')
+            insertTable = LiteTable('query_log')
 
             insertTable.insert({
                 "query": sql_str,
@@ -186,7 +212,8 @@ class LiteTable:
 
         return True
 
-    def __init__(self, database_path, table_name):
+    def __init__(self, table_name):
+        database_path = Lite.get_database_path()
 
         if not os.path.exists(database_path):
             raise DatabaseNotFoundError(database_path)

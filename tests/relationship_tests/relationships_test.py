@@ -1,27 +1,27 @@
 import pytest, sqlite3, os
-from lite.litemodel import LiteModel
+from lite.litemodel import LiteModel, LiteCollection
 from lite.liteexceptions import *
 from lite.litetable import LiteTable
 
-os.environ['DB_DATABASE'] = 'pytest.db'
+os.environ['DB_DATABASE'] = 'pytest.sqlite'
 
-try: os.remove('pytest.db')
+try: os.remove('pytest.sqlite')
 except: pass
 
-LiteTable.create_database('pytest.db')
+LiteTable.create_database('pytest.sqlite')
 
-LiteTable.create_table( 'pytest.db', 'users', {
+LiteTable.create_table('users', {
     'name': 'TEXT',
     'acc_id': 'TEXT'
 },"id",{
     'acc_id':['accounts','id'],
 })
 
-LiteTable.create_table( 'pytest.db', 'genders', {
+LiteTable.create_table('genders', {
     'label': 'TEXT',
 })
 
-LiteTable.create_table( 'pytest.db', 'gender_user', {
+LiteTable.create_table('gender_user', {
     'uid': 'INTEGER',
     'gid': 'INTEGER'
 }, 'id', {
@@ -29,12 +29,12 @@ LiteTable.create_table( 'pytest.db', 'gender_user', {
     'gid': ['genders','id'],
 })
 
-LiteTable.create_table( 'pytest.db', 'accounts', {
+LiteTable.create_table('accounts', {
     'username': 'TEXT',
     'password': 'TEXT',
 })
 
-LiteTable.create_table( 'pytest.db', 'pets', {
+LiteTable.create_table('pets', {
     'name': 'TEXT',
     'type': 'TEXT',
     'owner_id': 'INTEGER'
@@ -115,6 +115,8 @@ def test_hasOne_belongsTo():
     assert user_1.account() == None
     assert acc_1.user() == None
 
+    user_1.attach(acc_1) # re-attached for later tests
+
 def test_hasMany():
 
     # Forwards
@@ -167,6 +169,13 @@ def test_belongsToMany():
     assert gender_1.users() == []
     assert gender_3.users() == []
 
+    # Test multiple attachments
+    user_1.attach(gender_1)
+    user_1.attach(gender_2)
+    user_1.attach(gender_3)
+
+    assert [gender.label for gender in user_1.genders()] == [gender_1.label, gender_2.label, gender_3.label]
+
 def test_relationship_overrides():
 
     user_1.attach(pet_1)
@@ -182,3 +191,34 @@ def test_relationship_overrides():
     # You cannot attach a model if another is already attached
     with pytest.raises(RelationshipError):
         pet_1.attach(user_2)
+
+def test_delete_relationships():
+    """Tests if all relationships are removed when a model instance is deleted."""
+
+    # Make any number of random attachments in addition to those of prior testts
+    pet_2.attach(user_1)
+
+    # First, assert that these attachments are still present
+    assert [gender.label for gender in user_1.genders()] == [gender_1.label, gender_2.label, gender_3.label]
+    assert [pet.name for pet in user_1.pets()] == [pet_1.name, pet_2.name]
+    assert user_1.account() == acc_1
+
+    # Test removal of many-to-many relationship on delete
+    user_2.attachMany([gender_2,gender_3])
+    assert user_2 in gender_3.users()
+    user_2.delete()
+    assert user_2 not in gender_3.users()
+
+    # Test removal of hasOne relationship on delete
+    assert user_1.account() == acc_1
+    acc_1.delete()
+    assert user_1.account() == None
+
+    # Additional test removal of many-to-many relationship on delete
+    user_1.delete()
+    assert gender_1.users().where([['name','=','Ben']]) == []
+    assert Pet.all().where([['owner_id','=',1]]) == []
+
+
+
+    
