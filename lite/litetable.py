@@ -65,12 +65,6 @@ class LiteTable:
             print(Fore.YELLOW,"Creating Lite database. Lite version:", pkg_resources.get_distribution("lite").version, Fore.RESET)
             open(database_path, 'a').close() # Create DB file
 
-            # Create SQL log table
-            LiteTable.create_table('query_log', {
-                "query": "TEXT NOT NULL",
-                "query_values": "TEXT"
-            }, 'id')
-
             # Create config table
             LiteTable.create_table('config', {
                 "key": "TEXT NOT NULL UNIQUE",
@@ -148,12 +142,12 @@ class LiteTable:
                 
             self.log.append([sql_str,safe_values])
 
-            insertTable = LiteTable('query_log')
+            # insertTable = LiteTable('query_log')
 
-            insertTable.insert({
-                "query": sql_str,
-                "query_values": safe_values_str
-            },False,False)
+            # insertTable.insert({
+            #     "query": sql_str,
+            #     "query_values": safe_values_str
+            # },False,False)
 
     def insert(self, columns, or_ignore=False, should_log=True):
         columns_str = ", ".join([cname for cname in columns])
@@ -221,11 +215,7 @@ class LiteTable:
         self.connection = sqlite3.connect(database_path)
         self.cursor = self.connection.cursor()
 
-        # Check if config and query_log tables exist
-        self.cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table" AND name="query_log"')
-        if len(self.cursor.fetchall()) < 1: # Table doesn't exist
-            raise InvalidDatabaseError(database_path)
-
+        # Check if config tables exist
         self.cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table" AND name="config"')
         if len(self.cursor.fetchall()) < 1: # Table doesn't exist
             raise InvalidDatabaseError(database_path)

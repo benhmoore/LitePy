@@ -81,5 +81,16 @@ def test_equality():
 
     assert c_1 == c_2
     
+def test_contains():
+    """Tests the 'in' operator of LiteCollection instances."""
 
+    user_1, user_2, user_3 = User.all()[:3]
+
+    c_1 = LiteCollection([user_1, user_3])
+
+    c_1.remove(user_1)
+
+    assert user_1 not in c_1
+    assert user_2 not in c_1
+    assert user_3 in c_1
 

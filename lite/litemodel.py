@@ -399,8 +399,7 @@ class LiteModel:
             else:
                 # Update table to remove reference to self model instance
                 temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
-            
-
+                
 
     def delete(self):
         if self.id == None: raise ModelInstanceNotFoundError(self.id) # cannot delete a model instance that isn't saved in database
