@@ -134,9 +134,9 @@ class LiteModel:
             foreign_key = fkey[3]
             local_key = fkey[4]
 
-            if table_name not in foreign_key_map: foreign_key_map[table_name] = {}
+            if table_name not in foreign_key_map: foreign_key_map[table_name] = []
 
-            foreign_key_map[table_name][local_key] = foreign_key
+            foreign_key_map[table_name].append([local_key, foreign_key])
             
         return foreign_key_map
 
@@ -144,14 +144,15 @@ class LiteModel:
         self_fkey = f'{model.__name__.lower()}_id'
         model_table_name = self.__pluralize(model.__name__.lower())
         if model_table_name in self.FOREIGN_KEY_MAP:
-            self_fkey = self.FOREIGN_KEY_MAP[model_table_name][local_key]
-
+            self_fkey = self.FOREIGN_KEY_MAP[model_table_name][0][1]
+            
         return self_fkey
 
     def __get_foreign_key_from_instance(self, model_instance, local_key:str='id'):
         self_fkey = f'{model_instance.__class__.__name__.lower()}_id'
+
         if model_instance.table_name in self.FOREIGN_KEY_MAP:
-            self_fkey = self.FOREIGN_KEY_MAP[model_instance.table_name][local_key]
+            self_fkey = self.FOREIGN_KEY_MAP[model_instance.table_name][0][1]
 
         return self_fkey
 
@@ -279,6 +280,7 @@ class LiteModel:
     def attach(self, model_instance, self_fkey=None, model_fkey=None):
         
         pivot_table_name = self.__pivot_table_exists(model_instance)
+        # print("PIVOT TABLE NAME", pivot_table_name)
         if pivot_table_name: # Is a many-to-many relationship
             pivot_table = LiteTable(pivot_table_name)
 
@@ -286,8 +288,13 @@ class LiteModel:
             foreign_keys = pivot_table.get_foreign_key_references()
 
             # user should provide a self and model foreign keys if the pivot table associates two rows from the *same* table
-            if not self_fkey: self_fkey = foreign_keys[self.table_name]['id']
-            if not model_fkey: model_fkey = foreign_keys[model_instance.table_name]['id']
+            if not self_fkey or not model_fkey:
+                if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
+                    self_fkey = foreign_keys[self.table_name][0][1]
+                    model_fkey = foreign_keys[model_instance.table_name][1][1]
+                else:
+                    self_fkey = foreign_keys[self.table_name][0][1]
+                    model_fkey = foreign_keys[model_instance.table_name][0][1]
 
             # Make sure this relationship doesn't already exist
             relationships = pivot_table.select([
@@ -341,8 +348,12 @@ class LiteModel:
             # Derive foreign keys
             foreign_keys = pivot_table.get_foreign_key_references()
 
-            self_fkey = foreign_keys[self.table_name]['id']
-            model_fkey = foreign_keys[model_instance.table_name]['id']
+            if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
+                self_fkey = foreign_keys[self.table_name][0][1]
+                model_fkey = foreign_keys[model_instance.table_name][1][1]
+            else:
+                self_fkey = foreign_keys[self.table_name][0][1]
+                model_fkey = foreign_keys[model_instance.table_name][0][1]
 
             # Make sure this relationship doesn't already exist
             relationships = pivot_table.delete([
@@ -388,17 +399,21 @@ class LiteModel:
 
         for tName in check_tables:
             # Get local and foreign keys
-            local_key = list(check_tables[tName].keys())[0]
-            foreign_key = check_tables[tName][local_key]
-            local_key_value = getattr(self, local_key)
+            key_maps = check_tables[tName]
+            for i in range(0, len(key_maps)):
+                local_key = key_maps[i][0]
+                foreign_key = key_maps[i][1]
 
-            # Check if table is a pivot table, as detach proceedure will be different
-            temp_table = LiteTable(tName)
-            if LiteTable.is_pivot_table(tName):
-                temp_table.delete([[foreign_key,'=',local_key_value]])
-            else:
-                # Update table to remove reference to self model instance
-                temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
+                local_key_value = getattr(self, local_key)
+
+                # Check if table is a pivot table, as detach proceedure will be different
+                temp_table = LiteTable(tName)
+                if LiteTable.is_pivot_table(tName):
+                    # print(Back.BLUE, "Deleting from pivot table", local_key_value, Back.RESET)
+                    temp_table.delete([[foreign_key,'=',local_key_value]])
+                else:
+                    # Update table to remove reference to self model instance
+                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
                 
 
     def delete(self):
@@ -447,8 +462,13 @@ class LiteModel:
         model_instance = model()
         foreign_keys = pivot_table.get_foreign_key_references()
 
-        self_fkey = foreign_keys[self.table_name]['id']
-        model_fkey = foreign_keys[model_instance.table_name]['id']
+        # Handles pivot tables that relate two of the same model
+        if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
+            self_fkey = foreign_keys[self.table_name][0][1]
+            model_fkey = foreign_keys[model_instance.table_name][1][1]
+        else:
+            self_fkey = foreign_keys[self.table_name][0][1]
+            model_fkey = foreign_keys[model_instance.table_name][0][1]
 
         # Assume relationship is many-to-many
         self.table.cursor.execute(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')

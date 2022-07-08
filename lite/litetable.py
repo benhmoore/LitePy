@@ -18,9 +18,9 @@ class LiteTable:
             foreign_key = fkey[3]
             local_key = fkey[4]
 
-            if table_name not in foreign_key_map: foreign_key_map[table_name] = {}
+            if table_name not in foreign_key_map: foreign_key_map[table_name] = []
 
-            foreign_key_map[table_name][local_key] = foreign_key
+            foreign_key_map[table_name].append([local_key, foreign_key])
             
         return foreign_key_map
 
@@ -48,7 +48,14 @@ class LiteTable:
         table_columns.remove('id')
 
         if len(table_columns) != 2: return False
-        if len(temp_table.get_foreign_key_references()) != 2: return False
+
+        total_relations = 0
+        fkey_refs = temp_table.get_foreign_key_references()
+        for fkey_ref in fkey_refs:
+            for relation in fkey_refs[fkey_ref]:
+                total_relations += 1
+
+        if total_relations != 2: return False
 
         return True
                 
