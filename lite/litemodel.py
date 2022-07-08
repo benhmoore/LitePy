@@ -398,7 +398,6 @@ class LiteModel:
                 [model_fkey,'=',model_instance.id]
             ])
         else:
-
             # Derive foreign keys
             self_fkey = model_instance.__get_foreign_key_from_instance(self)
             model_fkey = self.__get_foreign_key_from_instance(model_instance)
@@ -561,8 +560,6 @@ class LiteModel:
     def findPath(self, to_model_instance, max_depth:int=20, _path:list=None, _explored:list=None):
         """Attempts to find a path to the model using BFS."""
 
-        print("Current path", _path, "Looking for", to_model_instance.id, )
-
         if not _path: _path = []
         if not _explored: _explored = []
 
@@ -586,11 +583,8 @@ class LiteModel:
                     try: rel_results.add(result)
                     except: pass
 
-        print("Results from calling all relation methods on", self, rel_results)
-
         if to_model_instance in rel_results:
             _path.append(to_model_instance)
-            print("Found path!",_path)
             return _path
 
         _explored.append(self)

@@ -258,7 +258,8 @@ def test_find_path():
         'account_number':'6969'
     })
 
-    print("User 2 cars", user_b.cars())
+
+    user_c.attach(acc_1)
 
     assert user_a.findPath(car_1) != False
     assert car_2.findPath(user_a) != False
