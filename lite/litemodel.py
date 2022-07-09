@@ -295,8 +295,6 @@ class LiteModel:
         rows = table.select(where_columns,['id'])
         for row in rows:
             collection.append(self.findOrFail(row[0]))
-
-        print(collection)
         
         return LiteCollection(collection)
 
