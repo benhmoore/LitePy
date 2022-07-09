@@ -283,6 +283,24 @@ class LiteModel:
         return LiteCollection(collection)
 
     @classmethod
+    def where(self, where_columns):
+        """Returns a list of LiteModels matching query from database."""
+
+        database_path = Lite.get_database_path()
+        table_name = self.__pluralize(self,self.__name__.lower())
+        
+        table = LiteTable(table_name)
+
+        collection = []
+        rows = table.select(where_columns,['id'])
+        for row in rows:
+            collection.append(self.findOrFail(row[0]))
+
+        print(collection)
+        
+        return LiteCollection(collection)
+
+    @classmethod
     def create(self,column_values):
         """Creates a new table."""
         

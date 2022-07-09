@@ -167,21 +167,11 @@ class LiteTable:
         return True
 
     def update(self, update_columns:dict, where_columns:list, or_ignore=False):
-        """_summary_
-
-        Where Column Format: ['column','= or LIKE','value']
-
-        Args:
-            update_columns (dict): _description_
-            where_columns (list): _description_
-            or_ignore (bool, optional): _description_. Defaults to False.
-        """
-
         set_str = ",".join([f'{cname} = ?' for cname in update_columns])
         values_list = [update_columns[cname] for cname in update_columns] # collect update values
-        where_str = ",".join([f'{column[0]} {column[1]} ?' for column in where_columns])
+        where_str, where_values = self.__where_to_str(where_columns)
 
-        values_list += [column[2] for column in where_columns] # add where values
+        values_list += where_values
 
         self.execute_and_commit(f'UPDATE {"OR IGNORE" if or_ignore else ""} {self.table_name} SET {set_str} WHERE {where_str}', tuple(values_list))
 
@@ -189,11 +179,9 @@ class LiteTable:
 
     def select(self, where_columns:list, result_columns:list=['*']):
         get_str = ",".join([cname for cname in result_columns])
-        where_str = " AND ".join([f'{column[0]} {column[1]} ?' for column in where_columns])
-        values_list = [column[2] for column in where_columns] # add where values
-
+        where_str, values_list = self.__where_to_str(where_columns)
         sql_str = f'SELECT {get_str} FROM {self.table_name} WHERE {where_str}'
-
+        
         if len(where_columns) < 1: sql_str = f'SELECT {get_str} FROM {self.table_name}'
 
         self.log.append(sql_str)
@@ -202,16 +190,47 @@ class LiteTable:
         return self.cursor.fetchall()
 
     def delete(self, where_columns:list):
-        where_str = " AND ".join([f'{column[0]} {column[1]} ?' for column in where_columns])
-        values_list = [column[2] for column in where_columns] # add where values
+        where_str, values_list = self.__where_to_str(where_columns)
 
         sql_str = f'DELETE FROM {self.table_name} WHERE {where_str}'
         
         if len(where_columns) < 1: sql_str = f'DELETE FROM {self.table_name}'
-
         self.execute_and_commit(sql_str,tuple(values_list))
-
         return True
+
+    def __where_to_str(self, where_columns):
+        """Converts Lite where columns to an SQL query."""
+
+        where_str = " AND ".join([f'{column[0]} {column[1]} ?' for column in where_columns])
+        values_list = [column[2] for column in where_columns] # add where values
+
+        # Convert Python's None to NULL for the SQL query
+        values_to_remove = []
+        insert_positions = self.__find_char_occurances(where_str, '?')
+        where_str = list(where_str)
+
+        remove_values = []
+        for i in range(0, len(values_list)):
+            if values_list[i] == None:
+                del where_str[insert_positions[i]]
+                where_str.insert(insert_positions[i], 'NULL')
+                remove_values.append(i)
+        
+        for i in remove_values:
+            del values_list[i]
+
+
+        new_where_str = ''
+        for i in where_str:
+            new_where_str += i
+
+        # print(Back.GREEN, "New WHERE Clause", new_where_str, Back.RESET)
+
+        return (new_where_str, values_list)
+        
+
+    def __find_char_occurances(self, str, char):
+        return [i for i, letter in enumerate(str) if letter == char]
 
     def __init__(self, table_name):
         database_path = Lite.get_database_path()

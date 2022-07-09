@@ -154,7 +154,7 @@ def test_attach():
     user_a = User.findOrFail(1)
     user_b = User.findOrFail(2)
 
-    car_1 = Car.all().where([['make','=','VW']])[0]
+    car_1 = Car.where([['make','=','VW']])[0]
     bank_acc = Bank_Account.all().where([['account_number','>',125000]])[0]
 
     product_a = Product.findOrFail(1)

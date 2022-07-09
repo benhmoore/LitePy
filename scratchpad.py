@@ -99,7 +99,7 @@ if len(Pet.all()) == 0:
 else:
     pet_1, pet_2, pet_3 = Pet.all()
 
-
+print("Results", Pet().where([['name','=','Bouncer'],['type','=',None],['type','=','Cat']]))
 
 user_2.attachMany([pet_1])
 user_3.attachMany([pet_2,pet_3])
