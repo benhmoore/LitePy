@@ -265,5 +265,9 @@ def test_find_path():
     assert car_2.findPath(user_a) != False
     assert user_a.findPath(user_b) != False
     assert len(user_a.findPath(acc_1)) == 6
+    assert len(user_a.findPath(acc_1)) == 6
+
+    assert True == False
+    
 
     # assert False == True

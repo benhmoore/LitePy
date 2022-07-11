@@ -9,59 +9,6 @@ from lite.lite import Lite
 # using Queue.
 #
 
-class PriorityQueue(object):
-    def __init__(self):
-        self.queue = []
-
-    def __len__(self):
-        return len(self.queue)
-    
-    def __str__(self):
-        return str(self.queue)
-  
-    # for checking if the queue is empty
-    def isEmpty(self):
-        return len(self.queue) == 0
-  
-    # for inserting an element in the queue
-    def insert(self, node):
-        self.queue.append(node)
-
-    def containsPosition(self, node):
-        nodes = []
-        for q_node in self.queue:
-            if q_node.pos == node.pos:
-                nodes.append(q_node)
-        
-        if len(nodes) < 1: return False
-
-        try:
-            min = 0
-            for i in range(len(nodes)):
-                if nodes[i].f < nodes[min].f:
-                    min = i
-            item = nodes[min]
-            del nodes[min]
-            return item
-        except IndexError:
-            print()
-            exit()
-  
-    def popMin(self):
-        cumulative_g = 0
-        
-        try:
-            min = 0
-            for i in range(len(self.queue)):
-                if self.queue[i].f < self.queue[min].f:
-                    min = i
-            item = self.queue[min]
-            del self.queue[min]
-            return item
-        except IndexError:
-            print()
-            exit()
-
 class LiteCollection:
 
     def __init__(self, model_instances:list=None):
@@ -156,6 +103,9 @@ class LiteCollection:
 
 class LiteModel:
     """Model-based system for database management. Inspired by Laravel."""
+
+
+    PATH_LOOKUP_TABLE = {}
 
 
     def toDict(self):
@@ -665,51 +615,95 @@ class LiteModel:
 
         return LiteCollection(children_collection)
 
-    def findPath(self, to_model_instance, max_depth:int=20, _path:list=None, _explored:list=None):
-        """Attempts to find a path to the model using BFS."""
 
-        if to_model_instance == self: # Don't attempt to find a path to self
-            return LiteCollection([])
+    def __add_to_path_lookup(self, from_model, to_model, path):
+        from_str = f'{from_model.table.table_name}.{from_model.id}'
+        to_str = f'{to_model.table.table_name}.{to_model.id}'
 
-        if not _path: _path = []
-        if not _explored: _explored = []
+        key = f'{from_str}_{to_str}'
 
-        _path.append(self)
-        if len(_path) > max_depth:
-            print("Reached max depth!")
-            return False
+        print(key)
 
-        # Get relationship definition methods
-        rel_methods = self.__get_relationship_methods()
+        if key in self.PATH_LOOKUP_TABLE: return True
 
-        rel_results = LiteCollection()
-        
-        for method in rel_methods:
-            result = getattr(self, method)()
-            if result:
-                if type(result) == LiteCollection:
-                    try: rel_results.join(result)
-                    except: pass
-                else:
-                    try: rel_results.add(result)
-                    except: pass
+        self.PATH_LOOKUP_TABLE[key] = path
 
-        print(Back.RED,rel_results,Back.RESET)
-        print(Back.BLUE,LiteCollection(_explored),Back.BLUE)
 
-        if to_model_instance in rel_results:
-            _path.append(to_model_instance)
-            return LiteCollection(_path)
+    def __get_path_from_lookup(self, from_model, to_model):
+        from_str = f'{from_model.table.table_name}.{from_model.id}'
+        to_str = f'{to_model.table.table_name}.{to_model.id}'
 
-        _explored.append(self)
-        
-        for result_model in rel_results:
-            # if result_model: 
-            if result_model != self:
-                if result_model not in _explored:
-                    return result_model.findPath(to_model_instance, max_depth, _path, _explored)
+        key = f'{from_str}_{to_str}'
+        key_reversed = f'{to_str}_{from_str}'
 
-        return False   
+        if key in self.PATH_LOOKUP_TABLE: return self.PATH_LOOKUP_TABLE[key]
+        if key_reversed in self.PATH_LOOKUP_TABLE: return self.PATH_LOOKUP_TABLE[key_reversed]
+
+        return False
+
+
+    def findPath(self, to_model_instance, max_depth:int=500):
+
+        setattr(self, 'parent', None)
+
+        open_nodes = []
+        open_nodes.append(self)
+
+        closed_nodes = []
+
+        iterations = 0
+
+        while len(open_nodes) > 0 and iterations < max_depth:
+            iterations += 1
+
+            q = open_nodes.pop()
+            if q not in closed_nodes:
+                closed_nodes.append(q)
+
+            # if self.__get_path_from_lookup(q, to_model_instance):
+            #     path_extension = self.__get_path_from_lookup(q, to_model_instance)
+
+            if q == to_model_instance: # Calculate and return path
+                
+                path = [q]
+                temp = getattr(q,'parent')
+
+                while temp != None:
+                    path.append(temp)
+                    temp = getattr(temp,'parent')
+
+                # Reverse path
+                reversed_path = []
+                for model in path: reversed_path.insert(0,model)
+                
+                print(Back.GREEN, LiteCollection(reversed_path),Back.RESET)
+                self.__add_to_path_lookup(self, to_model_instance, reversed_path) # Add this path to the path cache table, to speed up future path searches
+                return reversed_path
+
+
+            # Get relationship definition methods
+            methods = q.__get_relationship_methods()
+
+            relationship_models = LiteCollection()
+            
+            for method in methods:
+                result = getattr(q, method)()
+                if result:
+                    if type(result) == LiteCollection:
+                        try: relationship_models.join(result)
+                        except: pass
+                    else:
+                        try: relationship_models.add(result)
+                        except: pass
+
+            for model in relationship_models:
+                
+                setattr(model, 'parent', q) # Set special parent attribute to keep track of path
+                if model in closed_nodes: continue
+
+                open_nodes.insert(0, model) # insert to beginning of open_nodes
+
+        print(Back.YELLOW,"Did NOT find path.",Back.RESET)
 
         
 
