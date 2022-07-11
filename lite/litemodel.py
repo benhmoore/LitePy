@@ -1,16 +1,80 @@
-import re, typing # used for pluralizing class names to derive table name
+import re, typing, queue # used for pluralizing class names to derive table name
 from lite.litetable import LiteTable
 from lite.liteexceptions import *
 from lite.lite import Lite
 
+#
+# From https://www.geeksforgeeks.org/priority-queue-in-python/
+# A simple implementation of Priority Queue
+# using Queue.
+#
+
+class PriorityQueue(object):
+    def __init__(self):
+        self.queue = []
+
+    def __len__(self):
+        return len(self.queue)
+    
+    def __str__(self):
+        return str(self.queue)
+  
+    # for checking if the queue is empty
+    def isEmpty(self):
+        return len(self.queue) == 0
+  
+    # for inserting an element in the queue
+    def insert(self, node):
+        self.queue.append(node)
+
+    def containsPosition(self, node):
+        nodes = []
+        for q_node in self.queue:
+            if q_node.pos == node.pos:
+                nodes.append(q_node)
+        
+        if len(nodes) < 1: return False
+
+        try:
+            min = 0
+            for i in range(len(nodes)):
+                if nodes[i].f < nodes[min].f:
+                    min = i
+            item = nodes[min]
+            del nodes[min]
+            return item
+        except IndexError:
+            print()
+            exit()
+  
+    def popMin(self):
+        cumulative_g = 0
+        
+        try:
+            min = 0
+            for i in range(len(self.queue)):
+                if self.queue[i].f < self.queue[min].f:
+                    min = i
+            item = self.queue[min]
+            del self.queue[min]
+            return item
+        except IndexError:
+            print()
+            exit()
+
 class LiteCollection:
 
     def __init__(self, model_instances:list=None):
-        if model_instances: self.list = model_instances
-        else: self.list = []
+        self.list = []
+        if model_instances: 
+            for instance in model_instances:
+                if instance not in self.list: self.list.append(instance)
 
     def __str__(self):
-        return self.list.__str__()
+        print_list = []
+        for model_instance in self.list:
+            print_list.append(model_instance.toDict())
+        return print_list.__str__()
 
     def __len__(self):
         return len(self.list)
@@ -92,6 +156,25 @@ class LiteCollection:
 
 class LiteModel:
     """Model-based system for database management. Inspired by Laravel."""
+
+
+    def toDict(self):
+        """Converts the LiteModel into a human-readable dictionary, with truncated values where necessary."""
+        print_dict = {}
+        for column in self.table_columns:
+            attribute = getattr(self, column)
+
+            # Convert byte strings to regular strings
+            if type(attribute) == bytes: attribute = attribute.decode("utf-8") 
+
+            # Truncate text over 50 characters)
+            if type(attribute) == str: attribute = attribute[:50] + '...'
+            print_dict[column] = attribute
+
+        return print_dict
+
+    def __str__(self):
+        return self.toDict().__str__()
 
     def __eq__(self, other):
         # Collect base classes of class being compared to make sure it is a LiteModel
@@ -516,24 +599,33 @@ class LiteModel:
 
         # Handles pivot tables that relate two of the same model
         if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
-            self_fkey = foreign_keys[self.table_name][0][1]
-            model_fkey = foreign_keys[model_instance.table_name][1][1]
+            self_fkey = [foreign_keys[self.table_name][0][1],foreign_keys[self.table_name][1][1]]
+            model_fkey = [foreign_keys[model_instance.table_name][1][1],foreign_keys[model_instance.table_name][0][1]]
         else:
             self_fkey = foreign_keys[self.table_name][0][1]
             model_fkey = foreign_keys[model_instance.table_name][0][1]
 
         # Assume relationship is many-to-many
-        self.table.cursor.execute(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')
-        relationships = self.table.cursor.fetchall()
-
         siblings_collection = []
-        for rel in relationships:
-            try: 
-                sibling = model.find(rel[0])
-            except ModelInstanceNotFoundError: 
-                # print("Error occured!")
-                continue
-            siblings_collection.append(sibling)
+        relationships = []
+        if type(self_fkey) == list:
+            for i in range(0, len(self_fkey)):
+                self.table.cursor.execute(f'SELECT {model_fkey[i]} FROM {pivot_table_name} WHERE {self_fkey[i]} = {self.id}')
+                relationships.append(self.table.cursor.fetchall())
+
+        else:
+
+            self.table.cursor.execute(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')
+            relationships.append(self.table.cursor.fetchall())
+
+        for rel_set in relationships:
+            for rel in rel_set:
+                try: 
+                    sibling = model.find(rel[0])
+                except ModelInstanceNotFoundError: 
+                    print("Error occurred!")
+                    continue
+                siblings_collection.append(sibling)
 
         return LiteCollection(siblings_collection)
 
@@ -576,6 +668,9 @@ class LiteModel:
     def findPath(self, to_model_instance, max_depth:int=20, _path:list=None, _explored:list=None):
         """Attempts to find a path to the model using BFS."""
 
+        if to_model_instance == self: # Don't attempt to find a path to self
+            return LiteCollection([])
+
         if not _path: _path = []
         if not _explored: _explored = []
 
@@ -599,19 +694,22 @@ class LiteModel:
                     try: rel_results.add(result)
                     except: pass
 
+        print(Back.RED,rel_results,Back.RESET)
+        print(Back.BLUE,LiteCollection(_explored),Back.BLUE)
+
         if to_model_instance in rel_results:
             _path.append(to_model_instance)
-            return _path
+            return LiteCollection(_path)
 
         _explored.append(self)
         
         for result_model in rel_results:
-            if result_model: 
-                if result_model != self:
+            # if result_model: 
+            if result_model != self:
+                if result_model not in _explored:
+                    return result_model.findPath(to_model_instance, max_depth, _path, _explored)
 
-                    if result_model not in _explored:
-                        return result_model.findPath(to_model_instance, max_depth, _path, _explored)
-        return False
+        return False   
 
         
 
