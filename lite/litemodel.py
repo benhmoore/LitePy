@@ -660,6 +660,7 @@ class LiteModel:
             if q not in closed_nodes:
                 closed_nodes.append(q)
 
+            # See if a cached path exists
             # if self.__get_path_from_lookup(q, to_model_instance):
             #     path_extension = self.__get_path_from_lookup(q, to_model_instance)
 
