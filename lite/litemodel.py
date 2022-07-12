@@ -1,4 +1,4 @@
-import re, typing, queue
+import re, typing, queue, time
 from select import select # used for pluralizing class names to derive table name
 from lite.litetable import LiteTable
 from lite.liteexceptions import *
@@ -165,8 +165,7 @@ class LiteModel:
             return False
 
     def get_foreign_key_references(self):
-        self.table.cursor.execute(f'PRAGMA foreign_key_list({self.table_name})')
-        foreign_keys = self.table.cursor.fetchall()
+        foreign_keys = self.table.execute_and_fetch(f'PRAGMA foreign_key_list({self.table_name})')
 
         foreign_key_map = {}
 
@@ -231,9 +230,7 @@ class LiteModel:
         if id is not None:
 
             # Load columns and values from database for this model
-            self.table.cursor.execute(f'PRAGMA table_info({self.table_name})')
-            
-            columns = self.table.cursor.fetchall()
+            columns = self.table.execute_and_fetch(f'PRAGMA table_info({self.table_name})')
             values = self.table.select([['id','=',id]])
 
             for i in range(0,len(columns)):
@@ -344,11 +341,10 @@ class LiteModel:
         table.insert(column_values)
 
         sql_str = f'SELECT id FROM {table_name} WHERE {list(column_values.keys())[0]} = ? ORDER BY id DESC'
-        table.cursor.execute(
+        ids = table.execute_and_fetch(
             sql_str,
             tuple([column_values[list(column_values.keys())[0]]])
         )
-        ids = table.cursor.fetchall()
         if len(ids) > 0:
             return self(ids[0][0])
         else:
@@ -571,14 +567,9 @@ class LiteModel:
             select_queries = []
             for i in range(0, len(self_fkey)):
                 select_queries.append(f'SELECT {model_fkey[i]} FROM {pivot_table_name} WHERE {self_fkey[i]} = {self.id}')
-            
-            self.table.cursor.execute(' UNION '.join(select_queries))
-            relationships = self.table.cursor.fetchall()
-
+            relationships = self.table.execute_and_fetch(' UNION '.join(select_queries))
         else:
-
-            self.table.cursor.execute(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')
-            relationships = self.table.cursor.fetchall()
+            relationships = self.table.execute_and_fetch(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')
 
         for rel in relationships:
             try: 
@@ -634,8 +625,6 @@ class LiteModel:
 
         key = f'{from_str}_{to_str}'
 
-        print(key)
-
         if key in self.PATH_LOOKUP_TABLE: return True
 
         self.PATH_LOOKUP_TABLE[key] = path
@@ -654,80 +643,153 @@ class LiteModel:
         return False
 
 
-    def pathExists(self, to_model_instance, max_depth:int=500):
-        """Quickly determines if a path exists between two elements."""
+    # def pathExists(self, to_model_instance, max_depth:int=500):
+    #     """Quickly determines if a path exists between two elements."""
 
-        if self.findPath(to_model_instance, max_depth, False): # Find a path without requiring shortest path
-            return True
-        else:
-            return False
+    #     if self.findBiPath(to_model_instance, max_depth): # Find a path without requiring shortest path
+    #         return True
+    #     else:
+    #         return False
         
         
-    def findPath(self, to_model_instance, max_depth:int=500, shortestPath:bool = True):
+    # def findPath(self, to_model_instance, max_depth:int=500, shortestPath:bool = True):
+
+    #     setattr(self, 'parent', None)
+
+    #     open_nodes = []
+    #     open_nodes.append(self)
+
+    #     closed_nodes = []
+
+    #     iterations = 0
+
+    #     while len(open_nodes) > 0 and iterations < max_depth:
+    #         iterations += 1
+
+    #         q = open_nodes.pop()
+    #         if q not in closed_nodes:
+    #             closed_nodes.append(q)
+
+    #         # If we're not looking for the shortest path, then use path cache
+    #         # See if a cached path exists
+    #         path_extension = []
+    #         if not shortestPath:
+    #             print("Looking in cache")
+    #             if self.__get_path_from_lookup(q, to_model_instance):
+    #                 print("Found in cache!")
+    #                 path_extension = self.__get_path_from_lookup(q, to_model_instance)
+
+    #         if q == to_model_instance or len(path_extension) > 0: # Calculate and return path
+                
+    #             path = [q] + path_extension
+    #             temp = getattr(q,'parent')
+
+    #             while temp != None:
+    #                 path.append(temp)
+    #                 temp = getattr(temp,'parent')
+
+    #             # Reverse path
+    #             reversed_path = []
+    #             for model in path: reversed_path.insert(0,model)
+                
+    #             print(Back.GREEN, LiteCollection(reversed_path),Back.RESET)
+    #             self.__add_to_path_lookup(self, to_model_instance, reversed_path) # Add this path to the path cache table, to speed up future path searches
+    #             return LiteCollection(reversed_path)
+
+    #         # Get relationship definition methods
+    #         methods = q.__get_relationship_methods()
+
+    #         relationship_models = LiteCollection()
+            
+    #         for method in methods:
+    #             result = getattr(q, method)()
+    #             if result:
+    #                 if type(result) == LiteCollection:
+    #                     try: relationship_models.join(result)
+    #                     except: pass
+    #                 else:
+    #                     try: relationship_models.add(result)
+    #                     except: pass
+
+    #         for model in relationship_models:
+                
+    #             setattr(model, 'parent', q) # Set special parent attribute to keep track of path
+    #             if model in closed_nodes: continue
+
+    #             open_nodes.insert(0, model) # insert to beginning of open_nodes
+
+    #     return False # Return false if a path is not found within iteration limit
+
+    def findPath(self, to_model_instance, max_depth:int=100, shortestPath:bool = True):
+
+        # Lists used to measure speed of path finding algorithms in real time
+        n_times = []
+        r_times = []
 
         setattr(self, 'parent', None)
+        setattr(to_model_instance, 'parent', None)
 
         open_nodes = []
         open_nodes.append(self)
 
+        reversed_open_nodes = []
+        reversed_open_nodes.append(to_model_instance)
+
         closed_nodes = []
+        reversed_closed_nodes = []
 
         iterations = 0
+        while iterations < max_depth:
+            path = self.__findPath__iteration(open_nodes, closed_nodes, to_model_instance)
+            if path is not False: return LiteCollection(path)
 
-        while len(open_nodes) > 0 and iterations < max_depth:
+            reversed_path = to_model_instance.__findPath__iteration(reversed_open_nodes, reversed_closed_nodes, self)
+            if reversed_path is not False: return LiteCollection(reversed(reversed_path))
+
             iterations += 1
+        return False
 
-            q = open_nodes.pop()
-            if q not in closed_nodes:
-                closed_nodes.append(q)
+    def __findPath__iteration(self, open_nodes, closed_nodes, to_model_instance):
 
-            # If we're not looking for the shortest path, then use path cache
-            # See if a cached path exists
-            path_extension = []
-            if not shortestPath:
-                if self.__get_path_from_lookup(q, to_model_instance):
-                    path_extension = self.__get_path_from_lookup(q, to_model_instance)
+        if len(open_nodes) < 1: return False
 
-            if q == to_model_instance or len(path_extension) > 0: # Calculate and return path
-                
-                path = [q] + path_extension
-                temp = getattr(q,'parent')
+        q = open_nodes.pop()
+        if q not in closed_nodes: closed_nodes.append(q)
 
-                while temp != None:
-                    path.append(temp)
-                    temp = getattr(temp,'parent')
-
-                # Reverse path
-                reversed_path = []
-                for model in path: reversed_path.insert(0,model)
-                
-                print(Back.GREEN, LiteCollection(reversed_path),Back.RESET)
-                self.__add_to_path_lookup(self, to_model_instance, reversed_path) # Add this path to the path cache table, to speed up future path searches
-                return reversed_path
-
-            # Get relationship definition methods
-            methods = q.__get_relationship_methods()
-
-            relationship_models = LiteCollection()
+        if q == to_model_instance: # Calculate and return path
             
-            for method in methods:
-                result = getattr(q, method)()
-                if result:
-                    if type(result) == LiteCollection:
-                        try: relationship_models.join(result)
-                        except: pass
-                    else:
-                        try: relationship_models.add(result)
-                        except: pass
+            path = [q]
+            temp = getattr(q,'parent')
+            while temp != None:
+                path.append(temp)
+                temp = getattr(temp,'parent')
 
-            for model in relationship_models:
-                
-                setattr(model, 'parent', q) # Set special parent attribute to keep track of path
-                if model in closed_nodes: continue
+            return list(reversed(path))
 
-                open_nodes.insert(0, model) # insert to beginning of open_nodes
+        # Get relationship definition methods
+        methods = q.__get_relationship_methods()
 
-        return False # Return false if a path is not found within iteration limit
+        relationship_models = LiteCollection()
+        
+        for method in methods:
+            result = getattr(q, method)()
+            if result:
+                if type(result) == LiteCollection:
+                    try: relationship_models.join(result)
+                    except: pass
+                else:
+                    try: relationship_models.add(result)
+                    except: pass
+
+        for model in relationship_models:
+            
+            setattr(model, 'parent', q) # Set special parent attribute to keep track of path
+            if model in closed_nodes: continue
+
+            open_nodes.insert(0, model) # insert to beginning of open_nodes
+
+        return False
+
 
         
 

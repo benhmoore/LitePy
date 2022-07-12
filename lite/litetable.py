@@ -1,7 +1,9 @@
-import sqlite3, os
+import sqlite3, os, time
 from colorama import Fore, Back, Style
 from lite.liteexceptions import *
 from lite.lite import Lite
+
+import pprint
 
 import pkg_resources # Used to store the version of Lite used to create a database.
 
@@ -9,7 +11,7 @@ class LiteTable:
 
     def get_foreign_key_references(self):
         self.cursor.execute(f'PRAGMA foreign_key_list({self.table_name})')
-        foreign_keys = self.cursor.fetchall()
+        foreign_keys = self.execute_and_fetch(f'PRAGMA foreign_key_list({self.table_name})')
 
         foreign_key_map = {}
 
@@ -128,6 +130,24 @@ class LiteTable:
         names = [row[0] for row in self.cursor.fetchall()]
         return names;
 
+    
+    def execute_and_fetch(self, sql_str:str, values=(),should_log=True):
+        """Executes and commits an sql query. Logs query."""
+
+        self.cursor.execute(sql_str, values)
+        results = self.cursor.fetchall()
+
+        # if should_log:
+        #     safe_values = []
+        #     for value in values:
+        #         safe_values.append(str(value)[:30])
+        #     safe_values_str = ", ".join(safe_values)
+                
+        #     self.log.append([sql_str,safe_values])
+
+        return results
+
+
     def execute_and_commit(self, sql_str:str, values=(),should_log=True):
         """Executes and commits an sql query. Logs query.
 
@@ -139,13 +159,13 @@ class LiteTable:
         self.cursor.execute(sql_str, values)
         self.connection.commit()
 
-        if should_log:
-            safe_values = []
-            for value in values:
-                safe_values.append(str(value)[:30])
-            safe_values_str = ", ".join(safe_values)
+        # if should_log:
+        #     safe_values = []
+        #     for value in values:
+        #         safe_values.append(str(value)[:30])
+        #     safe_values_str = ", ".join(safe_values)
                 
-            self.log.append([sql_str,safe_values])
+        #     self.log.append([sql_str,safe_values])
 
             # insertTable = LiteTable('query_log')
 
@@ -184,8 +204,7 @@ class LiteTable:
 
         self.log.append(sql_str)
 
-        self.cursor.execute(sql_str,tuple(values_list))
-        return self.cursor.fetchall()
+        return self.execute_and_fetch(sql_str,tuple(values_list))
 
     def delete(self, where_columns:list):
         where_str, values_list = self.__where_to_str(where_columns)
@@ -231,6 +250,9 @@ class LiteTable:
         return [i for i, letter in enumerate(str) if letter == char]
 
     def __init__(self, table_name):
+
+        self.FETCH_CACHE = {}
+
         database_path = Lite.get_database_path()
 
         if not os.path.exists(database_path):
