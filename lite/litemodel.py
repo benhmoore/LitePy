@@ -1,4 +1,5 @@
-import re, typing, queue # used for pluralizing class names to derive table name
+import re, typing, queue
+from select import select # used for pluralizing class names to derive table name
 from lite.litetable import LiteTable
 from lite.liteexceptions import *
 from lite.lite import Lite
@@ -105,7 +106,8 @@ class LiteModel:
     """Model-based system for database management. Inspired by Laravel."""
 
 
-    PATH_LOOKUP_TABLE = {}
+    PIVOT_TABLE_CACHE = {} # Used by belongsToMany() to cache pivot table names and foreign keys
+    PATH_LOOKUP_TABLE = {} # Added to by findPath(), though it is currently unused
 
 
     def toDict(self):
@@ -261,7 +263,6 @@ class LiteModel:
                 unique_methods.append(i_var)
             except: continue
                 
-
         # These unique methods should contain any relationship definitions (i.e. calling hasOne, hasMany, belongsToMany, etc.)
         # To find these relationship definitions, we look for methods that return either a LiteCollection or LiteModel:
 
@@ -540,12 +541,20 @@ class LiteModel:
     def belongsToMany(self, model): # Many-to-many
 
         # Check to see if pivot table exists - - -
-        pivot_table_name = self.__pivot_table_exists(model)
-        pivot_table = LiteTable(pivot_table_name)
+        # First, check pivot table cache for this model
+        model_class_name = getattr(model, '__name__').lower()
+        if model_class_name not in self.PIVOT_TABLE_CACHE:
+            pivot_table_name = self.__pivot_table_exists(model)
+            pivot_table = LiteTable(pivot_table_name)
 
-        # Derive foreign keys
+            # Derive foreign keys
+            foreign_keys = pivot_table.get_foreign_key_references()
+
+            self.PIVOT_TABLE_CACHE[model_class_name] = [pivot_table_name, foreign_keys]     
+        else: # If the pivot table for this relationship is already in the cache, use it
+            pivot_table_name, foreign_keys = self.PIVOT_TABLE_CACHE[model_class_name]
+
         model_instance = model()
-        foreign_keys = pivot_table.get_foreign_key_references()
 
         # Handles pivot tables that relate two of the same model
         if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
@@ -559,23 +568,25 @@ class LiteModel:
         siblings_collection = []
         relationships = []
         if type(self_fkey) == list:
+            select_queries = []
             for i in range(0, len(self_fkey)):
-                self.table.cursor.execute(f'SELECT {model_fkey[i]} FROM {pivot_table_name} WHERE {self_fkey[i]} = {self.id}')
-                relationships.append(self.table.cursor.fetchall())
+                select_queries.append(f'SELECT {model_fkey[i]} FROM {pivot_table_name} WHERE {self_fkey[i]} = {self.id}')
+            
+            self.table.cursor.execute(' UNION '.join(select_queries))
+            relationships = self.table.cursor.fetchall()
 
         else:
 
             self.table.cursor.execute(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')
-            relationships.append(self.table.cursor.fetchall())
+            relationships = self.table.cursor.fetchall()
 
-        for rel_set in relationships:
-            for rel in rel_set:
-                try: 
-                    sibling = model.find(rel[0])
-                except ModelInstanceNotFoundError: 
-                    print("Error occurred!")
-                    continue
-                siblings_collection.append(sibling)
+        for rel in relationships:
+            try: 
+                sibling = model.find(rel[0])
+            except ModelInstanceNotFoundError: 
+                print("Error occurred!")
+                continue
+            siblings_collection.append(sibling)
 
         return LiteCollection(siblings_collection)
 
@@ -595,6 +606,7 @@ class LiteModel:
             return model.find(child_ids[0][0])
         else:
             return None
+
 
     def hasMany(self, model, foreign_key=None, local_key=None): # One-to-many
 
@@ -642,7 +654,16 @@ class LiteModel:
         return False
 
 
-    def findPath(self, to_model_instance, max_depth:int=500):
+    def pathExists(self, to_model_instance, max_depth:int=500):
+        """Quickly determines if a path exists between two elements."""
+
+        if self.findPath(to_model_instance, max_depth, False): # Find a path without requiring shortest path
+            return True
+        else:
+            return False
+        
+        
+    def findPath(self, to_model_instance, max_depth:int=500, shortestPath:bool = True):
 
         setattr(self, 'parent', None)
 
@@ -660,13 +681,16 @@ class LiteModel:
             if q not in closed_nodes:
                 closed_nodes.append(q)
 
+            # If we're not looking for the shortest path, then use path cache
             # See if a cached path exists
-            # if self.__get_path_from_lookup(q, to_model_instance):
-            #     path_extension = self.__get_path_from_lookup(q, to_model_instance)
+            path_extension = []
+            if not shortestPath:
+                if self.__get_path_from_lookup(q, to_model_instance):
+                    path_extension = self.__get_path_from_lookup(q, to_model_instance)
 
-            if q == to_model_instance: # Calculate and return path
+            if q == to_model_instance or len(path_extension) > 0: # Calculate and return path
                 
-                path = [q]
+                path = [q] + path_extension
                 temp = getattr(q,'parent')
 
                 while temp != None:
@@ -680,7 +704,6 @@ class LiteModel:
                 print(Back.GREEN, LiteCollection(reversed_path),Back.RESET)
                 self.__add_to_path_lookup(self, to_model_instance, reversed_path) # Add this path to the path cache table, to speed up future path searches
                 return reversed_path
-
 
             # Get relationship definition methods
             methods = q.__get_relationship_methods()
@@ -704,7 +727,7 @@ class LiteModel:
 
                 open_nodes.insert(0, model) # insert to beginning of open_nodes
 
-        print(Back.YELLOW,"Did NOT find path.",Back.RESET)
+        return False # Return false if a path is not found within iteration limit
 
         
 

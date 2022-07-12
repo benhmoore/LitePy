@@ -128,8 +128,6 @@ class LiteTable:
         names = [row[0] for row in self.cursor.fetchall()]
         return names;
 
-        
-
     def execute_and_commit(self, sql_str:str, values=(),should_log=True):
         """Executes and commits an sql query. Logs query.
 
