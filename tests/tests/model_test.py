@@ -227,6 +227,25 @@ def test_delete():
     # the python object should be cleared of the deleted model instance's data
     assert user_a.username == None
 
+def test_comparisons():
+    user_a, user_b, user_c = User.createMany([
+        {
+            'username': 'a',
+            'password': 'p'
+        },
+        {
+            'username': 'b',
+            'password': 'p'
+        },
+        {
+            'username': 'c',
+            'password': 'p'
+        }
+    ])
+
+    collection = sorted(LiteCollection([user_a,user_b,user_c]))
+
+
 # Path finding tests
 def test_find_path():
 

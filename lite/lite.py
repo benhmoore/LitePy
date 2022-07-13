@@ -1,13 +1,22 @@
-import os, time
+import os, time, hashlib
 from lite.liteexceptions import EnvFileNotFound, DatabaseNotFoundError
 
 class Lite:
 
     FETCH_CACHE = {}
+    DATABASE_FILE_HASH = None
 
     @staticmethod
-    def command(self):
-        print("HELLO")
+    def hash_file(filepath):
+        sha1 = hashlib.sha1()
+        with open(filepath, 'rb') as f:
+            while True:
+                data = f.read(65536)
+                if not data:
+                    break
+                sha1.update(data)
+
+        return sha1.hexdigest()
 
     @staticmethod
     def get_env():
@@ -57,6 +66,12 @@ class Lite:
 
     @classmethod
     def get_fetch_cache(self, table_name, sql_str, values):
+        new_hash = Lite.hash_file(Lite.get_database_path())
+        if new_hash != self.DATABASE_FILE_HASH:
+            print("Hash not the same. Pulling from database.")
+            self.DATABASE_FILE_HASH = new_hash
+            return False
+
         if table_name not in self.FETCH_CACHE: self.FETCH_CACHE[table_name] = {}
         if sql_str not in self.FETCH_CACHE[table_name]: self.FETCH_CACHE[table_name][sql_str] = []
 
@@ -64,5 +79,6 @@ class Lite:
             if query[0] == values:
                 # pprint.pprint(self.FETCH_CACHE)
                 return query[1]
+                
 
         return False

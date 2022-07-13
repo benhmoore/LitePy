@@ -134,8 +134,13 @@ class LiteTable:
     def execute_and_fetch(self, sql_str:str, values=(),should_log=True):
         """Executes and commits an sql query. Logs query."""
 
+        # results = Lite.get_fetch_cache(self.table_name, sql_str, values)
+        # if results: return results
+
         self.cursor.execute(sql_str, values)
         results = self.cursor.fetchall()
+
+        # Lite.add_fetch_cache(self.table_name, sql_str, values, results)
 
         # if should_log:
         #     safe_values = []

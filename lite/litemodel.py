@@ -1,4 +1,5 @@
 import re, typing, queue, time
+from tracemalloc import start
 from select import select # used for pluralizing class names to derive table name
 from lite.litetable import LiteTable
 from lite.liteexceptions import *
@@ -127,6 +128,22 @@ class LiteModel:
 
     def __str__(self):
         return self.toDict().__str__()
+
+    def __repr__(self):
+        attributes = []
+        for key in self.table_columns:
+            attributes.append(getattr(self,key))
+
+        return str(tuple(attributes))
+
+    def __lt__(self, other):
+        try: getattr(other, 'id')
+        except: raise TypeError
+        
+        if self.id < other.id:
+            return True
+        else:
+            return False
 
     def __eq__(self, other):
         # Collect base classes of class being compared to make sure it is a LiteModel
@@ -563,6 +580,7 @@ class LiteModel:
         # Assume relationship is many-to-many
         siblings_collection = []
         relationships = []
+
         if type(self_fkey) == list:
             select_queries = []
             for i in range(0, len(self_fkey)):
