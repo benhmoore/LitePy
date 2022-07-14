@@ -1,5 +1,6 @@
-import os
 from colorama import Fore, Back, Style
+
+import os
 from lite import *
 
 class Lite:

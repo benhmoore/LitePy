@@ -26,7 +26,6 @@ class LiteTable:
         """
 
         # Get raw list of foreign key relationships using 'PRAGMA'
-        self.cursor.execute(f'PRAGMA foreign_key_list({self.table_name})')
         foreign_keys = self.execute_and_fetch(f'PRAGMA foreign_key_list({self.table_name})')
 
         foreign_key_map = {
@@ -361,7 +360,7 @@ class LiteTable:
 
 
     def __init__(self, table_name:str):
-        """LiteTable initializer
+        """LiteTable initializer.
 
         Args:
             table_name (str): Name of table within database to connect to

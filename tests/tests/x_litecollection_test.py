@@ -1,4 +1,6 @@
+from multiprocessing.sharedctypes import Value
 import pytest, sqlite3, os
+from lite.liteexceptions import DuplicateModelInstance
 from lite.litemodel import LiteCollection, LiteModel
 
 os.environ['DB_DATABASE'] = 'pytest.db'
@@ -44,6 +46,20 @@ def test_add():
     collection.add(user_3)
     
     assert collection == LiteCollection([user_1, user_2, user_3])
+
+    del collection
+
+def test_add_duplicate():
+    """Tests adding to LiteCollection instance."""
+
+    collection = LiteCollection()
+
+    user_1 = User.create({"username":'ben',"password":'123'})
+
+    collection.add(user_1)
+    
+    with pytest.raises(DuplicateModelInstance):
+        collection.add(user_1)
 
     del collection
 

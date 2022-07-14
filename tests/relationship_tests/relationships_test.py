@@ -15,7 +15,7 @@ LiteTable.create_database('pytest.sqlite')
 LiteTable.create_table('users', {
     'name': 'TEXT',
     'acc_id': 'TEXT'
-},"id",{
+},{
     'acc_id':['accounts','id'],
 })
 
@@ -26,7 +26,7 @@ LiteTable.create_table('genders', {
 LiteTable.create_table('gender_user', {
     'uid': 'INTEGER',
     'gid': 'INTEGER'
-}, 'id', {
+}, {
     'uid': ['users','id'],
     'gid': ['genders','id'],
 })
@@ -40,7 +40,7 @@ LiteTable.create_table('pets', {
     'name': 'TEXT',
     'type': 'TEXT',
     'owner_id': 'INTEGER'
-},"id",{
+},{
     'owner_id': ['users','id']
 })
 
@@ -220,6 +220,7 @@ def test_delete_relationships():
     user_1.delete()
     assert gender_1.users().where([['name','=','Ben']]) == []
     assert Pet.all().where([['owner_id','=',1]]) == []
+    # assert 1 == 2
 
 
 
