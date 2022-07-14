@@ -31,6 +31,8 @@ class Lite:
         else:
             raise EnvFileNotFound()
     
+    
+    @staticmethod
     def get_database_path() -> str:
         """Returns sqlite database filepath.
 
@@ -40,6 +42,7 @@ class Lite:
         Returns:
             str: Database filepath
         """
+
         db_path = os.environ.get('DB_DATABASE')
         if db_path is not None: # Look for database path in environment variables first
             return db_path

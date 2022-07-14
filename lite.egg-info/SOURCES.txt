@@ -1,6 +1,8 @@
+README.md
 pyproject.toml
 setup.cfg
 setup.py
+lite/__init__.py
 lite/lite.py
 lite/liteexceptions.py
 lite/litemodel.py

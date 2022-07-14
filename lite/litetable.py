@@ -5,6 +5,14 @@ from lite import *
 import pkg_resources # Used to store the version of Lite used to create a database.
 
 class LiteTable:
+    """Facilitates common table operations on an SQLite database.
+
+    Raises:
+        DatabaseAlreadyExists: Database already exists at filepath
+        DatabaseNotFoundError: Database not specified by environment file or variables.
+        InvalidDatabaseError: Database does not contain a Lite config table
+        TableNotFoundError: Table not found within database
+    """
 
     def get_foreign_key_references(self) -> dict:
         """Returns dictionary of foreign keys associated with table.
