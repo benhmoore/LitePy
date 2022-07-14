@@ -1,5 +1,5 @@
 import os, time, hashlib
-from lite.liteexceptions import EnvFileNotFound, DatabaseNotFoundError
+from lite import *
 
 class Lite:
 

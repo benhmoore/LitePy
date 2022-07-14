@@ -1,7 +1,7 @@
 import sqlite3, os, time
 from colorama import Fore, Back, Style
-from lite.liteexceptions import *
-from lite.lite import Lite
+from lite import *
+# from lite import Lite
 
 import pprint
 

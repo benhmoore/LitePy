@@ -1,7 +1,9 @@
 import pytest, sqlite3, os
-from lite.litemodel import LiteModel, LiteCollection
-from lite.liteexceptions import *
-from lite.litetable import LiteTable
+
+from lite import *
+# from lite.litemodel import LiteModel, LiteCollection
+# from lite.liteexceptions import *
+# from lite.litetable import LiteTable
 
 os.environ['DB_DATABASE'] = 'pytest.sqlite'
 

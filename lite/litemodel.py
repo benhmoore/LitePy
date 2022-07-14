@@ -1,9 +1,7 @@
 import re, typing, queue, time
 from tracemalloc import start
 from select import select # used for pluralizing class names to derive table name
-from lite.litetable import LiteTable
-from lite.liteexceptions import *
-from lite.lite import Lite
+from lite import *
 
 #
 # From https://www.geeksforgeeks.org/priority-queue-in-python/
