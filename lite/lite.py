@@ -1,25 +1,26 @@
-import os, time, hashlib
+import os
+from colorama import Fore, Back, Style
 from lite import *
 
 class Lite:
+    """Helper functions for other Lite classes.
 
-    FETCH_CACHE = {}
-    DATABASE_FILE_HASH = None
-
-    @staticmethod
-    def hash_file(filepath):
-        sha1 = hashlib.sha1()
-        with open(filepath, 'rb') as f:
-            while True:
-                data = f.read(65536)
-                if not data:
-                    break
-                sha1.update(data)
-
-        return sha1.hexdigest()
+    Raises:
+        EnvFileNotFound: Environment ('.env') file not found in script directory
+        DatabaseNotFoundError: Database not specified by environment file or variables.
+    """
 
     @staticmethod
-    def get_env():
+    def get_env() -> dict:
+        """Returns dict of values from .env file.
+
+        Raises:
+            EnvFileNotFound: Environment ('.env') file not found in script directory
+
+        Returns:
+            dict: Dictionary containing the key-value pairings from the .env file.
+        """
+        
         env_dict = {}
         if os.path.exists('.env'):
             with open('.env') as env:
@@ -30,8 +31,15 @@ class Lite:
         else:
             raise EnvFileNotFound()
     
-    @staticmethod
-    def get_database_path():
+    def get_database_path() -> str:
+        """Returns sqlite database filepath.
+
+        Raises:
+            DatabaseNotFoundError: Database not specified by environment file or variables.
+
+        Returns:
+            str: Database filepath
+        """
         db_path = os.environ.get('DB_DATABASE')
         if db_path is not None: # Look for database path in environment variables first
             return db_path
@@ -41,44 +49,3 @@ class Lite:
                 return env['DB_DATABASE']
             else:
                 raise DatabaseNotFoundError('')
-
-    @classmethod
-    def clean_fetch_cache(self, table_name, sql_str, cutoff_time:float=10.0):
-        if table_name not in self.FETCH_CACHE: self.FETCH_CACHE[table_name] = {}
-        if sql_str not in self.FETCH_CACHE[table_name]: self.FETCH_CACHE[table_name][sql_str] = []
-
-        delete_indexes = []
-        for i in range(0, len(self.FETCH_CACHE[table_name][sql_str])):
-            if time.perf_counter() - self.FETCH_CACHE[table_name][sql_str][i][2] > cutoff_time:
-                delete_indexes.append(i)
-        
-        for index in sorted(delete_indexes, reverse=True):
-            del self.FETCH_CACHE[table_name][sql_str][index]
-
-
-    @classmethod
-    def add_fetch_cache(self, table_name, sql_str, values, results):
-        if table_name not in self.FETCH_CACHE: self.FETCH_CACHE[table_name] = {}
-        if sql_str not in self.FETCH_CACHE[table_name]: self.FETCH_CACHE[table_name][sql_str] = []
-
-        self.FETCH_CACHE[table_name][sql_str].append([values, results, time.perf_counter()])
-
-
-    @classmethod
-    def get_fetch_cache(self, table_name, sql_str, values):
-        new_hash = Lite.hash_file(Lite.get_database_path())
-        if new_hash != self.DATABASE_FILE_HASH:
-            print("Hash not the same. Pulling from database.")
-            self.DATABASE_FILE_HASH = new_hash
-            return False
-
-        if table_name not in self.FETCH_CACHE: self.FETCH_CACHE[table_name] = {}
-        if sql_str not in self.FETCH_CACHE[table_name]: self.FETCH_CACHE[table_name][sql_str] = []
-
-        for query in self.FETCH_CACHE[table_name][sql_str]:
-            if query[0] == values:
-                # pprint.pprint(self.FETCH_CACHE)
-                return query[1]
-                
-
-        return False

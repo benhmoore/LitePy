@@ -7,8 +7,7 @@ os.environ['DB_DATABASE'] = 'pytest.db'
 
 # Setup database
 test_db = 'pytest.db'
-try:
-    os.remove('pytest.db')
+try: os.remove('pytest.db')
 except Exception: pass
 
 LiteTable.create_database(test_db)
@@ -54,7 +53,7 @@ LiteTable.create_table('users', {
     'username': 'TEXT',
     'password': 'TEXT',
     'user_id': 'INTEGER'   
-},"id",{
+},{
     'user_id':['users','id']
 })
 
@@ -69,7 +68,7 @@ LiteTable.create_table('cars', {
 LiteTable.create_table('car_user', {
     'cid': 'INTEGER',
     'uid': 'INTEGER',
-},"id",{
+},{
     "cid":['cars','id'],
     "uid":['users','id']
 })
@@ -79,7 +78,7 @@ LiteTable.create_table('bank_accounts',{
     'account_number': 'INTEGER',
     'routing_number': 'INTEGER',
     'user_id': 'INTEGER',
-},"id",{
+},{
     "user_id":['user','id']
 })
 
@@ -87,7 +86,7 @@ LiteTable.create_table('bank_accounts',{
 LiteTable.create_table('products',{
     'manufacturer': 'TEXT',
     'user_id': 'INTEGER'
-},"id",{
+},{
     "user_id":['user','id']
 })
 

@@ -15,6 +15,11 @@ class DatabaseNotFoundError(BaseException):
     def __init__(self, database_path):
         print(Fore.RED, f'Database "{database_path}" does not exist.', Fore.RESET)
 
+class DatabaseAlreadyExists(BaseException):
+    """Raised when a database already exists."""
+    def __init__(self, database_path):
+        print(Fore.RED, f'Database "{database_path}" already exists.', Fore.RESET)
+
 class TableNotFoundError(BaseException):
     """Raised when the table doesn't exist in database"""
     def __init__(self, table_name):

@@ -1,4 +1,5 @@
 import pytest, sqlite3, os
+from lite.liteexceptions import DatabaseAlreadyExists
 from lite.litemodel import LiteModel
 from lite.litetable import LiteTable
 
@@ -15,25 +16,26 @@ LiteTable.create_database(test_db)
 
 # Test .create_database()
 def test_create_database():
-    assert LiteTable.create_database(test_db) == True
+    try: LiteTable.create_database(test_db)
+    except DatabaseAlreadyExists: pass
     
 @pytest.mark.parametrize("table_name,expected", [
     ('table_a', True),
     ('table_b', True),
 ])
 def test_create_tables(table_name, expected):
-    assert LiteTable.create_table(table_name, {'name':'TEXT'}) == expected
+    LiteTable.create_table(table_name, {'name':'TEXT'})
 
 @pytest.mark.parametrize("table_name,expected", [
     ('table_b', True),
 ])
 def test_delete_tables(table_name, expected):
-    assert LiteTable.delete_table(table_name) == expected
+    LiteTable.delete_table(table_name)
 
 # .delete_table() should only remove a table if it exists.
 # It should not raise an exception
 def test_delete_nonexistant_table():
-    assert LiteTable.delete_table('table_b') == True
+    LiteTable.delete_table('table_b')
 
 # Test .exists()
 @pytest.mark.parametrize("table_name,expected", [
@@ -51,12 +53,12 @@ def test_exists(table_name, expected):
 ])
 def test_insert(columns, expected):
     table = LiteTable('table_a')
-    assert table.insert(columns) == True
+    table.insert(columns)
 
 # Test .update()
 def test_update():
     table = LiteTable('table_a')
-    assert table.update({'name':'testing987'},[['id','=',1]]) == True
+    table.update({'name':'testing987'},[['id','=',1]])
 
 # Test .select()
 @pytest.mark.parametrize("where_columns, expected", [
