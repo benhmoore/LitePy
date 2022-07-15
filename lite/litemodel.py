@@ -174,37 +174,80 @@ class LiteModel:
             return pivot_table_name # If it does, return the table name
 
 
-    def __init__(self,id:int=None):
-        """LiteModel initializer.
+    def __clean_attachments(self):
+        """Internal method. Cleans up any references to a model instance that's being deleted. Called by .delete()."""
 
-        Args:
-            id (int, optional): The id of the model instance within the database. Defaults to None, which does not load from database.
-        """
+        foreign_keys = self.table.getForeignKeyReferences()
+        table_names = self.table.getAllTableNames()
 
-        # Get database path
-        self.database_path = Lite.getDatabasePath()
+        check_tables = {}
 
-        # Derive table name from class name
-        self.table_name = self.__get_table_name()
-        self.table = LiteTable(self.table_name)
+        for t_name in table_names:
+            temp_table = LiteTable(t_name)
 
-        # Generate dict map of foreign key references. Used by .__get_foreign_key_from_model()
-        self.FOREIGN_KEY_MAP = self.table.getForeignKeyReferences()
+            temp_foreign_keys = temp_table.getForeignKeyReferences()
 
-        # Load model instance from database if an id is provided
-        if id != None:
+            if self.table.table_name in temp_foreign_keys:
+                check_tables[temp_table.table_name] = temp_foreign_keys[self.table.table_name]
 
-            columns = self.table.executeAndFetch(f'PRAGMA table_info({self.table_name})')
-            values = self.table.select([['id','=',id]])
+        for tName in check_tables:
+            # Get local and foreign keys
+            key_maps = check_tables[tName]
+            for i in range(0, len(key_maps)):
+                local_key = key_maps[i][0]
+                foreign_key = key_maps[i][1]
 
-            # Add columns and values to python class instance as attributes
-            for i in range(0,len(columns)):
-                try: value = values[0][i]
-                except: value = None
-                setattr(self, columns[i][1], value)
+                local_key_value = getattr(self, local_key)
+
+                # Check if table is a pivot table, as detach procedure will be different
+                temp_table = LiteTable(tName)
+                if LiteTable.isPivotTable(tName):
+                    temp_table.delete([[foreign_key,'=',local_key_value]])
+                else:
+                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
                 
-            # Store list of all table column names. Used by .save()
-            self.table_columns = [column[1] for column in columns]
+
+    def __findPath__iteration(self, open_nodes, closed_nodes, to_model_instance):
+        """Internal method. Step function for .findPath()."""
+
+        if len(open_nodes) < 1: return False
+
+        q = open_nodes.pop()
+        if q not in closed_nodes: closed_nodes.append(q)
+
+        if q == to_model_instance: # Calculate and return path
+            
+            path = [q]
+            temp = getattr(q,'parent')
+            while temp != None:
+                path.append(temp)
+                temp = getattr(temp,'parent')
+
+            return list(reversed(path))
+
+        # Get relationship definition methods
+        methods = q.__get_relationship_methods()
+
+        relationship_models = LiteCollection()
+        
+        for method in methods:
+            result = getattr(q, method)()
+            if result:
+                if type(result) == LiteCollection:
+                    try: relationship_models.join(result)
+                    except: pass
+                else:
+                    try: relationship_models.add(result)
+                    except: pass
+
+        for model in relationship_models:
+            
+            setattr(model, 'parent', q) # Set special parent attribute to keep track of path
+            if model in closed_nodes: continue
+
+            open_nodes.insert(0, model) # insert to beginning of open_nodes
+
+        return False
 
 
     def __get_relationship_methods(self) -> list:
@@ -247,6 +290,39 @@ class LiteModel:
                     relationship_definitions.append(method)
         
         return relationship_definitions
+
+
+    def __init__(self,id:int=None):
+        """LiteModel initializer.
+
+        Args:
+            id (int, optional): The id of the model instance within the database. Defaults to None, which does not load from database.
+        """
+
+        # Get database path
+        self.database_path = Lite.getDatabasePath()
+
+        # Derive table name from class name
+        self.table_name = self.__get_table_name()
+        self.table = LiteTable(self.table_name)
+
+        # Generate dict map of foreign key references. Used by .__get_foreign_key_from_model()
+        self.FOREIGN_KEY_MAP = self.table.getForeignKeyReferences()
+
+        # Load model instance from database if an id is provided
+        if id != None:
+
+            columns = self.table.executeAndFetch(f'PRAGMA table_info({self.table_name})')
+            values = self.table.select([['id','=',id]])
+
+            # Add columns and values to python class instance as attributes
+            for i in range(0,len(columns)):
+                try: value = values[0][i]
+                except: value = None
+                setattr(self, columns[i][1], value)
+                
+            # Store list of all table column names. Used by .save()
+            self.table_columns = [column[1] for column in columns]
 
 
     @classmethod
@@ -538,39 +614,6 @@ class LiteModel:
             self.detach(model_instance)
 
 
-    def __clean_attachments(self):
-        """Internal method. Cleans up any references to a model instance that's being deleted. Called by .delete()."""
-
-        foreign_keys = self.table.getForeignKeyReferences()
-        table_names = self.table.getAllTableNames()
-
-        check_tables = {}
-
-        for t_name in table_names:
-            temp_table = LiteTable(t_name)
-
-            temp_foreign_keys = temp_table.getForeignKeyReferences()
-
-            if self.table.table_name in temp_foreign_keys:
-                check_tables[temp_table.table_name] = temp_foreign_keys[self.table.table_name]
-
-        for tName in check_tables:
-            # Get local and foreign keys
-            key_maps = check_tables[tName]
-            for i in range(0, len(key_maps)):
-                local_key = key_maps[i][0]
-                foreign_key = key_maps[i][1]
-
-                local_key_value = getattr(self, local_key)
-
-                # Check if table is a pivot table, as detach procedure will be different
-                temp_table = LiteTable(tName)
-                if LiteTable.isPivotTable(tName):
-                    temp_table.delete([[foreign_key,'=',local_key_value]])
-                else:
-                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
-                
-
     def delete(self) -> bool:
         """Deletes the current model instance.
 
@@ -776,49 +819,6 @@ class LiteModel:
             if reversed_path is not False: return LiteCollection(reversed(reversed_path))
 
             iterations += 1
-        return False
-
-
-    def __findPath__iteration(self, open_nodes, closed_nodes, to_model_instance):
-        """Internal method. Step function for .findPath()."""
-
-        if len(open_nodes) < 1: return False
-
-        q = open_nodes.pop()
-        if q not in closed_nodes: closed_nodes.append(q)
-
-        if q == to_model_instance: # Calculate and return path
-            
-            path = [q]
-            temp = getattr(q,'parent')
-            while temp != None:
-                path.append(temp)
-                temp = getattr(temp,'parent')
-
-            return list(reversed(path))
-
-        # Get relationship definition methods
-        methods = q.__get_relationship_methods()
-
-        relationship_models = LiteCollection()
-        
-        for method in methods:
-            result = getattr(q, method)()
-            if result:
-                if type(result) == LiteCollection:
-                    try: relationship_models.join(result)
-                    except: pass
-                else:
-                    try: relationship_models.add(result)
-                    except: pass
-
-        for model in relationship_models:
-            
-            setattr(model, 'parent', q) # Set special parent attribute to keep track of path
-            if model in closed_nodes: continue
-
-            open_nodes.insert(0, model) # insert to beginning of open_nodes
-
         return False
 
 
