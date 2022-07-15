@@ -1,4 +1,5 @@
 import pytest, sqlite3, os
+from lite.litecollection import LiteCollection
 from lite.litemodel import LiteModel, LiteCollection
 from lite.litetable import LiteTable
 from lite.liteexceptions import *

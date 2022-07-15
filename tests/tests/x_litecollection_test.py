@@ -1,7 +1,8 @@
 from multiprocessing.sharedctypes import Value
 import pytest, sqlite3, os
 from lite.liteexceptions import DuplicateModelInstance
-from lite.litemodel import LiteCollection, LiteModel
+from lite.litecollection import LiteCollection
+from lite.litemodel import LiteModel
 
 os.environ['DB_DATABASE'] = 'pytest.db'
 

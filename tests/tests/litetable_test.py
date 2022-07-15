@@ -1,5 +1,6 @@
 import pytest, sqlite3, os
 from lite.liteexceptions import DatabaseAlreadyExists
+from lite.litecollection import LiteCollection
 from lite.litemodel import LiteModel
 from lite.litetable import LiteTable
 
