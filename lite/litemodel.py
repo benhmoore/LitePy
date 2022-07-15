@@ -2,31 +2,15 @@ import re, typing
 from lite import *
 
 class LiteModel:
+    """Describes a distinct model for database storage and methods for operating upon it.
 
+    Raises:
+        TypeError: Comparison between incompatible types.
+        ModelInstanceNotFoundError: Model does not exist in database.
+        RelationshipError: Relationship does not match required status.
+    """
 
     PIVOT_TABLE_CACHE = {} # Used by belongsToMany() to cache pivot table names and foreign keys
-
-    def toDict(self) -> dict:
-        """Converts LiteModel instance into human-readable dict, truncating string values where necessary.
-
-        Returns:
-            dict: LiteModel attributes as dictionary
-        """
-        
-        print_dict = {}
-
-        for column in self.table_columns:
-            attribute = getattr(self, column)
-
-            # Convert byte strings to regular strings
-            if type(attribute) == bytes: attribute = attribute.decode("utf-8") 
-
-            # Truncate text over 50 characters)
-            if type(attribute) == str:
-                if len(attribute) > 50: attribute = attribute[:50] + '...'
-            print_dict[column] = attribute
-
-        return print_dict
 
 
     def __str__(self): return self.toDict().__str__()
@@ -207,7 +191,7 @@ class LiteModel:
                     temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
                 
 
-    def __findPath__iteration(self, open_nodes, closed_nodes, to_model_instance):
+    def __findPath__iteration(self, open_nodes:list, closed_nodes:list, to_model_instance):
         """Internal method. Step function for .findPath()."""
 
         if len(open_nodes) < 1: return False
@@ -292,32 +276,30 @@ class LiteModel:
         return relationship_definitions
 
 
-    def __init__(self,id:int=None):
-        """LiteModel initializer.
-
-        Args:
-            id (int, optional): The id of the model instance within the database. Defaults to None, which does not load from database.
-        """
+    def __init__(self,_id:int=None, _table:LiteTable=None, _values:list=None):
+        """LiteModel initializer. Parameters are used by internal methods and should not be provided."""
 
         # Get database path
         self.database_path = Lite.getDatabasePath()
 
         # Derive table name from class name
         self.table_name = self.__get_table_name()
-        self.table = LiteTable(self.table_name)
+
+        # Load table if not passed
+        self.table = _table or LiteTable(self.table_name)
 
         # Generate dict map of foreign key references. Used by .__get_foreign_key_from_model()
         self.FOREIGN_KEY_MAP = self.table.getForeignKeyReferences()
 
         # Load model instance from database if an id is provided
-        if id != None:
+        if _id != None:
 
             columns = self.table.executeAndFetch(f'PRAGMA table_info({self.table_name})')
-            values = self.table.select([['id','=',id]])
+            if not _values: _values = self.table.select([['id','=',_id]])
 
             # Add columns and values to python class instance as attributes
             for i in range(0,len(columns)):
-                try: value = values[0][i]
+                try: value = _values[0][i]
                 except: value = None
                 setattr(self, columns[i][1], value)
                 
@@ -333,19 +315,19 @@ class LiteModel:
             id (int): Id of model instance within database table
 
         Raises:
-            ModelInstanceNotFoundError: 
+            ModelInstanceNotFoundError: Model does not exist in database.
 
         Returns:
             LiteModel: LiteModel with matching id
         """
         
         database_path = Lite.getDatabasePath()
-        table_name = self.__pluralize(self,self.__name__.lower())
+        table_name = self.__pluralize(self, self.__name__.lower())
         
         table = LiteTable(table_name)
         rows = table.select([['id','=',id]])
 
-        if len(rows) > 0: return self(id) # Return LiteModel
+        if len(rows) > 0: return self(id, table, rows) # Return LiteModel
         else: raise ModelInstanceNotFoundError(id)
 
 
@@ -437,7 +419,7 @@ class LiteModel:
 
         # This check should never fail
         if len(ids) > 0:
-            return self(ids[0][0])
+            return self.findOrFail(ids[0][0])
         else:
             raise Exception('Could not locate model that was created.')
 
@@ -460,7 +442,30 @@ class LiteModel:
         return LiteCollection(model_list)
 
 
-    def attach(self, model_instance, self_fkey:str=None, model_fkey:str=None) -> bool:
+    def toDict(self) -> dict:
+        """Converts LiteModel instance into human-readable dict, truncating string values where necessary.
+
+        Returns:
+            dict: LiteModel attributes as dictionary
+        """
+        
+        print_dict = {}
+
+        for column in self.table_columns:
+            attribute = getattr(self, column)
+
+            # Convert byte strings to regular strings
+            if type(attribute) == bytes: attribute = attribute.decode("utf-8") 
+
+            # Truncate text over 50 characters)
+            if type(attribute) == str:
+                if len(attribute) > 50: attribute = attribute[:50] + '...'
+            print_dict[column] = attribute
+
+        return print_dict
+
+
+    def attach(self, model_instance, self_fkey:str=None, model_fkey:str=None):
         """Defines a relationship between two model instances.
 
         Args:
@@ -468,9 +473,6 @@ class LiteModel:
 
         Raises:
             RelationshipError: Relationship already exists.
-
-        Returns:
-            bool: Success of attachment.
         """
 
         try: pivot_table_name = self.__get_pivot_name(model_instance)
@@ -543,7 +545,7 @@ class LiteModel:
             self.attach(model_instance)
 
 
-    def detach(self, model_instance) -> bool:
+    def detach(self, model_instance):
         """Removes a relationship between two model instances.
 
         Args:
@@ -551,9 +553,6 @@ class LiteModel:
 
         Raises:
             RelationshipError: Relationship does not exist.
-
-        Returns:
-            bool: Success of detachment.
         """
         
         try: pivot_table_name = self.__get_pivot_name(model_instance)
@@ -597,8 +596,6 @@ class LiteModel:
                 else:
                     raise RelationshipError(f"Relationship does not exist. Cannot detach.")
 
-        return True
-
 
     def detachMany(self, model_instances):
         """Removes relationships between the current model instance and many model instances.
@@ -614,14 +611,11 @@ class LiteModel:
             self.detach(model_instance)
 
 
-    def delete(self) -> bool:
+    def delete(self):
         """Deletes the current model instance.
 
         Raises:
             ModelInstanceNotFoundError: Model does not exist in database.
-
-        Returns:
-            bool: Success of deletion. 
         """
 
         if self.id == None: raise ModelInstanceNotFoundError(self.id) # Cannot delete a model instance that isn't saved in database
@@ -633,8 +627,6 @@ class LiteModel:
         # Since the python object instance cannot be removed from memory manually,
         # set all attributes to None
         for column in self.table_columns: setattr(self, column, None)
-
-        return True
         
 
     def save(self):
@@ -777,18 +769,17 @@ class LiteModel:
 
         children_collection = []
         for row in child_rows:
-            children_collection.append(model(row[0]))
+            children_collection.append(model.find(row[0]))
 
         return LiteCollection(children_collection)
 
 
-    def findPath(self, to_model_instance, max_depth:int=100, shortestPath:bool = True):
+    def findPath(self, to_model_instance, max_depth:int=100):
         """Attempts to find a path from the current model instance to another. Uses Bidirectional BFS.
 
         Args:
             to_model_instance (LiteModel): Model instance to navigate to
             max_depth (int, optional): Maximum depth to traverse. Defaults to 100.
-            shortestPath (bool, optional): _description_. Defaults to True.
 
         Returns:
             LiteCollection or bool: Either the path or False for failure
@@ -819,7 +810,8 @@ class LiteModel:
             if reversed_path is not False: return LiteCollection(reversed(reversed_path))
 
             iterations += 1
-        return False
+
+        return LiteCollection([])
 
 
         
