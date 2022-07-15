@@ -12,7 +12,7 @@ class Lite:
     """
 
     @staticmethod
-    def get_env() -> dict:
+    def getEnv() -> dict:
         """Returns dict of values from .env file.
 
         Raises:
@@ -34,7 +34,7 @@ class Lite:
     
     
     @staticmethod
-    def get_database_path() -> str:
+    def getDatabasePath() -> str:
         """Returns sqlite database filepath.
 
         Raises:
@@ -48,7 +48,7 @@ class Lite:
         if db_path is not None: # Look for database path in environment variables first
             return db_path
         else: # Otherwise, pull from .env file
-            env = Lite.get_env()
+            env = Lite.getEnv()
             if 'DB_DATABASE' in env:
                 return env['DB_DATABASE']
             else:

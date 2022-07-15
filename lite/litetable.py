@@ -14,7 +14,7 @@ class LiteTable:
         TableNotFoundError: Table not found within database
     """
 
-    def get_foreign_key_references(self) -> dict:
+    def getForeignKeyReferences(self) -> dict:
         """Returns dictionary of foreign keys associated with table.
 
         Returns:
@@ -26,7 +26,7 @@ class LiteTable:
         """
 
         # Get raw list of foreign key relationships using 'PRAGMA'
-        foreign_keys = self.execute_and_fetch(f'PRAGMA foreign_key_list({self.table_name})')
+        foreign_keys = self.executeAndFetch(f'PRAGMA foreign_key_list({self.table_name})')
 
         foreign_key_map = {
             # table_name: [local_key, foreign_key]
@@ -55,7 +55,7 @@ class LiteTable:
             bool
         """
 
-        database_path = Lite.get_database_path()
+        database_path = Lite.getDatabasePath()
         if os.path.exists(database_path):
             try: tbl = LiteTable(table_name)
             except TableNotFoundError: return False
@@ -65,7 +65,7 @@ class LiteTable:
 
 
     @staticmethod
-    def is_pivot_table(table_name:str) -> bool:
+    def isPivotTable(table_name:str) -> bool:
         """Checks if table is pivot table by counting table columns and checking foreign key references.
 
         Args:
@@ -86,7 +86,7 @@ class LiteTable:
 
         # Check that number of foreign key relations is equal to 2
         total_relations = 0
-        fkey_refs = temp_table.get_foreign_key_references()
+        fkey_refs = temp_table.getForeignKeyReferences()
         for fkey_ref in fkey_refs:
             for relation in fkey_refs[fkey_ref]:
                 total_relations += 1
@@ -96,7 +96,7 @@ class LiteTable:
 
 
     @staticmethod
-    def create_database(database_path:str):
+    def createDatabase(database_path:str):
         """Creates an SQLite database with a Lite config table.
 
         Args:
@@ -114,7 +114,7 @@ class LiteTable:
         open(database_path, 'a').close() # Create DB file
 
         # Create config table
-        LiteTable.create_table('config', {
+        LiteTable.createTable('config', {
             "key": "TEXT NOT NULL UNIQUE",
             "value": "TEXT"
         })
@@ -125,7 +125,7 @@ class LiteTable:
 
 
     @staticmethod
-    def create_table(table_name:str, columns:dict, foreign_keys:dict={}):
+    def createTable(table_name:str, columns:dict, foreign_keys:dict={}):
         """Creates a table within the database.
 
         Args:
@@ -161,7 +161,7 @@ class LiteTable:
         """
 
         # Create table within database
-        database_path = Lite.get_database_path() # Get database path from environment
+        database_path = Lite.getDatabasePath() # Get database path from environment
         temp_connection = sqlite3.connect(database_path)
         temp_cursor = temp_connection.cursor()
         temp_cursor.execute(table_sql)
@@ -169,21 +169,21 @@ class LiteTable:
 
 
     @staticmethod
-    def delete_table(table_name:str):
+    def deleteTable(table_name:str):
         """Deletes a given table.
 
         Args:
             table_name (str): Table name
         """
 
-        database_path = Lite.get_database_path()
+        database_path = Lite.getDatabasePath()
         temp_connection = sqlite3.connect(database_path)
         temp_cursor = temp_connection.cursor()
 
         temp_cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
 
 
-    def get_all_table_names(self) -> list:
+    def getAllTableNames(self) -> list:
         """Returns a list of all tables in database.
 
         Returns:
@@ -195,7 +195,7 @@ class LiteTable:
         return names;
 
     
-    def execute_and_fetch(self, sql_str:str, values=()) -> list:
+    def executeAndFetch(self, sql_str:str, values=()) -> list:
         """Executes and fetches an sql query.
 
         Args:
@@ -212,7 +212,7 @@ class LiteTable:
         return results
 
 
-    def execute_and_commit(self, sql_str:str, values=()):
+    def executeAndCommit(self, sql_str:str, values=()):
         """Executes and commits an sql query.
 
         Args:
@@ -240,7 +240,7 @@ class LiteTable:
         values_list = [columns[cname] for cname in columns]
 
         insert_sql = f'INSERT {"OR IGNORE" if or_ignore else ""} INTO {self.table_name} ({columns_str}) VALUES({values_str})'
-        self.execute_and_commit(insert_sql, tuple(values_list))
+        self.executeAndCommit(insert_sql, tuple(values_list))
 
 
     def update(self, update_columns:dict, where_columns:list, or_ignore=False):
@@ -263,7 +263,7 @@ class LiteTable:
 
         values_list += where_values
 
-        self.execute_and_commit(f'UPDATE {"OR IGNORE" if or_ignore else ""} {self.table_name} SET {set_str} WHERE {where_str}', tuple(values_list))
+        self.executeAndCommit(f'UPDATE {"OR IGNORE" if or_ignore else ""} {self.table_name} SET {set_str} WHERE {where_str}', tuple(values_list))
 
 
     def select(self, where_columns:list, result_columns:list=['*']) -> list:
@@ -286,7 +286,7 @@ class LiteTable:
         
         if len(where_columns) < 1: sql_str = f'SELECT {get_str} FROM {self.table_name}'
 
-        return self.execute_and_fetch(sql_str,tuple(values_list))
+        return self.executeAndFetch(sql_str,tuple(values_list))
 
 
     def delete(self, where_columns:list):
@@ -305,7 +305,7 @@ class LiteTable:
         # Delete all rows if no where conditions provided
         if len(where_columns) < 1: sql_str = f'DELETE FROM {self.table_name}'
 
-        self.execute_and_commit(sql_str,tuple(values_list))
+        self.executeAndCommit(sql_str,tuple(values_list))
 
 
     def __where_to_str(self, where_columns:list) -> tuple:
@@ -371,7 +371,7 @@ class LiteTable:
             TableNotFoundError: Table not found within database
         """
 
-        database_path = Lite.get_database_path()
+        database_path = Lite.getDatabasePath()
 
         # Raise an error if the database already exists
         if not os.path.exists(database_path):

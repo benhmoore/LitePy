@@ -10,20 +10,20 @@ os.environ['DB_DATABASE'] = 'pytest.sqlite'
 try: os.remove('pytest.sqlite')
 except: pass
 
-LiteTable.create_database('pytest.sqlite')
+LiteTable.createDatabase('pytest.sqlite')
 
-LiteTable.create_table('users', {
+LiteTable.createTable('users', {
     'name': 'TEXT',
     'acc_id': 'TEXT'
 },{
     'acc_id':['accounts','id'],
 })
 
-LiteTable.create_table('genders', {
+LiteTable.createTable('genders', {
     'label': 'TEXT',
 })
 
-LiteTable.create_table('gender_user', {
+LiteTable.createTable('gender_user', {
     'uid': 'INTEGER',
     'gid': 'INTEGER'
 }, {
@@ -31,12 +31,12 @@ LiteTable.create_table('gender_user', {
     'gid': ['genders','id'],
 })
 
-LiteTable.create_table('accounts', {
+LiteTable.createTable('accounts', {
     'username': 'TEXT',
     'password': 'TEXT',
 })
 
-LiteTable.create_table('pets', {
+LiteTable.createTable('pets', {
     'name': 'TEXT',
     'type': 'TEXT',
     'owner_id': 'INTEGER'

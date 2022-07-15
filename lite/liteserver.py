@@ -35,7 +35,7 @@ class LiteServer:
                 "query_values": safe_values_str
             },False,False)
 
-    def create_database(self, database_path:str):
+    def createDatabase(self, database_path:str):
         """Creates an SQLite database.
 
         Args:
@@ -51,14 +51,14 @@ class LiteServer:
             self.connect_to(database_path)
 
             # Create config table
-            self.create_table('config', {
+            self.createTable('config', {
                 "id": "INTEGER NOT NULL UNIQUE",
                 "key": "TEXT NOT NULL UNIQUE",
                 "value": "TEXT"
             }, 'id')
 
             # Create SQL log table
-            self.create_table('query_log', {
+            self.createTable('query_log', {
                 "id": "INTEGER NOT NULL UNIQUE",
                 "query": "TEXT NOT NULL",
                 "query_values": "TEXT"
@@ -103,7 +103,7 @@ class LiteServer:
 
         insert_sql = f'INSERT {"OR IGNORE" if or_ignore else ""} INTO {table_name} ({columns_str}) VALUES({values_str})'
         print(Fore.RED, insert_sql, tuple(values_list), Fore.RESET)
-        self.execute_and_commit(insert_sql, tuple(values_list),should_log)
+        self.executeAndCommit(insert_sql, tuple(values_list),should_log)
 
     def update(self, table_name, update_columns, where_columns, or_ignore=False):
         """_summary_
@@ -122,7 +122,7 @@ class LiteServer:
 
         values_list += [column[2] for column in where_columns] # add where values
 
-        self.execute_and_commit(f'UPDATE {"OR IGNORE" if or_ignore else ""} {table_name} SET {set_str} WHERE {where_str}', tuple(values_list))
+        self.executeAndCommit(f'UPDATE {"OR IGNORE" if or_ignore else ""} {table_name} SET {set_str} WHERE {where_str}', tuple(values_list))
 
     def select(self, table_name, where_columns, result_columns=['*']):
         get_str = ",".join([cname for cname in result_columns])
@@ -141,7 +141,7 @@ class LiteServer:
         pass
 
 s = LiteServer()
-# s.create_table(
+# s.createTable(
 #     'pages',
 #     {
 #         "id": "INTEGER NOT NULL UNIQUE",
@@ -155,7 +155,7 @@ s = LiteServer()
 #     }
 # )
 
-s.create_database('test.db')
+s.createDatabase('test.db')
 s.connect_to('test.db')
 s.insert('config',{'key':'date_created','value':'never'},True)
 s.update('config',{

@@ -10,7 +10,7 @@ test_db = 'pytest.db'
 try: os.remove('pytest.db')
 except Exception: pass
 
-LiteTable.create_database(test_db)
+LiteTable.createDatabase(test_db)
 
 # Create models for tests
 class User(LiteModel):
@@ -49,7 +49,7 @@ class Product(LiteModel):
 # Create tables for tests - - - - -
 
 # Users table
-LiteTable.create_table('users', {
+LiteTable.createTable('users', {
     'username': 'TEXT',
     'password': 'TEXT',
     'user_id': 'INTEGER'   
@@ -59,13 +59,13 @@ LiteTable.create_table('users', {
 
 # Cars table
 # A car can belong to  one or more people, and one person may own multiple cars
-LiteTable.create_table('cars', {
+LiteTable.createTable('cars', {
     'make': 'TEXT',
     'model': 'TEXT',
 })
 
 # Pivot table
-LiteTable.create_table('car_user', {
+LiteTable.createTable('car_user', {
     'cid': 'INTEGER',
     'uid': 'INTEGER',
 },{
@@ -74,7 +74,7 @@ LiteTable.create_table('car_user', {
 })
 
 # Bank Account table
-LiteTable.create_table('bank_accounts',{
+LiteTable.createTable('bank_accounts',{
     'account_number': 'INTEGER',
     'routing_number': 'INTEGER',
     'user_id': 'INTEGER',
@@ -83,7 +83,7 @@ LiteTable.create_table('bank_accounts',{
 })
 
 # Products table
-LiteTable.create_table('products',{
+LiteTable.createTable('products',{
     'manufacturer': 'TEXT',
     'user_id': 'INTEGER'
 },{

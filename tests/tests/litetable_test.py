@@ -10,13 +10,13 @@ test_db = 'pytest.db'
 try: os.remove('pytest.db')
 except: pass
 
-LiteTable.create_database(test_db)
+LiteTable.createDatabase(test_db)
 
 # Test LiteTable Module - - - - - - -
 
-# Test .create_database()
-def test_create_database():
-    try: LiteTable.create_database(test_db)
+# Test .createDatabase()
+def test_createDatabase():
+    try: LiteTable.createDatabase(test_db)
     except DatabaseAlreadyExists: pass
     
 @pytest.mark.parametrize("table_name,expected", [
@@ -24,18 +24,18 @@ def test_create_database():
     ('table_b', True),
 ])
 def test_create_tables(table_name, expected):
-    LiteTable.create_table(table_name, {'name':'TEXT'})
+    LiteTable.createTable(table_name, {'name':'TEXT'})
 
 @pytest.mark.parametrize("table_name,expected", [
     ('table_b', True),
 ])
 def test_delete_tables(table_name, expected):
-    LiteTable.delete_table(table_name)
+    LiteTable.deleteTable(table_name)
 
-# .delete_table() should only remove a table if it exists.
+# .deleteTable() should only remove a table if it exists.
 # It should not raise an exception
 def test_delete_nonexistant_table():
-    LiteTable.delete_table('table_b')
+    LiteTable.deleteTable('table_b')
 
 # Test .exists()
 @pytest.mark.parametrize("table_name,expected", [
