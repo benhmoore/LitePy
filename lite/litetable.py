@@ -167,6 +167,8 @@ class LiteTable:
         temp_cursor.execute(table_sql)
         temp_connection.commit()
 
+        return LiteTable(table_name)
+
 
     @staticmethod
     def deleteTable(table_name:str):
@@ -190,9 +192,9 @@ class LiteTable:
             list: [table_name,..]
         """
 
-        self.cursor.execute("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name")
-        names = [row[0] for row in self.cursor.fetchall()]
-        return names;
+        rows = self.executeAndFetch("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name")
+        names = [row[0] for row in rows]
+        return names
 
     
     def executeAndFetch(self, sql_str:str, values=()) -> list:
@@ -359,11 +361,13 @@ class LiteTable:
         return [i for i, letter in enumerate(str) if letter == char]
 
 
-    def __init__(self, table_name:str):
+    def __init__(self, table_name:str, disable_isolation=False, disable_WAL=False):
         """LiteTable initializer.
 
         Args:
             table_name (str): Name of table within database to connect to
+            disable_isolation (bool, optional). Determines whether the SQLite connection disables isolation. Defaults to False.
+            disable_WAL (bool, optional): Determines whether the SQLite connection disables WAL. Defaults to False.
 
         Raises:
             DatabaseNotFoundError: Database not found
@@ -376,18 +380,28 @@ class LiteTable:
         # Raise an error if the database already exists
         if not os.path.exists(database_path):
             raise DatabaseNotFoundError(database_path)
-        
-        self.connection = sqlite3.connect(database_path)
+
+        # Set isolation level
+        if not disable_isolation:
+            self.connection = sqlite3.connect(database_path,isolation_level=None)
+        else:
+            self.connection = sqlite3.connect(database_path)
+            
         self.cursor = self.connection.cursor()
 
+        # Set journal_mode
+        if not disable_WAL:
+            self.cursor.execute('PRAGMA journal_mode=wal;');
+        else:
+            self.cursor.execute('PRAGMA journal_mode=delete;')
+
+
         # Check if config table exists
-        self.cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table" AND name="config"')
-        if len(self.cursor.fetchall()) < 1: # Table doesn't exist
+        if len(self.executeAndFetch(f'SELECT name FROM sqlite_master WHERE type="table" AND name="config"')) < 1: # Table doesn't exist
             raise InvalidDatabaseError(database_path)
 
         # Check if table with provided name exists
-        self.cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table" AND name="{table_name}"')
-        if len(self.cursor.fetchall()) < 1: # Table doesn't exist
+        if len(self.executeAndFetch(f'SELECT name FROM sqlite_master WHERE type="table" AND name="{table_name}"')) < 1: # Table doesn't exist
             raise TableNotFoundError(table_name)
 
         # Store database and table attributes for later use

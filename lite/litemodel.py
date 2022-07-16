@@ -306,6 +306,12 @@ class LiteModel:
             # Store list of all table column names. Used by .save()
             self.table_columns = [column[1] for column in columns]
 
+    def __del__(self):
+        try:
+            self.table.cursor.close()
+            self.table.connection.close()
+        except: pass
+
 
     @classmethod
     def findOrFail(self, id:int):
