@@ -813,6 +813,3 @@ class LiteModel:
 
         return LiteCollection([])
 
-
-        
-

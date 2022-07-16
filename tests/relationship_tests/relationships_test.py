@@ -1,9 +1,5 @@
 import pytest, sqlite3, os
-
 from lite import *
-# from lite.litemodel import LiteModel, LiteCollection
-# from lite.liteexceptions import *
-# from lite.litetable import LiteTable
 
 os.environ['DB_DATABASE'] = 'pytest.sqlite'
 
@@ -176,7 +172,15 @@ def test_belongsToMany():
     user_1.attach(gender_2)
     user_1.attach(gender_3)
 
-    assert [gender.label for gender in user_1.genders()] == [gender_1.label, gender_2.label, gender_3.label]
+    assert user_1.genders() == LiteCollection([gender_1, gender_2, gender_3])
+
+    gender_3.detach(user_1)
+    gender_3.attach(user_1)
+
+    # Test duplicate attachments
+    with pytest.raises(RelationshipError):
+        user_1.attach(gender_3)
+
 
 def test_relationship_overrides():
 
@@ -197,11 +201,11 @@ def test_relationship_overrides():
 def test_delete_relationships():
     """Tests if all relationships are removed when a model instance is deleted."""
 
-    # Make any number of random attachments in addition to those of prior testts
+    # Make any number of random attachments in addition to those of prior tests
     pet_2.attach(user_1)
 
     # First, assert that these attachments are still present
-    assert [gender.label for gender in user_1.genders()] == [gender_1.label, gender_2.label, gender_3.label]
+    assert user_1.genders() == LiteCollection([gender_1, gender_2, gender_3])
     assert [pet.name for pet in user_1.pets()] == [pet_1.name, pet_2.name]
     assert user_1.account() == acc_1
 

@@ -1,10 +1,8 @@
-from multiprocessing.sharedctypes import Value
+# from multiprocessing.sharedctypes import Value
 import pytest, sqlite3, os
-from lite.liteexceptions import DuplicateModelInstance
-from lite.litecollection import LiteCollection
-from lite.litemodel import LiteModel
+from lite import *
 
-os.environ['DB_DATABASE'] = 'pytest.db'
+os.environ['DB_DATABASE'] = 'pytest.sqlite'
 
 # Create models for tests
 class User(LiteModel):
