@@ -1,12 +1,13 @@
 import pytest, sqlite3, os
 from lite import *
 
-os.environ['DB_DATABASE'] = 'pytest.sqlite'
+relationship_database = 'rel.sqlite'
+os.environ['DB_DATABASE'] = relationship_database
 
-try: os.remove('pytest.sqlite')
+try: os.remove(relationship_database)
 except: pass
 
-LiteTable.createDatabase('pytest.sqlite')
+LiteTable.createDatabase(relationship_database)
 
 LiteTable.createTable('users', {
     'name': 'TEXT',
