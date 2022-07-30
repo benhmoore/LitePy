@@ -204,6 +204,20 @@ def test_save():
 
     assert user_temp.password == 'xyz'
 
+# Test .fresh()
+def test_fresh():
+    user_a = User.findOrFail(1)
+    user_a_copy = User.findOrFail(1)
+
+    user_a.password = '123'
+    user_a.save()
+
+    assert user_a.password != user_a_copy.password
+
+    user_a_copy.fresh()
+
+    assert user_a.password == user_a_copy.password
+
 # Test .delete()
 def test_delete():
 

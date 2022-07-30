@@ -43,6 +43,20 @@ class LiteCollection:
 
 
     def __contains__(self, item):
+        """Used by 'in' Python comparison.
+
+        Args:
+            item (LiteModel, int): if an integer, looks for a model with the given primary key.
+        """
+
+        # If an integer
+        if type(item) is int:
+            for model in self.list:
+                if getattr(model,'id') == item:
+                    return True
+            return False
+
+        # If a LiteModel
         if item in self.list:
             return True
         else:
@@ -66,7 +80,13 @@ class LiteCollection:
         if model_instance in self.list: raise DuplicateModelInstance(model_instance)
 
         self.list.append(model_instance)
-            
+
+
+    def fresh(self):
+        """Retrieves a fresh copy of each model instance in the collection from the database."""
+        
+        for model in self.list: model.fresh()
+
 
     def join(self, lite_collection):
         """Merges two LiteCollection instances.
@@ -114,18 +134,28 @@ class LiteCollection:
                 elif condition[1] == '!=':
                     if getattr(model,condition[0]) == condition[2]:
                         should_add = False
+                        
                 elif condition[1] == 'LIKE':
                     if condition[2][1:-1] not in getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
                         should_add = False
                 elif condition[1] == 'NOT LIKE':
                     if condition[2][1:-1] in getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
                         should_add = False
+                
                 elif condition[1] == '<':
+                    if condition[2] <= getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
+                        should_add = False
+                elif condition[1] == '<=':
                     if condition[2] < getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
                         should_add = False
+                
                 elif condition[1] == '>':
+                    if condition[2] >= getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
+                        should_add = False
+                elif condition[1] == '>=':
                     if condition[2] > getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
                         should_add = False
+            
             if should_add: results_collection.append(model)
 
         return LiteCollection(results_collection)

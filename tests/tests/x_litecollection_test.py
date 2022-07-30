@@ -108,4 +108,54 @@ def test_contains():
     assert user_1 not in c_1
     assert user_2 not in c_1
     assert user_3 in c_1
+    
+    # Using primary key (id) value
+    assert 4 in c_1
 
+def test_fresh():
+
+    user_1, user_2, user_3 = User.all()[:3]
+
+    c_1 = LiteCollection([user_1, user_2, user_3])
+
+    user_1_copy = User.all()[:1][0]
+    user_1_copy.password = 'changed'
+    user_1_copy.save()
+
+    assert user_1_copy.password != c_1[0].password
+
+    c_1.fresh()
+
+    assert user_1_copy.password == c_1[0].password
+
+
+
+def test_where():
+
+    users = User.all()
+
+    assert len(users.where([
+        ['id','=',2]
+    ])) == 1
+
+    assert len(users.where([
+        ['id','!=',11]
+    ])) == 10
+
+
+    assert len(users.where([
+        ['id','>',10]
+    ])) == 2
+
+    assert len(users.where([
+        ['id','>=',10]
+    ])) == 3
+
+
+    assert len(users.where([
+        ['id','<',10]
+    ])) == 8
+
+    assert len(users.where([
+        ['id','<=',10]
+    ])) == 9

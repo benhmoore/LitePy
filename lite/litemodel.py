@@ -649,6 +649,19 @@ class LiteModel:
             self.table.update(update_columns,[['id','=',self.id]])
 
 
+    def fresh(self):
+        """Reloads the model's attributes from the database."""
+
+        # Load model instance from database by primary key
+        _values = self.table.select([['id','=',self.id]])
+
+        # Set attributes of Python class instance
+        for i in range(0,len(self.table_columns)):
+            try: value = _values[0][i]
+            except: value = None
+            setattr(self, self.table_columns[i], value)
+
+
     def belongsTo(self, model, foreign_key:str=None):
         """Defines the current model instance as a child of the passed model class.
 
