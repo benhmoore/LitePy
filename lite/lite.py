@@ -3,6 +3,12 @@ from colorama import Fore, Back, Style
 import os
 from lite import *
 
+# class LiteConnection:
+#     """Encapsulates a server connection for Lite.
+#     """
+
+#     def __init__():
+
 class Lite:
     """Helper functions for other Lite classes.
 

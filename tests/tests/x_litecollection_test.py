@@ -22,7 +22,6 @@ class User(LiteModel):
     def products(self):
         return self.hasMany(Product)
 
-
 def test_get_length():
     """Tests to see if length of collection can be accurately attained."""
 
@@ -128,7 +127,21 @@ def test_fresh():
 
     assert user_1_copy.password == c_1[0].password
 
+def test_intersection():
+    user_1, user_2, user_3, user_4 = User.all()[:4]
 
+    c_1 = LiteCollection([user_1, user_2, user_3])
+    c_2 = LiteCollection([user_1, user_2, user_4])
+
+    assert c_2.intersection(c_1) == LiteCollection([user_1, user_2])
+
+def test_difference():
+    user_1, user_2, user_3, user_4 = User.all()[:4]
+
+    c_1 = LiteCollection([user_1, user_2, user_3])
+    c_2 = LiteCollection([user_1, user_2, user_4])
+
+    assert c_2.difference(c_1) == LiteCollection([user_4])
 
 def test_where():
 

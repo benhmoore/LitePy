@@ -84,8 +84,14 @@ class LiteCollection:
 
     def fresh(self):
         """Retrieves a fresh copy of each model instance in the collection from the database."""
-        
+
         for model in self.list: model.fresh()
+
+    
+    def modelKeys(self) -> list:
+        """Returns a list of primary keys for models in the collection."""
+
+        return [model.id for model in self.list]
 
 
     def join(self, lite_collection):
@@ -96,6 +102,47 @@ class LiteCollection:
         """
         
         self.list += lite_collection.list
+
+
+    def intersection(self, lite_collection):
+        """Returns the intersection of two collections.
+
+        Args:
+            lite_collection (LiteCollection): LiteCollection instance
+
+        Returns:
+            LiteCollection: Collection of LiteModel instances forming intersection
+        """
+
+        self_keys = set(self.modelKeys())
+        other_keys = set(lite_collection.modelKeys())
+
+        intersection_keys = list(self_keys.intersection(other_keys))
+
+        intersection = LiteCollection()
+        for model in self.list:
+            if model.id in intersection_keys:
+                intersection.add(model)
+        
+        return intersection
+
+    
+    def difference(self, lite_collection):
+        """Returns all models not in the passed collection.
+
+        Args:
+            lite_collection (LiteCollection): LiteCollection instance
+
+        Returns:
+            LiteCollection: Collection of LiteModel instances forming intersection
+        """
+
+        difference = LiteCollection()
+        for model in self.list:
+            if model not in lite_collection:
+                difference.add(model)
+        
+        return difference
 
 
     def remove(self, model_instance):
