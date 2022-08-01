@@ -75,8 +75,11 @@ class LiteTable:
             bool
         """
 
+        # Ensure table exists
+        try: temp_table = LiteTable(table_name)
+        except: return False
+
         # Check that number of columns in table is equal to 2, not including 'id' field
-        temp_table = LiteTable(table_name)
         temp_table.cursor.execute(f'PRAGMA table_info({table_name})')
 
         table_columns = [column[1] for column in temp_table.cursor.fetchall()]

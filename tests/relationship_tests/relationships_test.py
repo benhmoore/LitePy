@@ -9,7 +9,7 @@ except: pass
 
 LiteTable.createDatabase(relationship_database)
 
-LiteTable.createTable('users', {
+LiteTable.createTable('users_custom_table_name', {
     'name': 'TEXT',
     'acc_id': 'TEXT'
 },{
@@ -24,7 +24,7 @@ LiteTable.createTable('gender_user', {
     'uid': 'INTEGER',
     'gid': 'INTEGER'
 }, {
-    'uid': ['users','id'],
+    'uid': ['users_custom_table_name','id'],
     'gid': ['genders','id'],
 })
 
@@ -38,12 +38,14 @@ LiteTable.createTable('pets', {
     'type': 'TEXT',
     'owner_id': 'INTEGER'
 },{
-    'owner_id': ['users','id']
+    'owner_id': ['users_custom_table_name','id']
 })
 
 # - - - Create Models - - -
 
 class User(LiteModel):
+
+    TABLE_NAME = 'users_custom_table_name'
     
     def account(self):
         return self.belongsTo(Account)

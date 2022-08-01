@@ -6,6 +6,8 @@ os.environ['DB_DATABASE'] = 'pytest.sqlite'
 
 # Create models for tests
 class User(LiteModel):
+
+    TABLE_NAME = 'users_custom_table_name'
     
     def parent(self):
         return self.belongsTo(User,'user_id')

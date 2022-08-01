@@ -12,6 +12,8 @@ LiteTable.createDatabase(test_db)
 
 # Create models for tests
 class User(LiteModel):
+
+    TABLE_NAME = 'users_custom_table_name'
     
     def parent(self) -> LiteModel:
         return self.belongsTo(User,'user_id')
@@ -47,12 +49,12 @@ class Product(LiteModel):
 # Create tables for tests - - - - -
 
 # Users table
-LiteTable.createTable('users', {
+LiteTable.createTable('users_custom_table_name', {
     'username': 'TEXT',
     'password': 'TEXT',
     'user_id': 'INTEGER'   
 },{
-    'user_id':['users','id']
+    'user_id':['users_custom_table_name','id']
 })
 
 # Cars table
@@ -68,7 +70,7 @@ LiteTable.createTable('car_user', {
     'uid': 'INTEGER',
 },{
     "cid":['cars','id'],
-    "uid":['users','id']
+    "uid":['users_custom_table_name','id']
 })
 
 # Bank Account table
@@ -77,7 +79,7 @@ LiteTable.createTable('bank_accounts',{
     'routing_number': 'INTEGER',
     'user_id': 'INTEGER',
 },{
-    "user_id":['user','id']
+    "user_id":['users_custom_table_name','id']
 })
 
 # Products table
@@ -85,7 +87,7 @@ LiteTable.createTable('products',{
     'manufacturer': 'TEXT',
     'user_id': 'INTEGER'
 },{
-    "user_id":['user','id']
+    "user_id":['users_custom_table_name','id']
 })
 
 # Test .create()
