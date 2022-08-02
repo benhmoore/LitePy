@@ -35,6 +35,8 @@ class Car(LiteModel):
     def owners(self) -> LiteCollection:
         return self.belongsToMany(User)
 
+Car.customPivotWith(User, 'c_u')
+
 class Bank_Account(LiteModel):
     
     def holder(self) -> LiteModel:
@@ -65,7 +67,7 @@ LiteTable.createTable('cars', {
 })
 
 # Pivot table
-LiteTable.createTable('car_user', {
+LiteTable.createTable('c_u', {
     'cid': 'INTEGER',
     'uid': 'INTEGER',
 },{
@@ -166,6 +168,8 @@ def test_attach():
 
     user_b.attach(product_a)
     user_b.attach(product_b)
+
+    print(user_a.parent(), user_b.parent())
 
     assert user_a.child().username == "jane"
     assert user_a.child().username == "jane"

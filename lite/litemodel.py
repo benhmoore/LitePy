@@ -10,6 +10,8 @@ class LiteModel:
         RelationshipError: Relationship does not match required status.
     """
 
+    CUSTOM_PIVOT_TABLES = {} # Filled by calls to .customPivotWith()
+
     PIVOT_TABLE_CACHE = {} # Used by belongsToMany() to cache pivot table names and foreign keys
 
 
@@ -140,6 +142,17 @@ class LiteModel:
         Returns:
             str: Name of pivot table
         """
+
+        # Check custom pivot tables names first
+        for name in self.CUSTOM_PIVOT_TABLES:
+            if self.__class__.__name__ in self.CUSTOM_PIVOT_TABLES[name]:
+                try: 
+                    model_name = model.__class__.__name__
+                    if model_name == 'type': raise Exception
+                except: model_name = getattr(model, '__name__')
+                if model_name in self.CUSTOM_PIVOT_TABLES[name]:
+                    print(Back.CYAN, "Matched this custom pivot table.", self.__class__.__name__, model_name, name, Back.RESET)
+                    return name
 
         # Derive conventional naming scheme for pivot tables
         model_names = []
@@ -455,6 +468,23 @@ class LiteModel:
         return LiteCollection(model_list)
 
 
+    @classmethod
+    def customPivotWith(self, other_model, pivot_table_name:str):
+        """Notifies Lite of a many-to-many relationship. This is only required when a custom pivot table name is used.
+
+        Args:
+            other_model (LiteModel): The other model forming the many-to-many relationship.
+            pivot_table_name (str): Name of the pivot table storing the relationships.
+        """
+
+        self_name = self.__name__
+        other_name = other_model.__name__
+
+        self.CUSTOM_PIVOT_TABLES[pivot_table_name] = [self_name, other_name]
+
+
+
+
     def toDict(self) -> dict:
         """Converts LiteModel instance into human-readable dict, truncating string values where necessary.
 
@@ -490,6 +520,8 @@ class LiteModel:
 
         try: pivot_table_name = self.__get_pivot_name(model_instance)
         except: pivot_table_name = False
+
+        print(Back.RED, "Using pivot table", pivot_table_name, self.__class__.__name__, model_instance.__class__.__name__, Back.RESET)
 
         if pivot_table_name: # Is a many-to-many relationship
             pivot_table = LiteTable(pivot_table_name)
