@@ -143,26 +143,18 @@ class LiteModel:
             str: Name of pivot table
         """
 
-        # Check custom pivot tables names first
+        # Check CUSTOM_PIVOT_TABLES for any pivot tables with custom names that define relationships between these two models
+        self_name = self.__class__.__name__
+        try: 
+            model_name = model.__class__.__name__
+            if model_name == 'type': raise Exception
+        except: model_name = getattr(model, '__name__')
+
         for name in self.CUSTOM_PIVOT_TABLES:
-            present_count = 0
-            for class_name in self.CUSTOM_PIVOT_TABLES[name]:
-                if class_name == self.__class__.__name__:
-                    present_count += 1
-                    continue
-
-                try: 
-                    model_name = model.__class__.__name__
-                    if model_name == 'type': raise Exception
-                except: model_name = getattr(model, '__name__')
-
-                if class_name == model_name:
-                    present_count += 1
-                
-            if present_count == 2:
+            if self.CUSTOM_PIVOT_TABLES[name] == [model_name, self_name] or self.CUSTOM_PIVOT_TABLES[name] == [self_name, model_name]:
                 return name
 
-        # Derive conventional naming scheme for pivot tables
+        # Otherwise, derive conventional naming scheme for pivot tables
         model_names = []
         model_names.append(self.__class__.__name__.lower())
 
