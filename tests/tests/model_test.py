@@ -152,6 +152,7 @@ def test_create_products(columns, expected):
 
 # Test .attach() and all relationships
 def test_attach():
+    
     user_a = User.findOrFail(1)
     user_b = User.findOrFail(2)
 
@@ -171,7 +172,6 @@ def test_attach():
 
     print(user_a.parent(), user_b.parent())
 
-    assert user_a.child().username == "jane"
     assert user_a.child().username == "jane"
 
     # Test Many-To-Many relationships using Pivot Table

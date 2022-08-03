@@ -145,14 +145,22 @@ class LiteModel:
 
         # Check custom pivot tables names first
         for name in self.CUSTOM_PIVOT_TABLES:
-            if self.__class__.__name__ in self.CUSTOM_PIVOT_TABLES[name]:
+            present_count = 0
+            for class_name in self.CUSTOM_PIVOT_TABLES[name]:
+                if class_name == self.__class__.__name__:
+                    present_count += 1
+                    continue
+
                 try: 
                     model_name = model.__class__.__name__
                     if model_name == 'type': raise Exception
                 except: model_name = getattr(model, '__name__')
-                if model_name in self.CUSTOM_PIVOT_TABLES[name]:
-                    print(Back.CYAN, "Matched this custom pivot table.", self.__class__.__name__, model_name, name, Back.RESET)
-                    return name
+
+                if class_name == model_name:
+                    present_count += 1
+                
+            if present_count == 2:
+                return name
 
         # Derive conventional naming scheme for pivot tables
         model_names = []
@@ -348,7 +356,8 @@ class LiteModel:
         rows = table.select([['id','=',id]])
 
         if len(rows) > 0: return self(id, table, rows) # Return LiteModel
-        else: raise ModelInstanceNotFoundError(id)
+        else: 
+            raise ModelInstanceNotFoundError(id)
 
 
     @classmethod
@@ -483,8 +492,6 @@ class LiteModel:
         self.CUSTOM_PIVOT_TABLES[pivot_table_name] = [self_name, other_name]
 
 
-
-
     def toDict(self) -> dict:
         """Converts LiteModel instance into human-readable dict, truncating string values where necessary.
 
@@ -520,8 +527,6 @@ class LiteModel:
 
         try: pivot_table_name = self.__get_pivot_name(model_instance)
         except: pivot_table_name = False
-
-        print(Back.RED, "Using pivot table", pivot_table_name, self.__class__.__name__, model_instance.__class__.__name__, Back.RESET)
 
         if pivot_table_name: # Is a many-to-many relationship
             pivot_table = LiteTable(pivot_table_name)
