@@ -5,11 +5,6 @@ class EnvFileNotFound(BaseException):
     def __init__(self):
         super().__init__(f'.env file not found in application directory.')
 
-class InvalidDatabaseError(BaseException):
-    """Raised when a database doesn't contain a 'config' table."""
-    def __init__(self, database_path):
-        super().__init__(f'Database "{database_path}" is not a valid LiteDatabase. Make sure a config table exists.')
-
 class DatabaseNotFoundError(BaseException):
     """Raised when a database doesn't exist at the specified filepath."""
     def __init__(self, database_path):

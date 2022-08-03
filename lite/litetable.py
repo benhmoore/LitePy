@@ -10,7 +10,6 @@ class LiteTable:
     Raises:
         DatabaseAlreadyExists: Database already exists at filepath
         DatabaseNotFoundError: Database not specified by environment file or variables.
-        InvalidDatabaseError: Database does not contain a Lite config table
         TableNotFoundError: Table not found within database
     """
 
@@ -115,16 +114,6 @@ class LiteTable:
         # Create database
         print(Fore.YELLOW,"Creating Lite database. Lite version:", pkg_resources.get_distribution("lite").version, Fore.RESET)
         open(database_path, 'a').close() # Create DB file
-
-        # Create config table
-        LiteTable.createTable('config', {
-            "key": "TEXT NOT NULL UNIQUE",
-            "value": "TEXT"
-        })
-
-        # Insert version information into config table
-        configTable = LiteTable('config')
-        configTable.insert({"key": "lite_version", "value": pkg_resources.get_distribution("lite").version})
 
 
     @staticmethod
@@ -397,11 +386,6 @@ class LiteTable:
             self.cursor.execute('PRAGMA journal_mode=wal;');
         else:
             self.cursor.execute('PRAGMA journal_mode=delete;')
-
-
-        # Check if config table exists
-        if len(self.executeAndFetch(f'SELECT name FROM sqlite_master WHERE type="table" AND name="config"')) < 1: # Table doesn't exist
-            raise InvalidDatabaseError(database_path)
 
         # Check if table with provided name exists
         if len(self.executeAndFetch(f'SELECT name FROM sqlite_master WHERE type="table" AND name="{table_name}"')) < 1: # Table doesn't exist

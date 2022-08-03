@@ -3,12 +3,6 @@ from colorama import Fore, Back, Style
 import os
 from lite import *
 
-# class LiteConnection:
-#     """Encapsulates a server connection for Lite.
-#     """
-
-#     def __init__():
-
 class Lite:
     """Helper functions for other Lite classes.
 
@@ -16,6 +10,8 @@ class Lite:
         EnvFileNotFound: Environment ('.env') file not found in script directory
         DatabaseNotFoundError: Database not specified by environment file or variables.
     """
+
+    DATABASE_CONNECTIONS = {}
 
     @staticmethod
     def getEnv() -> dict:
@@ -59,3 +55,11 @@ class Lite:
                 return env['DB_DATABASE']
             else:
                 raise DatabaseNotFoundError('')
+
+    
+    # @staticmethod
+    # def declareConnection(label:str, lite_connection:LiteConnection):
+    #     Lite.DATABASE_CONNECTIONS[label] = lite_connection
+
+
+# Lite.declareConnection('default',LiteConnection())

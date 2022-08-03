@@ -152,6 +152,9 @@ def test_create_products(columns, expected):
 
 # Test .attach() and all relationships
 def test_attach():
+
+    # print(Lite.DATABASE_CONNECTIONS['default'])
+    # assert False == True
     
     user_a = User.findOrFail(1)
     user_b = User.findOrFail(2)
