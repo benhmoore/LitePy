@@ -8,7 +8,7 @@ os.environ['DB_DATABASE'] = 'pytest.sqlite'
 try: os.remove('pytest.sqlite')
 except Exception: pass
 
-LiteTable.createDatabase(test_db)
+Lite.createDatabase(test_db)
 
 # Create models for tests
 class User(LiteModel):

@@ -56,10 +56,25 @@ class Lite:
             else:
                 raise DatabaseNotFoundError('')
 
-    
-    # @staticmethod
-    # def declareConnection(label:str, lite_connection:LiteConnection):
-    #     Lite.DATABASE_CONNECTIONS[label] = lite_connection
+
+    @staticmethod
+    def createDatabase(database_path:str):
+        """Creates an empty SQLite database.
+
+        Args:
+            database_path (str): Desired database location
+
+        Raises:
+            DatabaseAlreadyExists: Database already exists at given filepath.
+        """
+
+        # Raise error if database already exists
+        if os.path.exists(database_path): raise DatabaseAlreadyExists(database_path)
+
+        # Create database
+        open(database_path, 'a').close() # Create DB file
 
 
-# Lite.declareConnection('default',LiteConnection())
+    @staticmethod
+    def declareConnection(label:str, lite_connection:LiteConnection):
+        Lite.DATABASE_CONNECTIONS[label] = lite_connection

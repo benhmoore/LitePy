@@ -2,8 +2,6 @@ from multiprocessing.sharedctypes import Value
 import sqlite3, os
 from lite import *
 
-import pkg_resources # Used to store the version of Lite used to create a database.
-
 class LiteTable:
     """Facilitates common table operations on an SQLite database.
 
@@ -95,25 +93,6 @@ class LiteTable:
         if total_relations != 2: return False
 
         return True
-
-
-    @staticmethod
-    def createDatabase(database_path:str):
-        """Creates an SQLite database with a Lite config table.
-
-        Args:
-            database_path (str): Desired database location
-
-        Raises:
-            DatabaseAlreadyExists: Database already exists at given filepath.
-        """
-
-        # Raise error if database already exists
-        if os.path.exists(database_path): raise DatabaseAlreadyExists(database_path)
-
-        # Create database
-        print(Fore.YELLOW,"Creating Lite database. Lite version:", pkg_resources.get_distribution("lite").version, Fore.RESET)
-        open(database_path, 'a').close() # Create DB file
 
 
     @staticmethod

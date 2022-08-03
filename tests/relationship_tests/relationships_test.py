@@ -7,7 +7,7 @@ os.environ['DB_DATABASE'] = relationship_database
 try: os.remove(relationship_database)
 except: pass
 
-LiteTable.createDatabase(relationship_database)
+Lite.createDatabase(relationship_database)
 
 LiteTable.createTable('users_custom_table_name', {
     'name': 'TEXT',

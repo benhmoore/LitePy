@@ -8,7 +8,7 @@ os.environ['DB_DATABASE'] = test_db
 try: os.remove(test_db)
 except: pass
 
-LiteTable.createDatabase(test_db)
+Lite.createDatabase(test_db)
 testingTable = LiteTable.createTable('test_table',{
     'key': 'blob',
     'value': 'blob'

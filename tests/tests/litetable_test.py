@@ -8,13 +8,13 @@ os.environ['DB_DATABASE'] = 'pytest.sqlite'
 try: os.remove('pytest.sqlite')
 except: pass
 
-LiteTable.createDatabase(test_db)
+Lite.createDatabase(test_db)
 
 # Test LiteTable Module - - - - - - -
 
 # Test .createDatabase()
 def test_createDatabase():
-    try: LiteTable.createDatabase(test_db)
+    try: Lite.createDatabase(test_db)
     except DatabaseAlreadyExists: pass
     
 @pytest.mark.parametrize("table_name,expected", [
