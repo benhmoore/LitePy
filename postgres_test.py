@@ -3,7 +3,7 @@ import psycopg2
 # conn = psycopg2.connect(database='organization',
 #                         host='db.engr.msstate.edu',
 #                         user='app_inventory',
-#                         password='',
+#                         password='An)KW9?Sh-o3',
 #                         port='5432')
 
 cursor = conn.cursor()

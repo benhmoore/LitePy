@@ -12,6 +12,7 @@ class Lite:
     """
 
     DATABASE_CONNECTIONS = {}
+    DEFAULT_CONNECTION = None
 
     @staticmethod
     def getEnv() -> dict:
@@ -74,6 +75,10 @@ class Lite:
         # Create database
         open(database_path, 'a').close() # Create DB file
 
+    @staticmethod
+    def connect(lite_connection:LiteConnection):
+        Lite.DEFAULT_CONNECTION = lite_connection
+        print(Fore.RED, "Declared connection",Fore.RESET)
 
     @staticmethod
     def declareConnection(label:str, lite_connection:LiteConnection):

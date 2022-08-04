@@ -288,17 +288,16 @@ class LiteModel:
         return relationship_definitions
 
 
-    def __init__(self,_id:int=None, _table:LiteTable=None, _values:list=None):
+    def __init__(self, _id:int=None, _table:LiteTable=None, _values:list=None, _lite_connection:LiteConnection=None):
         """LiteModel initializer. Parameters are used by internal methods and should not be provided."""
 
-        # Get database path
-        self.database_path = Lite.getDatabasePath()
+        if not _lite_connection: _lite_connection = Lite.DEFAULT_CONNECTION
 
         # Derive table name from class name
         if not hasattr(self, 'TABLE_NAME'): self.TABLE_NAME = self.__get_table_name()
 
         # Load table if not passed
-        self.table = _table or LiteTable(self.TABLE_NAME)
+        self.table = _table or LiteTable(self.TABLE_NAME, _lite_connection)
 
         # Generate dict map of foreign key references. Used by .__get_foreign_key_from_model()
         self.FOREIGN_KEY_MAP = self.table.getForeignKeyReferences()
@@ -318,15 +317,15 @@ class LiteModel:
             # Store list of all table column names. Used by .save()
             self.table_columns = [column[1] for column in columns]
 
-    def __del__(self):
-        try:
-            self.table.cursor.close()
-            self.table.connection.close()
-        except: pass
+    # def __del__(self):
+    #     try:
+    #         self.table.cursor.close()
+    #         self.table.connection.close()
+    #     except: pass
 
 
     @classmethod
-    def findOrFail(self, id:int):
+    def findOrFail(self, id:int, lite_connection:LiteConnection=None):
         """Returns a LiteModel instance with id matching the passed value. Throws an exception if an instance isn't found.
 
         Args:
@@ -338,22 +337,22 @@ class LiteModel:
         Returns:
             LiteModel: LiteModel with matching id
         """
-        
-        database_path = Lite.getDatabasePath()
+
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
         TABLE_NAME = self.__pluralize(self,self.__name__.lower())
         if hasattr(self, 'TABLE_NAME'): TABLE_NAME = self.TABLE_NAME
         
-        table = LiteTable(TABLE_NAME)
+        table = LiteTable(TABLE_NAME, lite_connection)
         rows = table.select([['id','=',id]])
 
-        if len(rows) > 0: return self(id, table, rows) # Return LiteModel
+        if len(rows) > 0: return self(id, table, rows, lite_connection) # Return LiteModel
         else: 
             raise ModelInstanceNotFoundError(id)
 
 
     @classmethod
-    def find(self, id:int):
+    def find(self, id:int, lite_connection:LiteConnection=None):
         """Returns a LiteModel instance with id matching the passed value or None.
 
         Args:
@@ -364,25 +363,25 @@ class LiteModel:
         """
 
         try:
-            return self.findOrFail(id)
+            return self.findOrFail(id, lite_connection)
         except ModelInstanceNotFoundError:
             return None
 
 
     @classmethod
-    def all(self) -> LiteCollection:
+    def all(self, lite_connection:LiteConnection=None) -> LiteCollection:
         """Returns a LiteCollection containing all instances of this model.
 
         Returns:
             LiteCollection: Collection of all model instances
         """
         
-        database_path = Lite.getDatabasePath()
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
         TABLE_NAME = self.__pluralize(self,self.__name__.lower())
         if hasattr(self, 'TABLE_NAME'): TABLE_NAME = self.TABLE_NAME
         
-        table = LiteTable(TABLE_NAME)
+        table = LiteTable(TABLE_NAME, lite_connection)
 
         collection = []
         rows = table.select([],['id'])
@@ -393,7 +392,7 @@ class LiteModel:
 
 
     @classmethod
-    def where(self, where_columns:list) -> LiteCollection:
+    def where(self, where_columns:list, lite_connection:LiteConnection=None) -> LiteCollection:
         """Returns a LiteCollection containing all model instances matching where_columns.
 
         Args:
@@ -403,14 +402,14 @@ class LiteModel:
 
         Returns:
             LiteCollection: Collection of matching model instances
-        """
+        """ 
 
-        database_path = Lite.getDatabasePath()
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
         
         TABLE_NAME = self.__pluralize(self,self.__name__.lower())
         if hasattr(self, 'TABLE_NAME'): TABLE_NAME = self.TABLE_NAME
         
-        table = LiteTable(TABLE_NAME)
+        table = LiteTable(TABLE_NAME, lite_connection)
 
         collection = []
         rows = table.select(where_columns,['id'])
@@ -421,7 +420,7 @@ class LiteModel:
 
 
     @classmethod
-    def create(self, column_values:dict):
+    def create(self, column_values:dict, lite_connection:LiteConnection=None):
         """Creates a new instance of a LiteModel and returns it.
 
         Args:
@@ -430,14 +429,14 @@ class LiteModel:
         Returns:
             LiteModel: Created model instance.
         """
-        
-        database_path = Lite.getDatabasePath()
+
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
         
         TABLE_NAME = self.__pluralize(self,self.__name__.lower())
         if hasattr(self, 'TABLE_NAME'): TABLE_NAME = self.TABLE_NAME
         
         # Insert into table
-        table = LiteTable(TABLE_NAME)
+        table = LiteTable(TABLE_NAME, lite_connection)
         table.insert(column_values)
 
         # Get latest instance with this id
@@ -452,7 +451,7 @@ class LiteModel:
 
 
     @classmethod
-    def createMany(self,column_list:list) -> LiteCollection:
+    def createMany(self,column_list:list, lite_connection:LiteConnection=None) -> LiteCollection:
         """Creates many new instances of a LiteModel and returns them within a LiteCollection.
 
         Args:

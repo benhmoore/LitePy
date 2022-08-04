@@ -2,12 +2,12 @@ import pytest, sqlite3, os
 from lite import *
 
 relationship_database = 'rel.sqlite'
-os.environ['DB_DATABASE'] = relationship_database
 
 try: os.remove(relationship_database)
 except: pass
 
 Lite.createDatabase(relationship_database)
+Lite.connect(LiteConnection(connectionType.SQLITE,database_path=relationship_database))
 
 LiteTable.createTable('users_custom_table_name', {
     'name': 'TEXT',

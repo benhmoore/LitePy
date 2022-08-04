@@ -3,12 +3,14 @@ from lite import *
 
 # Setup database
 test_db = 'pytest.sqlite'
-os.environ['DB_DATABASE'] = 'pytest.sqlite'
+# os.environ['DB_DATABASE'] = 'pytest.sqlite'
 
 try: os.remove('pytest.sqlite')
 except Exception: pass
 
 Lite.createDatabase(test_db)
+
+Lite.connect(LiteConnection(connectionType.SQLITE, database_path=test_db))
 
 # Create models for tests
 class User(LiteModel):

@@ -23,7 +23,7 @@ class LiteTable:
         """
 
         # Get raw list of foreign key relationships using 'PRAGMA'
-        foreign_keys = self.executeAndFetch(f'PRAGMA foreign_key_list({self.table_name})')
+        foreign_keys = self.executeAndFetch(f"PRAGMA foreign_key_list({self.table_name})")
 
         foreign_key_map = {
             # table_name: [local_key, foreign_key]
@@ -42,7 +42,7 @@ class LiteTable:
 
 
     @staticmethod
-    def exists(table_name:str) -> bool:
+    def exists(table_name:str, lite_connection:LiteConnection=None) -> bool:
         """Checks if table exists in database.
 
         Args:
@@ -51,18 +51,16 @@ class LiteTable:
         Returns:
             bool
         """
+        
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
-        database_path = Lite.getDatabasePath()
-        if os.path.exists(database_path):
-            try: tbl = LiteTable(table_name)
-            except TableNotFoundError: return False
-            return True
-        else:
-            return False
+        try: tbl = LiteTable(table_name, lite_connection)
+        except TableNotFoundError: return False
+        return True
 
 
     @staticmethod
-    def isPivotTable(table_name:str) -> bool:
+    def isPivotTable(table_name:str, lite_connection:LiteConnection=None) -> bool:
         """Checks if table is pivot table by counting table columns and checking foreign key references.
 
         Args:
@@ -72,14 +70,14 @@ class LiteTable:
             bool
         """
 
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
+
         # Ensure table exists
-        try: temp_table = LiteTable(table_name)
+        try: temp_table = LiteTable(table_name, lite_connection)
         except: return False
 
         # Check that number of columns in table is equal to 2, not including 'id' field
-        temp_table.cursor.execute(f'PRAGMA table_info({table_name})')
-
-        table_columns = [column[1] for column in temp_table.cursor.fetchall()]
+        table_columns = [column[1] for column in temp_table.executeAndFetch(f'PRAGMA table_info({table_name})')]
         table_columns.remove('id')
 
         if len(table_columns) != 2: return False
@@ -96,7 +94,7 @@ class LiteTable:
 
 
     @staticmethod
-    def createTable(table_name:str, columns:dict, foreign_keys:dict={}):
+    def createTable(table_name:str, columns:dict, foreign_keys:dict={}, lite_connection:LiteConnection=None):
         """Creates a table within the database.
 
         Args:
@@ -108,52 +106,53 @@ class LiteTable:
                 column_name: [foreign_table_name, foreign_column_name]
             }
         """
+
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
+
+        # print(Fore.CYAN, Lite.DEFAULT_CONNECTION, lite_connection,Fore.RESET)
         
         table_desc = [] # list of lines that will be combined to create SQL query string
 
         # Convert columns dict into lines for SQL query
         for column_name in columns:
-            table_desc.append(f'"{column_name}"	{columns[column_name]}')
+            table_desc.append(f"'{column_name}'	{columns[column_name]}")
 
         # Declare primary key
-        table_desc.append(f'PRIMARY KEY("id" AUTOINCREMENT)')
+        table_desc.append(f"PRIMARY KEY('id' AUTOINCREMENT)")
 
         # Declare foreign key relationships
         for column_name in foreign_keys:
-            table_desc.append(f'FOREIGN KEY("{column_name}") REFERENCES "{foreign_keys[column_name][0]}"("{foreign_keys[column_name][1]}")')
+            table_desc.append(f"FOREIGN KEY('{column_name}') REFERENCES '{foreign_keys[column_name][0]}'('{foreign_keys[column_name][1]}')")
 
         # Combine list of lines into newline-separated string, and generate complete sql query string
         table_desc_str = ",\n".join(table_desc) 
         table_sql = f"""
-            CREATE TABLE "{table_name}" (
-                "id" INTEGER NOT NULL UNIQUE,
+            CREATE TABLE '{table_name}' (
+                'id' INTEGER NOT NULL UNIQUE,
                 {table_desc_str}
             );
         """
 
         # Create table within database
-        database_path = Lite.getDatabasePath() # Get database path from environment
-        temp_connection = sqlite3.connect(database_path)
-        temp_cursor = temp_connection.cursor()
-        temp_cursor.execute(table_sql)
-        temp_connection.commit()
+        
+        lite_connection.cursor.execute(table_sql)
+        lite_connection.connection.commit()
 
-        return LiteTable(table_name)
+        return LiteTable(table_name, lite_connection)
 
 
     @staticmethod
-    def deleteTable(table_name:str):
+    def deleteTable(table_name:str, lite_connection:LiteConnection=None):
         """Deletes a given table.
 
         Args:
             table_name (str): Table name
         """
 
-        database_path = Lite.getDatabasePath()
-        temp_connection = sqlite3.connect(database_path)
-        temp_cursor = temp_connection.cursor()
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
-        temp_cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+        lite_connection.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+        lite_connection.connection.commit()
 
 
     def getAllTableNames(self) -> list:
@@ -179,8 +178,8 @@ class LiteTable:
             list: List of query results
         """
 
-        self.cursor.execute(sql_str, values)
-        results = self.cursor.fetchall()
+        self.connection.cursor.execute(sql_str, values)
+        results = self.connection.cursor.fetchall()
 
         return results
 
@@ -193,8 +192,8 @@ class LiteTable:
             values (tuple, optional): Any parameters to be passed to SQLite's .execute() method. Defaults to ().
         """
 
-        self.cursor.execute(sql_str, values)
-        self.connection.commit()
+        self.connection.cursor.execute(sql_str, values)
+        self.connection.connection.commit()
 
 
     def insert(self, columns, or_ignore=False):
@@ -212,7 +211,7 @@ class LiteTable:
         values_str = ", ".join(["?" for cname in columns])
         values_list = [columns[cname] for cname in columns]
 
-        insert_sql = f'INSERT {"OR IGNORE" if or_ignore else ""} INTO {self.table_name} ({columns_str}) VALUES({values_str})'
+        insert_sql = f"INSERT {'OR IGNORE' if or_ignore else ''} INTO {self.table_name} ({columns_str}) VALUES({values_str})"
         self.executeAndCommit(insert_sql, tuple(values_list))
 
 
@@ -236,7 +235,7 @@ class LiteTable:
 
         values_list += where_values
 
-        self.executeAndCommit(f'UPDATE {"OR IGNORE" if or_ignore else ""} {self.table_name} SET {set_str} WHERE {where_str}', tuple(values_list))
+        self.executeAndCommit(f"UPDATE {'OR IGNORE' if or_ignore else ''} {self.table_name} SET {set_str} WHERE {where_str}", tuple(values_list))
 
 
     def select(self, where_columns:list, result_columns:list=['*']) -> list:
@@ -255,9 +254,9 @@ class LiteTable:
         # Refactor pythonic variables into SQLite query string
         get_str = ",".join([cname for cname in result_columns])
         where_str, values_list = self.__where_to_str(where_columns)
-        sql_str = f'SELECT {get_str} FROM {self.table_name} WHERE {where_str}'
+        sql_str = f"SELECT {get_str} FROM {self.table_name} WHERE {where_str}"
         
-        if len(where_columns) < 1: sql_str = f'SELECT {get_str} FROM {self.table_name}'
+        if len(where_columns) < 1: sql_str = f"SELECT {get_str} FROM {self.table_name}"
 
         return self.executeAndFetch(sql_str,tuple(values_list))
 
@@ -273,10 +272,10 @@ class LiteTable:
 
         where_str, values_list = self.__where_to_str(where_columns)
 
-        sql_str = f'DELETE FROM {self.table_name} WHERE {where_str}'
+        sql_str = f"DELETE FROM {self.table_name} WHERE {where_str}"
         
         # Delete all rows if no where conditions provided
-        if len(where_columns) < 1: sql_str = f'DELETE FROM {self.table_name}'
+        if len(where_columns) < 1: sql_str = f"DELETE FROM {self.table_name}"
 
         self.executeAndCommit(sql_str,tuple(values_list))
 
@@ -332,7 +331,7 @@ class LiteTable:
         return [i for i, letter in enumerate(str) if letter == char]
 
 
-    def __init__(self, table_name:str, disable_isolation=False, disable_WAL=False):
+    def __init__(self, table_name:str, lite_connection:LiteConnection=None, disable_isolation=False, disable_WAL=False):
         """LiteTable initializer.
 
         Args:
@@ -346,39 +345,29 @@ class LiteTable:
             TableNotFoundError: Table not found within database
         """
 
-        database_path = Lite.getDatabasePath()
-
-        # Raise an error if the database already exists
-        if not os.path.exists(database_path):
-            raise DatabaseNotFoundError(database_path)
-
-        # Set isolation level
-        if not disable_isolation:
-            self.connection = sqlite3.connect(database_path,isolation_level=None)
-        else:
-            self.connection = sqlite3.connect(database_path)
-            
-        self.cursor = self.connection.cursor()
-
-        # Set journal_mode
-        if not disable_WAL:
-            self.cursor.execute('PRAGMA journal_mode=wal;');
-        else:
-            self.cursor.execute('PRAGMA journal_mode=delete;')
+        if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
+        self.connection = lite_connection
 
         # Check if table with provided name exists
-        if len(self.executeAndFetch(f'SELECT name FROM sqlite_master WHERE type="table" AND name="{table_name}"')) < 1: # Table doesn't exist
-            raise TableNotFoundError(table_name)
+        if self.connection.connection_type == connectionType.SQLITE:
+            if len(self.executeAndFetch(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")) < 1: # Table doesn't exist
+                raise TableNotFoundError(table_name)
+        elif self.connection.connection_type == connectionType.POSTGRESQL:
+            try:
+                self.executeAndFetch(f"SELECT 'public.{table_name}'::regclass")
+            except:
+                raise TableNotFoundError(table_name)
+        
 
         # Store database and table attributes for later use
-        self.database_path = database_path
+        self.database_path = lite_connection.database_path
         self.table_name = table_name
 
 
-    def __del__(self):
-        """Cleans up LiteTable instance by closing SQLite cursor and connection."""
+    # def __del__(self):
+    #     """Cleans up LiteTable instance by closing SQLite cursor and connection."""
 
-        try:
-            self.cursor.close()
-            self.connection.close()
-        except Exception: pass
+    #     try:
+    #         self.connection.cursor.close()
+    #         self.connection.connection.close()
+    #     except Exception: pass
