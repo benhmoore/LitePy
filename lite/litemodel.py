@@ -200,7 +200,7 @@ class LiteModel:
                 if LiteTable.isPivotTable(tName):
                     temp_table.delete([[foreign_key,'=',local_key_value]])
                 else:
-                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]],True)
+                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]])
                 
 
     def __findPath__iteration(self, open_nodes:list, closed_nodes:list, to_model_instance):
@@ -305,23 +305,19 @@ class LiteModel:
         # Load model instance from database if an id is provided
         if _id != None:
 
-            columns = self.table.connection.execute(f'PRAGMA table_info({self.TABLE_NAME})').fetchall()
+            columns = self.table.getColumnNames()
+
             if not _values: _values = self.table.select([['id','=',_id]])
 
+            print(columns, _values)
             # Add columns and values to python class instance as attributes
             for i in range(0,len(columns)):
                 try: value = _values[0][i]
                 except: value = None
-                setattr(self, columns[i][1], value)
+                setattr(self, columns[i], value)
                 
             # Store list of all table column names. Used by .save()
-            self.table_columns = [column[1] for column in columns]
-
-    # def __del__(self):
-    #     try:
-    #         self.table.cursor.close()
-    #         self.table.connection.close()
-    #     except: pass
+            self.table_columns = columns
 
 
     @classmethod
@@ -440,7 +436,11 @@ class LiteModel:
         table.insert(column_values)
 
         # Get latest instance with this id
-        sql_str = f'SELECT id FROM {TABLE_NAME} WHERE {list(column_values.keys())[0]} = ? ORDER BY id DESC'
+        if table.connection.connection_type == connectionType.SQLITE:
+            sql_str = f'SELECT id FROM {TABLE_NAME} WHERE {list(column_values.keys())[0]} = ? ORDER BY id DESC'
+        elif table.connection.connection_type == connectionType.POSTGRESQL:
+            sql_str = f'SELECT id FROM {TABLE_NAME} WHERE {list(column_values.keys())[0]} = %s ORDER BY id DESC'
+
         ids = table.connection.execute(sql_str, tuple([column_values[list(column_values.keys())[0]]])).fetchall()
 
         # This check should never fail
@@ -550,6 +550,8 @@ class LiteModel:
             
         else: # Is not a many-to-many relationship
 
+            print("NOT A MANY-TO-MANY")
+
             # Derive foreign keys
             self_fkey = model_instance.__get_foreign_key_from_model(self)
             model_fkey = self.__get_foreign_key_from_model(model_instance)
@@ -560,6 +562,7 @@ class LiteModel:
                     setattr(self, model_fkey, model_instance.id)
                     self.save()
                 else:
+                    print(Fore.RED, model_fkey, getattr(self, model_fkey),Fore.RESET)
                     raise RelationshipError(f"There is a pre-existing relationship. Remove it with .detach() before proceeding.")
 
             else: # model_instance contains foreign key reference
@@ -567,6 +570,7 @@ class LiteModel:
                     setattr(model_instance, self_fkey, self.id)
                     model_instance.save()
                 else:
+                    print(Fore.RED, model_fkey, getattr(self, model_fkey),Fore.RESET)
                     raise RelationshipError(f"There is a pre-existing relationship. Remove it with .detach() before proceeding.")
 
         return True

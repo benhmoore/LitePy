@@ -51,10 +51,10 @@ class LiteTable:
                 phrases = fkey[0].split('REFERENCES')
                 if len(phrases) != 2: continue
 
-                local_key_phrase, foreign_key_phrase = phrases
+                foreign_key_phrase, local_key_phrase = phrases
                 local_key = local_key_phrase[local_key_phrase.find('(')+1:local_key_phrase.find(')')].strip()
                 foreign_key = foreign_key_phrase[foreign_key_phrase.find('(')+1:foreign_key_phrase.find(')')].strip()
-                table_name = foreign_key_phrase.split('(')[0].strip()
+                table_name = local_key_phrase.split('(')[0].strip()
 
                 if table_name not in foreign_key_map: foreign_key_map[table_name] = []
                 foreign_key_map[table_name].append([local_key, foreign_key])
@@ -100,10 +100,7 @@ class LiteTable:
         except: return False
 
         # Check that number of columns in table is equal to 2, not including 'id' field
-        if lite_connection.connection_type == connectionType.SQLITE:
-            table_columns = [column[1] for column in lite_connection.execute(f'PRAGMA table_info({table_name})').fetchall()]
-        elif lite_connection.connection_type == connectionType.POSTGRESQL:
-            table_columns = [column[0] for column in lite_connection.execute(f"select column_name from INFORMATION_SCHEMA.COLUMNS where table_name = '{table_name}'").fetchall()]
+        table_columns = temp_table.getColumnNames()
 
         table_columns.remove('id')
 
@@ -141,16 +138,18 @@ class LiteTable:
         
         table_desc = [] # list of lines that will be combined to create SQL query string
 
+        # Declare primary key (PostgreSQL)
+        if lite_connection.connection_type == connectionType.POSTGRESQL:
+            table_desc.append(f'"id" serial primary key')
+
         # Convert columns dict into lines for SQL query
         for column_name in columns:
             table_desc.append(f'"{column_name}"	{columns[column_name]}')
 
-        # Declare primary key
+        # Declare primary key (SQLite)
         if lite_connection.connection_type == connectionType.SQLITE:
             table_desc.append('"id" INTEGER NOT NULL UNIQUE')
             table_desc.append(f'PRIMARY KEY("id" AUTOINCREMENT)')
-        elif lite_connection.connection_type == connectionType.POSTGRESQL:
-            table_desc.append(f'"id" serial primary key')
 
         # Declare foreign key relationships
         for column_name in foreign_keys:
@@ -181,7 +180,10 @@ class LiteTable:
 
         if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
-        lite_connection.execute(f"DROP TABLE IF EXISTS {table_name}").commit()
+        if lite_connection.connection_type == connectionType.SQLITE:
+            lite_connection.execute(f"DROP TABLE IF EXISTS {table_name}").commit()
+        elif lite_connection.connection_type == connectionType.POSTGRESQL:
+            lite_connection.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE").commit()
 
     # PostgreSQL Support: ✅
     @staticmethod
@@ -201,6 +203,22 @@ class LiteTable:
         names = [row[0] for row in rows]
         return names
 
+
+    # PostgreSQL Support: ✅
+    def getColumnNames(self) -> list:
+        """Returns a list of the table's column names.
+
+        Returns:
+            list: Column names
+        """
+        
+        if self.connection.connection_type == connectionType.SQLITE:
+            table_columns = [column[1] for column in self.connection.execute(f'PRAGMA table_info({self.table_name})').fetchall()]
+        elif self.connection.connection_type == connectionType.POSTGRESQL:
+            table_columns = [column[0] for column in self.connection.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{self.table_name}'").fetchall()]
+
+        # print(Back.BLUE, table_columns, Back.RESET)
+        return table_columns
 
     # PostgreSQL Support: ✅
     def insert(self, columns, or_ignore=False):

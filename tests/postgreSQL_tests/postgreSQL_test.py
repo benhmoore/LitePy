@@ -1,16 +1,7 @@
 import pytest, sqlite3, os
 from lite import *
 
-# Setup database
-test_db = 'pytest.sqlite'
-# os.environ['DB_DATABASE'] = 'pytest.sqlite'
-
-try: os.remove('pytest.sqlite')
-except Exception: pass
-
-Lite.createDatabase(test_db)
-
-Lite.connect(LiteConnection(connectionType.SQLITE, database_path=test_db))
+Lite.connect(LiteConnection(connectionType.POSTGRESQL, host='localhost', username='benmoore', password='', database='benmoore', port='5432'))
 
 # Create models for tests
 class User(LiteModel):
@@ -121,6 +112,7 @@ def test_create_users(columns, expected):
 ])
 def test_create_cars(columns, expected):
     car = Car.create(columns)
+    print(car)
     assert len(Car.all()) == expected
     assert car.id == expected
 
@@ -168,7 +160,6 @@ def test_attach():
     product_b = Product.findOrFail(2)
 
     user_b.attach(user_a)
-
     user_b.attach(car_1)
     
     user_a.attach(bank_acc)
@@ -311,3 +302,12 @@ def test_find_path():
     
 
     # assert False == True
+
+
+# Test Delete Tables
+def test_delete_tables():
+    LiteTable.deleteTable('users_custom_table_name')
+    LiteTable.deleteTable('cars')
+    LiteTable.deleteTable('c_u')
+    LiteTable.deleteTable('bank_accounts')
+    LiteTable.deleteTable('products')

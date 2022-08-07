@@ -69,7 +69,9 @@ class LiteConnection:
 
         def fetchall(self) -> list:
             """Makes a fetchall call to the database using the query passed to .execute()."""
-            return self.outer.cursor.fetchall()
+            result = self.outer.cursor.fetchall()
+            print(Fore.YELLOW,result,Fore.RESET)
+            return result
 
 
         def fetchone(self):
