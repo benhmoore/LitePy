@@ -305,7 +305,7 @@ class LiteModel:
         # Load model instance from database if an id is provided
         if _id != None:
 
-            columns = self.table.executeAndFetch(f'PRAGMA table_info({self.TABLE_NAME})')
+            columns = self.table.connection.execute(f'PRAGMA table_info({self.TABLE_NAME})').fetchall()
             if not _values: _values = self.table.select([['id','=',_id]])
 
             # Add columns and values to python class instance as attributes
@@ -441,7 +441,7 @@ class LiteModel:
 
         # Get latest instance with this id
         sql_str = f'SELECT id FROM {TABLE_NAME} WHERE {list(column_values.keys())[0]} = ? ORDER BY id DESC'
-        ids = table.executeAndFetch(sql_str, tuple([column_values[list(column_values.keys())[0]]]))
+        ids = table.connection.execute(sql_str, tuple([column_values[list(column_values.keys())[0]]])).fetchall()
 
         # This check should never fail
         if len(ids) > 0:
@@ -759,9 +759,9 @@ class LiteModel:
             select_queries = []
             for i in range(0, len(self_fkey)):
                 select_queries.append(f'SELECT {model_fkey[i]} FROM {pivot_table_name} WHERE {self_fkey[i]} = {self.id}')
-            relationships = self.table.executeAndFetch(' UNION '.join(select_queries))
+            relationships = self.table.connection.execute(' UNION '.join(select_queries)).fetchall()
         else:
-            relationships = self.table.executeAndFetch(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}')
+            relationships = self.table.connection.execute(f'SELECT {model_fkey} FROM {pivot_table_name} WHERE {self_fkey} = {self.id}').fetchall()
 
         for rel in relationships:
             try: sibling = model.find(rel[0])

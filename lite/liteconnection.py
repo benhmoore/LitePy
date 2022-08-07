@@ -1,12 +1,11 @@
-import psycopg2, sqlite3, os
+import sqlite3, psycopg2, os
 from enum import Enum, IntEnum
 from lite import *
-
-
 
 class connectionType(Enum):
     SQLITE = 1
     POSTGRESQL = 2
+
 
 class LiteConnection:
 
@@ -19,6 +18,7 @@ class LiteConnection:
             "database_path": self.database_path,
         }
         return connection_config.__str__()
+        
 
     def __init__(self, connection_type:connectionType=connectionType.SQLITE, host:str=None, port:str=None, database:str=None, username:str=None, password:str=None, database_path:str=None, isolation:bool=False, WAL:bool=True):
         self.connection_type = connection_type
@@ -26,8 +26,6 @@ class LiteConnection:
         self.port = port
         self.database = database
         self.database_path = database_path
-        # self.username = username
-        # self.password = password
 
         if connection_type == connectionType.SQLITE:
 
@@ -35,7 +33,7 @@ class LiteConnection:
             if not os.path.exists(database_path):
                 raise DatabaseNotFoundError(database_path)
 
-            # Enable/disable isolation
+             # Enable/disable isolation
             if isolation:
                 self.connection = sqlite3.connect(database_path)
             else:
@@ -50,8 +48,38 @@ class LiteConnection:
                 self.cursor.execute('PRAGMA journal_mode=delete;')
 
         elif connection_type == connectionType.POSTGRESQL:
+            
             self.connection = psycopg2.connect(database=database, host=host, user=username, password=password, port=port)
             self.cursor = self.connection.cursor()
+
+    
+    class ExecuteResult:
+        """An instance of this class is returned by a call to LiteDriver.execute().
+        It includes modifier methods that can be stringed onto the .execute() call to commit or fetch.
+        """
+
+        def __init__(self, lite_driver):
+            self.outer = lite_driver
+
+
+        def commit(self) -> None:
+            """Commits changes made by .execute() to the database."""
+            self.outer.connection.commit()
+        
+
+        def fetchall(self) -> list:
+            """Makes a fetchall call to the database using the query passed to .execute()."""
+            return self.outer.cursor.fetchall()
+
+
+        def fetchone(self):
+            """Makes a fetchone call to the database using the query passed to .execute()."""
+            return self.outer.cursor.fetchone()
+
+
+    def execute(self, sql_str:str, values:tuple=()):
+        self.cursor.execute(sql_str, values)
+        return self.ExecuteResult(self)
 
 
 
