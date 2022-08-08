@@ -1,5 +1,5 @@
 from multiprocessing.sharedctypes import Value
-import sqlite3, os
+import os
 from lite import *
 
 class LiteTable:

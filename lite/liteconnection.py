@@ -1,4 +1,9 @@
-import sqlite3, psycopg2, os
+try:
+    import psycopg2
+except ImportError:
+    pass
+
+import sqlite3, os
 from enum import Enum, IntEnum
 from lite import *
 
