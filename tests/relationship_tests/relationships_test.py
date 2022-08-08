@@ -7,7 +7,7 @@ try: os.remove(relationship_database)
 except: pass
 
 Lite.createDatabase(relationship_database)
-Lite.connect(LiteConnection(connectionType.SQLITE,database_path=relationship_database))
+Lite.connect(LiteConnection(DB.SQLITE,database_path=relationship_database))
 
 LiteTable.createTable('users_custom_table_name', {
     'name': 'TEXT',

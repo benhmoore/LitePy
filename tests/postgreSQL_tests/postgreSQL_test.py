@@ -1,7 +1,7 @@
 import pytest, sqlite3, os
 from lite import *
 
-Lite.connect(LiteConnection(connectionType.POSTGRESQL, host='localhost', username='benmoore', password='', database='benmoore', port='5432'))
+Lite.connect(LiteConnection(DB.POSTGRESQL, host='localhost', username='benmoore', password='', database='benmoore', port='5432'))
 
 # Create models for tests
 class User(LiteModel):
@@ -28,7 +28,7 @@ class Car(LiteModel):
     def owners(self) -> LiteCollection:
         return self.belongsToMany(User)
 
-Car.customPivotWith(User, 'c_u')
+Car.pivotsWith(User, table_name='c_u')
 
 class Bank_Account(LiteModel):
     

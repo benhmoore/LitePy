@@ -10,7 +10,7 @@ except Exception: pass
 
 Lite.createDatabase(test_db)
 
-Lite.connect(LiteConnection(connectionType.SQLITE, database_path=test_db))
+Lite.connect(LiteConnection(DB.SQLITE, database_path=test_db))
 
 # Create models for tests
 class User(LiteModel):
@@ -37,7 +37,7 @@ class Car(LiteModel):
     def owners(self) -> LiteCollection:
         return self.belongsToMany(User)
 
-Car.customPivotWith(User, 'c_u')
+Car.pivotsWith(User, 'c_u')
 
 class Bank_Account(LiteModel):
     

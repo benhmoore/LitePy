@@ -2,7 +2,7 @@ import sqlite3, psycopg2, os
 from enum import Enum, IntEnum
 from lite import *
 
-class connectionType(Enum):
+class DB(Enum):
     SQLITE = 1
     POSTGRESQL = 2
 
@@ -20,14 +20,14 @@ class LiteConnection:
         return connection_config.__str__()
         
 
-    def __init__(self, connection_type:connectionType=connectionType.SQLITE, host:str=None, port:str=None, database:str=None, username:str=None, password:str=None, database_path:str=None, isolation:bool=False, WAL:bool=True):
+    def __init__(self, connection_type:DB=DB.SQLITE, host:str=None, port:str=None, database:str=None, username:str=None, password:str=None, database_path:str=None, isolation:bool=False, WAL:bool=True):
         self.connection_type = connection_type
         self.host = host
         self.port = port
         self.database = database
         self.database_path = database_path
 
-        if connection_type == connectionType.SQLITE:
+        if connection_type == DB.SQLITE:
 
             # Raise an error if the database doesn't exist
             if not os.path.exists(database_path):
@@ -47,7 +47,7 @@ class LiteConnection:
             else:
                 self.cursor.execute('PRAGMA journal_mode=delete;')
 
-        elif connection_type == connectionType.POSTGRESQL:
+        elif connection_type == DB.POSTGRESQL:
             
             self.connection = psycopg2.connect(database=database, host=host, user=username, password=password, port=port)
             self.cursor = self.connection.cursor()
@@ -70,7 +70,6 @@ class LiteConnection:
         def fetchall(self) -> list:
             """Makes a fetchall call to the database using the query passed to .execute()."""
             result = self.outer.cursor.fetchall()
-            print(Fore.YELLOW,result,Fore.RESET)
             return result
 
 

@@ -78,7 +78,7 @@ class Lite:
     @staticmethod
     def connect(lite_connection:LiteConnection):
         Lite.DEFAULT_CONNECTION = lite_connection
-        print(Fore.RED, "Declared connection",Fore.RESET)
+        print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
 
     @staticmethod
     def declareConnection(label:str, lite_connection:LiteConnection):

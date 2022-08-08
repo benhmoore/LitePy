@@ -24,19 +24,17 @@ class LiteTable:
         """
 
         # Get raw list of foreign key relationships using 'PRAGMA'
-        if self.connection.connection_type == connectionType.SQLITE:
+        if self.connection.connection_type == DB.SQLITE:
             foreign_keys = self.connection.execute(f"PRAGMA foreign_key_list({self.table_name})").fetchall()
-        elif self.connection.connection_type == connectionType.POSTGRESQL:
+        elif self.connection.connection_type == DB.POSTGRESQL:
             foreign_keys = self.connection.execute(f"SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='{self.table_name}'::regclass").fetchall()
-
-        print(Back.CYAN,foreign_keys,Back.RESET)
 
         foreign_key_map = {
             # table_name: [local_key, foreign_key]
         }
 
         # Generate key mapping
-        if self.connection.connection_type == connectionType.SQLITE:
+        if self.connection.connection_type == DB.SQLITE:
             for fkey in foreign_keys:
                 table_name = fkey[2]
                 foreign_key = fkey[3]
@@ -45,7 +43,7 @@ class LiteTable:
                 if table_name not in foreign_key_map: foreign_key_map[table_name] = []
                 foreign_key_map[table_name].append([local_key, foreign_key])
         
-        elif self.connection.connection_type == connectionType.POSTGRESQL:
+        elif self.connection.connection_type == DB.POSTGRESQL:
             for fkey in foreign_keys:
                 
                 phrases = fkey[0].split('REFERENCES')
@@ -133,13 +131,11 @@ class LiteTable:
         """
 
         if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
-
-        # print(Fore.CYAN, Lite.DEFAULT_CONNECTION, lite_connection,Fore.RESET)
         
         table_desc = [] # list of lines that will be combined to create SQL query string
 
         # Declare primary key (PostgreSQL)
-        if lite_connection.connection_type == connectionType.POSTGRESQL:
+        if lite_connection.connection_type == DB.POSTGRESQL:
             table_desc.append(f'"id" serial primary key')
 
         # Convert columns dict into lines for SQL query
@@ -147,7 +143,7 @@ class LiteTable:
             table_desc.append(f'"{column_name}"	{columns[column_name]}')
 
         # Declare primary key (SQLite)
-        if lite_connection.connection_type == connectionType.SQLITE:
+        if lite_connection.connection_type == DB.SQLITE:
             table_desc.append('"id" INTEGER NOT NULL UNIQUE')
             table_desc.append(f'PRIMARY KEY("id" AUTOINCREMENT)')
 
@@ -180,9 +176,9 @@ class LiteTable:
 
         if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
-        if lite_connection.connection_type == connectionType.SQLITE:
+        if lite_connection.connection_type == DB.SQLITE:
             lite_connection.execute(f"DROP TABLE IF EXISTS {table_name}").commit()
-        elif lite_connection.connection_type == connectionType.POSTGRESQL:
+        elif lite_connection.connection_type == DB.POSTGRESQL:
             lite_connection.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE").commit()
 
     # PostgreSQL Support: ✅
@@ -195,9 +191,9 @@ class LiteTable:
         """
         if not lite_connection: lite_connection = Lite.DEFAULT_CONNECTION
 
-        if lite_connection.connection_type == connectionType.SQLITE:
+        if lite_connection.connection_type == DB.SQLITE:
             rows = lite_connection.execute("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name").fetchall()
-        elif lite_connection.connection_type == connectionType.POSTGRESQL:
+        elif lite_connection.connection_type == DB.POSTGRESQL:
             rows = lite_connection.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name").fetchall()
         
         names = [row[0] for row in rows]
@@ -212,12 +208,11 @@ class LiteTable:
             list: Column names
         """
         
-        if self.connection.connection_type == connectionType.SQLITE:
+        if self.connection.connection_type == DB.SQLITE:
             table_columns = [column[1] for column in self.connection.execute(f'PRAGMA table_info({self.table_name})').fetchall()]
-        elif self.connection.connection_type == connectionType.POSTGRESQL:
+        elif self.connection.connection_type == DB.POSTGRESQL:
             table_columns = [column[0] for column in self.connection.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{self.table_name}'").fetchall()]
 
-        # print(Back.BLUE, table_columns, Back.RESET)
         return table_columns
 
     # PostgreSQL Support: ✅
@@ -234,9 +229,9 @@ class LiteTable:
         # Refactor pythonic variables into SQLite query string
         columns_str = ", ".join([cname for cname in columns])
 
-        if self.connection.connection_type == connectionType.SQLITE:
+        if self.connection.connection_type == DB.SQLITE:
             values_str = ", ".join(["?" for cname in columns])
-        elif self.connection.connection_type == connectionType.POSTGRESQL:
+        elif self.connection.connection_type == DB.POSTGRESQL:
             values_str = ", ".join(["%s" for cname in columns])
         values_list = [columns[cname] for cname in columns]
 
@@ -259,9 +254,9 @@ class LiteTable:
         """
 
         # Refactor pythonic variables into SQLite query string
-        if self.connection.connection_type == connectionType.SQLITE:
+        if self.connection.connection_type == DB.SQLITE:
             set_str = ",".join([f'{cname} = ?' for cname in update_columns])
-        elif self.connection.connection_type == connectionType.POSTGRESQL:
+        elif self.connection.connection_type == DB.POSTGRESQL:
             set_str = ",".join([f'{cname} = %s' for cname in update_columns])
         values_list = [update_columns[cname] for cname in update_columns] # collect update values
         where_str, where_values = self.__where_to_str(where_columns)
@@ -351,7 +346,7 @@ class LiteTable:
             new_where_str += i
 
         # Convert '?' to '%s' when using PostgreSQL
-        if self.connection.connection_type == connectionType.POSTGRESQL:
+        if self.connection.connection_type == DB.POSTGRESQL:
             new_where_str = new_where_str.replace('?','%s')
 
         return (new_where_str, values_list)
@@ -391,10 +386,10 @@ class LiteTable:
         self.connection = lite_connection
 
         # Check if table with provided name exists
-        if self.connection.connection_type == connectionType.SQLITE:
+        if self.connection.connection_type == DB.SQLITE:
             if len(self.connection.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'").fetchall()) < 1: # Table doesn't exist
                 raise TableNotFoundError(table_name)
-        elif self.connection.connection_type == connectionType.POSTGRESQL:
+        elif self.connection.connection_type == DB.POSTGRESQL:
             if len(self.connection.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='{table_name}'").fetchall()) < 1:
                 raise TableNotFoundError(table_name)
         
