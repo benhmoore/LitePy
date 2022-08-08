@@ -75,14 +75,13 @@ Of course, most use cases are orders of magnitude more complex than this example
 
 If this example piqued your interest, continue on for all the gritty details.
 
-------
-
 ## Installation
 If you just want to use Lite in your projects (not tinker with the source), pip is the recommended method for installation:
 
 ```pip3 install lite```
 
 To build from source, clone this repository and install a live, development version with pip:
+
 ```pip3 install -e [repo_directory]```
 
 ### PostgreSQL Support
@@ -92,8 +91,6 @@ To use your Lite installation with PostgreSQL databases, you need to install Pos
 brew install postgresql
 pip3 install psycopg2-binary
 ```
-
------
 
 ## Documentation
 
