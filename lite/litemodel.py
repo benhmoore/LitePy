@@ -14,7 +14,7 @@ class LiteModel:
     PIVOT_TABLE_CACHE = {} # Used by belongsToMany() to cache pivot table names and foreign keys
 
 
-    def __str__(self): return self.toDict().__str__()
+    def __str__(self): return self._toDict().__str__()
 
 
     def __repr__(self):
@@ -468,7 +468,7 @@ class LiteModel:
 
 
     @classmethod
-    def createMany(self,column_list:list) -> LiteCollection:
+    def createMany(self, column_list:list) -> LiteCollection:
         """Creates many new instances of a LiteModel and returns them within a LiteCollection.
 
         Args:
@@ -506,11 +506,16 @@ class LiteModel:
 
     @classmethod
     def accessedThrough(self, lite_connection:LiteConnection):
+        """Declares the connection Lite should use for this model.
+
+        Args:
+            lite_connection (LiteConnection): Connection pointed to the database in which this model is stored
+        """
         self.DEFAULT_CONNECTION = lite_connection
 
 
-    def toDict(self) -> dict:
-        """Converts LiteModel instance into human-readable dict, truncating string values where necessary.
+    def _toDict(self) -> dict:
+        """Internal method. Converts LiteModel instance into human-readable dict, truncating string values where necessary.
 
         Returns:
             dict: LiteModel attributes as dictionary

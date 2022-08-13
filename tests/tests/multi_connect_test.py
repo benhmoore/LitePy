@@ -91,11 +91,3 @@ freezing.attachMany([fall, winter])
 hot.attachMany([summer, fall])
 
 print(hot.seasons())
-
-
-def test_remove_databases():
-    try: os.remove('db_1.sqlite')
-    except Exception: pass
-
-    try: os.remove('db_2.sqlite')
-    except Exception: pass
