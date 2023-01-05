@@ -5,7 +5,7 @@ except ImportError:
 
 import sqlite3, os
 from enum import Enum, IntEnum
-from lite import *
+from lite import DatabaseNotFoundError
 
 class DB(Enum):
     SQLITE = 1

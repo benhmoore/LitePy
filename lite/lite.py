@@ -1,3 +1,4 @@
+from pathlib import Path
 from colorama import Fore, Back, Style
 
 import os
@@ -73,7 +74,7 @@ class Lite:
         if os.path.exists(database_path): raise DatabaseAlreadyExists(database_path)
 
         # Create database
-        open(database_path, 'a').close() # Create DB file
+        Path(database_path).touch()
 
     @staticmethod
     def connect(lite_connection:LiteConnection):
