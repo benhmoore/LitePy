@@ -1,4 +1,4 @@
-import pytest, sqlite3, os
+import pytest, sqlite3, os, time
 from lite import *
 
 # Setup database
@@ -68,7 +68,7 @@ LiteTable.createTable('cars', {
     'model': 'TEXT',
 })
 
-# Pivot table
+# Pivot table)
 LiteTable.createTable('c_u', {
     'cid': 'INTEGER',
     'uid': 'INTEGER',

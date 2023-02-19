@@ -134,6 +134,11 @@ class LiteTable:
         
         table_desc = [] # list of lines that will be combined to create SQL query string
 
+        # Create timestamp fields
+        if lite_connection.connection_type == DB.SQLITE:
+            table_desc.append('"created" TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+            table_desc.append('"updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+
         # Declare primary key (PostgreSQL)
         if lite_connection.connection_type == DB.POSTGRESQL:
             table_desc.append(f'"id" serial primary key')
@@ -153,6 +158,7 @@ class LiteTable:
 
         # Combine list of lines into newline-separated string, and generate complete sql query string
         table_desc_str = ",\n".join(table_desc) 
+
         table_sql = f"""
             CREATE TABLE "{table_name}" (
                 {table_desc_str}
@@ -161,6 +167,8 @@ class LiteTable:
 
         # Create table within database
         lite_connection.execute(table_sql).commit()
+
+        lite_connection.execute(f"CREATE TRIGGER update_timestamp_{table_name} AFTER UPDATE ON {table_name} BEGIN UPDATE {table_name} SET updated = CURRENT_TIMESTAMP WHERE id = OLD.id; END;").commit()
 
         return LiteTable(table_name, lite_connection)
 
