@@ -872,10 +872,6 @@ class LiteModel:
             LiteCollection or bool: Either the path or False for failure
         """
 
-        # Lists used to measure speed of path finding algorithms in real time
-        n_times = []
-        r_times = []
-
         setattr(self, 'parent', None)
         setattr(to_model_instance, 'parent', None)
 

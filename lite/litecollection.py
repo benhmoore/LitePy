@@ -25,6 +25,28 @@ class LiteCollection:
         return print_list.__str__()
 
 
+    def __add__(self, other):
+
+        if other.__class__.__name__ == 'LiteCollection':
+            for model in other.list:
+                if model not in self.list:
+                    self.list.append(model)
+        elif other.__class__.__name__ == 'list':
+            for model in other:
+                if model not in self.list:
+                    self.list.append(model)
+        else:
+            base_classes = []
+            for bc in other.__class__.__bases__:
+                print(bc)
+                base_classes.append(bc.__name__)
+
+            if 'LiteModel' in base_classes:
+                if other not in self.list:
+                    self.list.append(other)
+
+        return LiteCollection(self.list)
+
     def __len__(self):
         return len(self.list)
 
@@ -81,11 +103,52 @@ class LiteCollection:
 
         self.list.append(model_instance)
 
+    def attachManyToAll(self, model_instances:list, self_fkey:str=None, model_fkey:str=None):
+        """Attaches a list of model instances to the all model instances in the collection.
+
+        Args:
+            model_instances (list): List of LiteModel instances
+
+        Raises:
+            RelationshipError: Relationship already exists.
+        """
+
+        for model in self.list:
+            model.attachMany(model_instances)
+
+    def attachToAll(self, model_instance, self_fkey:str=None, model_fkey:str=None):
+        """Attaches a model instance to the all model instances in the collection.
+
+        Args:
+            model_instance (LiteModel): LiteModel instance
+
+        Raises:
+            RelationshipError: Relationship already exists.
+        """
+
+        for model in self.list:
+            model.attach(model_instance, self_fkey, model_fkey)
+
+    def first(self):
+        """Returns the first model instance in the collection."""
+
+        return self.list[0]
+
+    def last(self):
+        """Returns the last model instance in the collection."""
+
+        return self.list[-1]
 
     def fresh(self):
         """Retrieves a fresh copy of each model instance in the collection from the database."""
 
         for model in self.list: model.fresh()
+
+
+    def deleteAll(self):
+        """Deletes all model instances in the collection from the database."""
+
+        for model in self.list: model.delete()
 
     
     def modelKeys(self) -> list:
