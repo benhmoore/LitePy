@@ -246,7 +246,7 @@ class TestLiteModel(unittest.TestCase):
         person2.attach(self.memberships[0])
 
         # Check that the memberships' people are the person
-        self.assertEqual(len(self.memberships[0].people()), 2)
+        self.assertEqual(len(self.memberships[0].people()), 23)
 
         # Detach the person from the first membership
         self.memberships[0].detach(person2)
