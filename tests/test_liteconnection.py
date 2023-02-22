@@ -42,5 +42,6 @@ class TestLiteConnection(unittest.TestCase):
         result = self.conn.execute(select_data_sql).fetchall()
         self.assertEqual(result, [(1, "John")])
 
+
 if __name__ == '__main__':
     unittest.main()
