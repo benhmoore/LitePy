@@ -1,42 +1,46 @@
-import re, typing
-from lite import *
+import re
+import typing
+from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB
+from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
+
 
 class LiteModel:
-    """Describes a distinct model for database storage and methods for operating upon it.
+    """Describes a distinct model for database storage and methods
+    for operating upon it.
 
     Raises:
         TypeError: Comparison between incompatible types.
         ModelInstanceNotFoundError: Model does not exist in database.
         RelationshipError: Relationship does not match required status.
     """
-    DEFAULT_CONNECTION = None # Overridden by LiteModel.connect()
-    CUSTOM_PIVOT_TABLES = {} # Filled by calls to .pivotsWith()
-    PIVOT_TABLE_CACHE = {} # Used by belongsToMany() to cache pivot table names and foreign keys
+    DEFAULT_CONNECTION = None  # Overridden by LiteModel.connect()
+    CUSTOM_PIVOT_TABLES = {}  # Filled by calls to .pivotsWith()
+    PIVOT_TABLE_CACHE = {}  # Used by belongsToMany()
 
-
-    def __str__(self): return self._toDict().__str__()
-
+    def __str__(self):
+        return self._toDict().__str__()
 
     def __repr__(self):
         attributes = []
         for key in self.table_columns:
-            attributes.append(getattr(self,key))
+            attributes.append(getattr(self, key))
 
         return str(tuple(attributes))
 
-
     def __lt__(self, other):
-        try: getattr(other, 'id')
-        except: raise TypeError
-        
+        try:
+            getattr(other, 'id')
+        except Exception as exc:
+            raise TypeError from exc
+
         if self.id < other.id:
             return True
-        else:
-            return False
 
+        return False
 
     def __eq__(self, other):
-        # Collect base classes of class being compared to make sure it is a LiteModel
+        # Collect base classes of class being compared
+        # to make sure it is a LiteModel
         base_classes = []
         for bc in other.__class__.__bases__:
             base_classes.append(bc.__name__)
@@ -46,17 +50,19 @@ class LiteModel:
                 if self.table_columns == other.table_columns:
 
                     for col in self.table_columns:
-                        if getattr(self, col) != getattr(other, col): # If any column differs in value, these instances are not equal
+                        # If any column differs in value,
+                        # these instances are not equal
+                        if getattr(self, col) != getattr(other, col):
                             return False
-                    
+
                     return True
         return False
 
-
-    def __pluralize(self, noun:str) -> str:
+    def __pluralize(self, noun: str) -> str:
         """Returns plural form of noun. Used for table name derivations.
 
-        Algorithm sourced from: https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
+        Algorithm sourced from:
+        https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
 
         Args:
             noun (str): Singular noun
@@ -73,9 +79,9 @@ class LiteModel:
         else:
             return noun + 's'
 
-
     def __get_table_name(self) -> str:
-        """Returns the derived table name by getting the plural noun form of the LiteModel instance's name.
+        """Returns the derived table name by getting the plural noun form of
+        the LiteModel instance's name.
 
         Returns:
             str: Derived table name
@@ -83,8 +89,7 @@ class LiteModel:
 
         return self.__pluralize(self.__class__.__name__.lower())
 
-
-    def __has_column(self, column_name:str) -> bool:
+    def __has_column(self, column_name: str) -> bool:
         """Checks if LiteModel instance has a given field or column.
 
         Args:
@@ -93,19 +98,19 @@ class LiteModel:
         Returns:
             bool
         """
-        
+
         if column_name in self.table_columns:
             return True
-        else:
-            return False
-
+        return False
 
     def __get_foreign_key_from_model(self, model) -> str:
-        """Derives name of foreign key within current instance that references passed-in model.
+        """Derives name of foreign key within current instance
+        that references passed-in model.
 
-        This is used to get the `primary key` value of the parent or child to this model.
-        For example, if a `User` belongs to an `Account`, calling this method on `User`
-        and passing in `Account` would return the name of the foreign key column referencing
+        This is used to get the `primary key` value of the parent or
+        child to this model.For example, if a `User` belongs to an `Account`,
+        calling this method on `User` and passing in `Account` would return
+        the name of the foreign key column referencing
         the particular `Account` instance the current `User` belongs to.
 
         - Called by attach(), detach(), belongsTo(), hasOne(), and hasMany().
@@ -114,26 +119,26 @@ class LiteModel:
             model (LiteModel): LiteModel class or instance
 
         Returns:
-            str: Name of foreign key column referencing `parent` model instance.
+            str: Name of foreign key column referencing `parent` model instance
         """
-        
+
         # Get conventional foreign key name and table name
-        try: # Passed model is actually an instance
+        try:  # Passed model is actually an instance
             self_fkey = f'{model.__class__.__name__.lower()}_id'
             model_table_name = model.TABLE_NAME
-        except: # Passed model is a LiteModel class
+        except AttributeError:  # Passed model is a LiteModel class
             self_fkey = f'{model.__name__.lower()}_id'
             model_table_name = self.__pluralize(model.__name__.lower())
 
-        # Check if this table has a custom foreign key column name 
+        # Check if this table has a custom foreign key column name
         if model_table_name in self.FOREIGN_KEY_MAP:
             self_fkey = self.FOREIGN_KEY_MAP[model_table_name][0][1]
 
         return self_fkey
 
-
     def __get_pivot_name(self, model) -> str:
-        """Returns the pivot table between `self` and the given LiteModel instance or class, if it exists.
+        """Returns the pivot table between `self` and the given LiteModel
+        instance or class, if it exists.
 
         Args:
             model (LiteModel): LiteModel class or instance
@@ -142,40 +147,48 @@ class LiteModel:
             str: Name of pivot table
         """
 
-        # Check CUSTOM_PIVOT_TABLES for any pivot tables with custom names that define relationships between these two models
+        # Check CUSTOM_PIVOT_TABLES for custom pivot table names
+        # that define relationships between these two models
         self_name = self.__class__.__name__
-        try: 
+        try:
             model_name = model.__class__.__name__
-            if model_name == 'type': raise Exception
-        except: model_name = getattr(model, '__name__')
+            if model_name == 'type':
+                raise AttributeError
+        except AttributeError: 
+            model_name = getattr(model, '__name__')
 
-        for name in self.CUSTOM_PIVOT_TABLES:
-            if self.CUSTOM_PIVOT_TABLES[name][:2] == [model_name, self_name] or self.CUSTOM_PIVOT_TABLES[name][:2] == [self_name, model_name]:
-                lite_connection = self.CUSTOM_PIVOT_TABLES[name][2]
-                return name, lite_connection
+        for pivot_table_name, values in self.CUSTOM_PIVOT_TABLES.items():
+            # Check if this pivot table is between these two models
+            if set(values[:2]) == set([model_name, self_name]):
+                lite_connection = values[2]
+                return pivot_table_name, lite_connection
 
         # Otherwise, derive conventional naming scheme for pivot tables
-        # This table must be stored in the database denoted by Lite's DEFAULT CONNECTION
+        # This table must be stored in the database denoted by Lite's
+        # DEFAULT CONNECTION
 
         model_names = []
         model_names.append(self.__class__.__name__.lower())
 
-        try: model_name = getattr(model, '__name__').lower()
-        except: model_name = model.__class__.__name__.lower()
+        try:
+            model_name = getattr(model, '__name__').lower()
+        except AttributeError:
+            model_name = model.__class__.__name__.lower()
 
         model_names.append(model_name)
 
-        model_names = sorted(model_names) # Make alphabetical
-        pivot_table_name = '_'.join(model_names) # Join into string of format 'model_model'
+        model_names = sorted(model_names)  # Make alphabetical
+        pivot_table_name = '_'.join(model_names)  # Join into string
 
         # Check to see if table with this name exists
         if LiteTable.isPivotTable(pivot_table_name):
-            return pivot_table_name, None # If it does, return the table name
+            return pivot_table_name, None  # If it does, return the table name
 
     def __clean_attachments(self):
-        """Internal method. Cleans up any references to a model instance that's being deleted. Called by .delete()."""
+        """Internal method. Cleans up any references to a model instance
+        that's being deleted. Called by .delete()."""
 
-        foreign_keys = self.table.getForeignKeyReferences()
+        # foreign_keys = self.table.getForeignKeyReferences()
         table_names = self.table.getAllTableNames()
 
         check_tables = {}
@@ -202,8 +215,7 @@ class LiteModel:
                 if LiteTable.isPivotTable(tName):
                     temp_table.delete([[foreign_key,'=',local_key_value]])
                 else:
-                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]])
-                
+                    temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]])           
 
     def __findPath__iteration(self, open_nodes:list, closed_nodes:list, to_model_instance):
         """Internal method. Step function for .findPath()."""
