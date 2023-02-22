@@ -5,3 +5,5 @@ lite.egg-info
 .vscode
 **.db
 **.sqlite
+**.sqlite-shm
+**.sqlite-wal
