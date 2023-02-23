@@ -16,7 +16,7 @@ class Lite:
     DEFAULT_CONNECTION = None
 
     @staticmethod
-    def getEnv() -> dict:
+    def get_env() -> dict:
         """Returns dict of values from .env file.
 
         Raises:
@@ -39,7 +39,7 @@ class Lite:
     
     
     @staticmethod
-    def getDatabasePath() -> str:
+    def get_database_path() -> str:
         """Returns sqlite database filepath.
 
         Raises:
@@ -53,7 +53,7 @@ class Lite:
         if db_path is not None:
             return db_path
             
-        env = Lite.getEnv()
+        env = Lite.get_env()
         if 'DB_DATABASE' in env:
             return env['DB_DATABASE']
         else:
@@ -61,7 +61,7 @@ class Lite:
 
 
     @staticmethod
-    def createDatabase(database_path:str):
+    def create_database(database_path:str):
         """Creates an empty SQLite database.
 
         Args:
@@ -88,5 +88,5 @@ class Lite:
         print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
-    def declareConnection(label:str, lite_connection:LiteConnection):
+    def declare_connection(label:str, lite_connection:LiteConnection):
         Lite.DATABASE_CONNECTIONS[label] = lite_connection

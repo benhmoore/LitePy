@@ -10,7 +10,7 @@ class TestLiteConnection(unittest.TestCase):
 
     def setUp(self):
         # Create a new test database
-        Lite.createDatabase(TEST_DB_PATH)
+        Lite.create_database(TEST_DB_PATH)
         self.conn = LiteConnection(DB.SQLITE, database_path=TEST_DB_PATH)
 
     def tearDown(self):

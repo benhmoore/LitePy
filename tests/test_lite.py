@@ -9,7 +9,7 @@ class TestLite(unittest.TestCase):
 
     def setUp(self):
         """Create a test database"""
-        Lite.createDatabase(TEST_DB_PATH)
+        Lite.create_database(TEST_DB_PATH)
 
     def tearDown(self):
         """Remove the test database"""
@@ -17,39 +17,39 @@ class TestLite(unittest.TestCase):
         # remove test database
         os.remove(TEST_DB_PATH)
 
-    # Test Lite.getEnv()
+    # Test Lite.get_env()
     def test_get_env(self):
         os.remove('.env')
         with self.assertRaises(EnvFileNotFound):
-            env = Lite.getEnv()
+            env = Lite.get_env()
         with open(".env", "w") as env_file:
             env_file.write("DB_DATABASE=test.sqlite")
-        env = Lite.getEnv()
+        env = Lite.get_env()
         self.assertIsInstance(env, dict)
 
-    # Test Lite.getDatabasePath()
+    # Test Lite.get_database_path()
     def test_get_database_path(self):
         # Test case where database path is specified in environment variables
         os.environ["DB_DATABASE"] = "test.sqlite"
-        self.assertEqual(Lite.getDatabasePath(), "test.sqlite")
+        self.assertEqual(Lite.get_database_path(), "test.sqlite")
 
         # Test case where database path is specified in .env file
         os.environ.pop("DB_DATABASE", None)
         with open(".env", "w") as env_file:
             env_file.write("DB_DATABASE=test.sqlite")
-        self.assertEqual(Lite.getDatabasePath(), "test.sqlite")
+        self.assertEqual(Lite.get_database_path(), "test.sqlite")
 
         # Test case where database path is not specified
         with open(".env", "w") as env_file:
             env_file.write("")
         with self.assertRaises(DatabaseNotFoundError):
-            Lite.getDatabasePath()
+            Lite.get_database_path()
 
-    # Test Lite.createDatabase()
+    # Test Lite.create_database()
     def test_create_database(self):
         self.assertTrue(os.path.exists(TEST_DB_PATH))
         with self.assertRaises(DatabaseAlreadyExists):
-            Lite.createDatabase(TEST_DB_PATH)
+            Lite.create_database(TEST_DB_PATH)
 
     # Test Lite.connect()
     def test_connect(self):
@@ -64,8 +64,8 @@ class TestLite(unittest.TestCase):
         Lite.disconnect()
         self.assertEqual(Lite.DEFAULT_CONNECTION, None)
 
-    # Test Lite.declareConnection()
+    # Test Lite.declare_connection()
     def test_declare_connection(self):
         conn = LiteConnection(database_path=TEST_DB_PATH)
-        Lite.declareConnection("test", conn)
+        Lite.declare_connection("test", conn)
         self.assertEqual(Lite.DATABASE_CONNECTIONS["test"], conn)

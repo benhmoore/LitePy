@@ -8,7 +8,7 @@ TEST_DB_PATH = "test.sqlite"
 class TestLiteTable(unittest.TestCase):
 
     def setUp(self):
-        Lite.createDatabase(TEST_DB_PATH)
+        Lite.create_database(TEST_DB_PATH)
         Lite.connect(LiteConnection(DB.SQLITE, database_path=TEST_DB_PATH))
 
         # test creating a table
@@ -21,12 +21,12 @@ class TestLiteTable(unittest.TestCase):
         foreign_keys = {
             "parent_id": ("parents", "id")
         }
-        LiteTable.createTable(table_name, columns, foreign_keys)
+        LiteTable.create_table(table_name, columns, foreign_keys)
         self.table = LiteTable(table_name)
 
     def tearDown(self):
         # test deleting the table
-        LiteTable.deleteTable(self.table.table_name)
+        LiteTable.delete_table(self.table.table_name)
         self.assertFalse(LiteTable.exists(self.table.table_name))
 
         # remove test database
@@ -36,12 +36,12 @@ class TestLiteTable(unittest.TestCase):
         self.assertTrue(LiteTable.exists(self.table.table_name))
 
     def test_is_pivot_table(self):
-        self.assertFalse(self.table.isPivotTable("test"))
-        self.assertFalse(self.table.isPivotTable("test_table"))
+        self.assertFalse(self.table.is_pivot_table("test"))
+        self.assertFalse(self.table.is_pivot_table("test_table"))
 
     def test_column_names(self):
         self.assertSetEqual(
-            set(self.table.getColumnNames()),
+            set(self.table.get_column_names()),
             {"created", "updated", "id", "name", "age", "parent_id"},
         )
 
