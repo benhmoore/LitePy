@@ -1,27 +1,31 @@
-from colorama import Fore, Back, Style
+"""Contains the LiteCollection class"""
+from lite.liteexceptions import ModelInstanceNotFoundError, DuplicateModelInstance
 
-import os
-from lite import *
 
 class LiteCollection:
-    """Container for LiteModel instances. Provides useful methods and overloads for common operations."""
+    """ A collection of LiteModel instances
 
-    def __init__(self, model_instances:list=None):
+    Raises:
+        DuplicateModelInstance: Occurs when a model instance is added to a collection
+            that already exists in the collection.
+        ModelInstanceNotFoundError: Occurs when a model instance is not found in the collection.
+    """
+
+    def __init__(self, model_instances: list = None):
         """Initializes new LiteCollection with given list of LiteModel instances.
 
         Args:
             model_instances (list, optional): List of LiteModel instances. Defaults to None.
-        """        
+        """
         self.list = []
-        if model_instances: 
+        if model_instances:
             for instance in model_instances:
-                if instance not in self.list: self.list.append(instance)
-
+                if instance not in self.list:
+                    self.list.append(instance)
 
     def __str__(self):
         print_list = [model_instance.to_dict() for model_instance in self.list]
         return print_list.__str__()
-
 
     def __add__(self, other):
 
@@ -36,11 +40,7 @@ class LiteCollection:
                 if model not in self_list:
                     self_list.append(model)
         else:
-            base_classes = []
-            for bc in other.__class__.__bases__:
-                print(bc)
-                base_classes.append(bc.__name__)
-
+            base_classes = [b_c.__name__ for b_c in other.__class__.__bases__]
             if 'LiteModel' in base_classes and other not in self_list:
                 self_list.append(other)
             else:
@@ -51,13 +51,11 @@ class LiteCollection:
     def __len__(self):
         return len(self.list)
 
-
     def __eq__(self, other):
         if other.__class__.__name__ == 'LiteCollection':
             return self.list == other.list
         elif other.__class__.__name__ == 'list':
             return self.list == other
-
 
     def __contains__(self, item):
         """Used by 'in' Python comparison.
@@ -67,15 +65,14 @@ class LiteCollection:
         """
 
         # If an integer
-        if type(item) is int:
-            return any(getattr(model,'id') == item for model in self.list)
-        
+        if isinstance(item, int):
+            return any(getattr(model, 'id') == item for model in self.list)
+
         # If a LiteModel
         return item in self.list
 
-
-    def __getitem__(self, item): return self.list[item]
-
+    def __getitem__(self, item):
+        return self.list[item]
 
     def add(self, model_instance):
         """Adds a LiteModel instance to the collection.
@@ -88,11 +85,12 @@ class LiteCollection:
         """
 
         # Check if LiteModel instance is already in this collection
-        if model_instance in self.list: raise DuplicateModelInstance(model_instance)
+        if model_instance in self.list:
+            raise DuplicateModelInstance(model_instance)
 
         self.list.append(model_instance)
 
-    def attach_many_to_all(self, model_instances, self_fkey:str=None, model_fkey:str=None):
+    def attach_many_to_all(self, model_instances):
         """Attaches a list of model instances to the all model instances in the collection.
 
         Args:
@@ -111,7 +109,8 @@ class LiteCollection:
         Args:
             model_instances (list): List of LiteModel instances.
             self_fkey (str, optional): Foreign key to use for the self-model. Defaults to None.
-            model_fkey (str, optional): Foreign key to use for the model being detached. Defaults to None.
+            model_fkey (str, optional):
+                Foreign key to use for the model being detached. Defaults to None.
 
         Raises:
             RelationshipError: Relationship does not exist.
@@ -119,7 +118,7 @@ class LiteCollection:
         for model in self.list:
             model.detach_many(model_instances)
 
-    def attach_to_all(self, model_instance, self_fkey:str=None, model_fkey:str=None):
+    def attach_to_all(self, model_instance, self_fkey: str = None, model_fkey: str = None):
         """Attaches a model instance to the all model instances in the collection.
 
         Args:
@@ -138,8 +137,10 @@ class LiteCollection:
 
         Args:
             model_instance (LiteModel): The model instance to detach from all the model instances.
-            self_fkey (str): The foreign key in this model instance that points to the other model instance (default is None).
-            model_fkey (str): The foreign key in the other model instance that points to this model instance (default is None).
+            self_fkey (str): The foreign key in this model instance
+                that points to the other model instance (default is None).
+            model_fkey (str): The foreign key in the other model instance
+                that points to this model instance (default is None).
         """
 
         for model in self.list:
@@ -158,19 +159,19 @@ class LiteCollection:
     def fresh(self):
         """Retrieves a fresh copy of each model instance in the collection from the database."""
 
-        for model in self.list: model.fresh()
+        for model in self.list:
+            model.fresh()
 
     def delete_all(self):
         """Deletes all model instances in the collection from the database."""
 
-        for model in self.list: model.delete()
+        for model in self.list:
+            model.delete()
 
-    
     def model_keys(self) -> list:
         """Returns a list of primary keys for models in the collection."""
 
         return [model.id for model in self.list]
-
 
     def join(self, lite_collection):
         """Merges two LiteCollection instances.
@@ -178,9 +179,8 @@ class LiteCollection:
         Args:
             lite_collection (LiteCollection): LiteCollection instance
         """
-        
-        self.list += lite_collection.list
 
+        self.list += lite_collection.list
 
     def intersection(self, lite_collection):
         """Returns the intersection of two collections.
@@ -201,10 +201,9 @@ class LiteCollection:
         for model in self.list:
             if model.id in intersection_keys:
                 intersection.add(model)
-        
+
         return intersection
 
-    
     def difference(self, lite_collection):
         """Returns all models not in the passed collection.
 
@@ -219,9 +218,8 @@ class LiteCollection:
         for model in self.list:
             if model not in lite_collection:
                 difference.add(model)
-        
-        return difference
 
+        return difference
 
     def remove(self, model_instance):
         """Removes a LiteModel instance from this collection.
@@ -233,11 +231,12 @@ class LiteCollection:
             ModelInstanceNotFoundError: LiteModel instance does not exist in this collection.
         """
 
-        try: self.list.remove(model_instance)
-        except: raise ModelInstanceNotFoundError(model_instance.id)
+        try:
+            self.list.remove(model_instance)
+        except ValueError as exc:
+            raise ModelInstanceNotFoundError(model_instance.id) from exc
 
-
-    def where(self, where_columns:list):
+    def where(self, where_columns: list):
         """Simulates a select query on this collection.
 
         Args:
@@ -249,38 +248,23 @@ class LiteCollection:
             LiteCollection: Matching LiteModel instances
         """
 
+        # Define a dictionary to map operator strings to their corresponding comparison functions
+        ops = {
+            '=': lambda a, b: a == b,
+            '!=': lambda a, b: a != b,
+            'LIKE': lambda a, b: b[1:-1] in a,  # clip removes SQL's '%'
+            'NOT LIKE': lambda a, b: b[1:-1] not in a,  # clip removes SQL's '%'
+            '<': lambda a, b: a < b,
+            '<=': lambda a, b: a <= b,
+            '>': lambda a, b: a > b,
+            '>=': lambda a, b: a >= b,
+        }
+
+        # Filter the collection based on the where conditions
         results_collection = []
         for model in self.list:
-            should_add = True
-            for condition in where_columns:
-                if condition[1] == '=':
-                    if getattr(model,condition[0]) != condition[2]:
-                        should_add = False
-                elif condition[1] == '!=':
-                    if getattr(model,condition[0]) == condition[2]:
-                        should_add = False
-                        
-                elif condition[1] == 'LIKE':
-                    if condition[2][1:-1] not in getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
-                        should_add = False
-                elif condition[1] == 'NOT LIKE':
-                    if condition[2][1:-1] in getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
-                        should_add = False
-                
-                elif condition[1] == '<':
-                    if condition[2] <= getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
-                        should_add = False
-                elif condition[1] == '<=':
-                    if condition[2] < getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
-                        should_add = False
-                
-                elif condition[1] == '>':
-                    if condition[2] >= getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
-                        should_add = False
-                elif condition[1] == '>=':
-                    if condition[2] > getattr(model,condition[0]): # clipped string removes SQL's '%' from beginning and end
-                        should_add = False
-            
-            if should_add: results_collection.append(model)
+            should_add = all(ops[op](getattr(model, col), val) for col, op, val in where_columns)
+            if should_add:
+                results_collection.append(model)
 
         return LiteCollection(results_collection)
