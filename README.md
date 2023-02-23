@@ -92,4 +92,3 @@ pip3 install psycopg2-binary
 ## Documentation
 
 Documentation is hosted on GitHub, right over here.
-# game-design-astral
