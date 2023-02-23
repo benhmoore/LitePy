@@ -92,7 +92,7 @@ class LiteCollection:
 
         self.list.append(model_instance)
 
-    def attachManyToAll(self, model_instances, self_fkey:str=None, model_fkey:str=None):
+    def attach_many_to_all(self, model_instances, self_fkey:str=None, model_fkey:str=None):
         """Attaches a list of model instances to the all model instances in the collection.
 
         Args:
@@ -105,7 +105,7 @@ class LiteCollection:
         for model in self.list:
             model.attachMany(model_instances)
 
-    def detachManyFromAll(self, model_instances):
+    def detach_many_from_all(self, model_instances):
         """Detaches a list of model instances from all the model instances in the collection.
 
         Args:
@@ -119,7 +119,7 @@ class LiteCollection:
         for model in self.list:
             model.detachMany(model_instances)
 
-    def attachToAll(self, model_instance, self_fkey:str=None, model_fkey:str=None):
+    def attach_to_all(self, model_instance, self_fkey:str=None, model_fkey:str=None):
         """Attaches a model instance to the all model instances in the collection.
 
         Args:
@@ -132,7 +132,7 @@ class LiteCollection:
         for model in self.list:
             model.attach(model_instance, self_fkey, model_fkey)
 
-    def detachFromAll(self, model_instance):
+    def detach_from_all(self, model_instance):
         """
         Detaches a given model instance from all the model instances in the collection.
 
@@ -160,13 +160,13 @@ class LiteCollection:
 
         for model in self.list: model.fresh()
 
-    def deleteAll(self):
+    def delete_all(self):
         """Deletes all model instances in the collection from the database."""
 
         for model in self.list: model.delete()
 
     
-    def modelKeys(self) -> list:
+    def model_keys(self) -> list:
         """Returns a list of primary keys for models in the collection."""
 
         return [model.id for model in self.list]
@@ -192,8 +192,8 @@ class LiteCollection:
             LiteCollection: Collection of LiteModel instances forming intersection
         """
 
-        self_keys = set(self.modelKeys())
-        other_keys = set(lite_collection.modelKeys())
+        self_keys = set(self.model_keys())
+        other_keys = set(lite_collection.model_keys())
 
         intersection_keys = list(self_keys.intersection(other_keys))
 
