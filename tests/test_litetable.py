@@ -1,6 +1,6 @@
 import os
 import unittest
-from lite import *
+from tests import *
 
 # define a SQLite connection
 TEST_DB_PATH = "test.sqlite"

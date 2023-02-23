@@ -34,18 +34,17 @@ class LiteTable:
         }
 
         # Generate key mapping
-        if self.connection.connection_type == DB.SQLITE:
-            for fkey in foreign_keys:
+        for fkey in foreign_keys:
+                # Generate key mapping
+            if self.connection.connection_type == DB.SQLITE:
                 table_name = fkey[2]
                 foreign_key = fkey[3]
                 local_key = fkey[4]
 
                 if table_name not in foreign_key_map: foreign_key_map[table_name] = []
                 foreign_key_map[table_name].append([local_key, foreign_key])
-        
-        elif self.connection.connection_type == DB.POSTGRESQL:
-            for fkey in foreign_keys:
-                
+
+            elif self.connection.connection_type == DB.POSTGRESQL:
                 phrases = fkey[0].split('REFERENCES')
                 if len(phrases) != 2: continue
 
@@ -56,7 +55,7 @@ class LiteTable:
 
                 if table_name not in foreign_key_map: foreign_key_map[table_name] = []
                 foreign_key_map[table_name].append([local_key, foreign_key])
-            
+
         return foreign_key_map
 
 
@@ -108,12 +107,9 @@ class LiteTable:
         total_relations = 0
         fkey_refs = temp_table.getForeignKeyReferences()
         for fkey_ref in fkey_refs:
-            for relation in fkey_refs[fkey_ref]:
+            for _ in fkey_refs[fkey_ref]:
                 total_relations += 1
-        if total_relations != 2: return False
-
-        return True
-
+        return total_relations == 2
 
     # PostgreSQL Support: ✅
     @staticmethod
@@ -203,9 +199,8 @@ class LiteTable:
             rows = lite_connection.execute("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name").fetchall()
         elif lite_connection.connection_type == DB.POSTGRESQL:
             rows = lite_connection.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name").fetchall()
-        
-        names = [row[0] for row in rows]
-        return names
+
+        return [row[0] for row in rows]
 
 
     # PostgreSQL Support: ✅

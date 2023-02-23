@@ -19,33 +19,32 @@ class LiteCollection:
 
 
     def __str__(self):
-        print_list = []
-        for model_instance in self.list:
-            print_list.append(model_instance._toDict())
+        print_list = [model_instance._toDict() for model_instance in self.list]
         return print_list.__str__()
 
 
     def __add__(self, other):
 
+        self_list = self.list[:]
+
         if other.__class__.__name__ == 'LiteCollection':
             for model in other.list:
-                if model not in self.list:
-                    self.list.append(model)
+                if model not in self_list:
+                    self_list.append(model)
         elif other.__class__.__name__ == 'list':
             for model in other:
-                if model not in self.list:
-                    self.list.append(model)
+                if model not in self_list:
+                    self_list.append(model)
         else:
             base_classes = []
             for bc in other.__class__.__bases__:
                 print(bc)
                 base_classes.append(bc.__name__)
 
-            if 'LiteModel' in base_classes:
-                if other not in self.list:
-                    self.list.append(other)
+            if 'LiteModel' in base_classes and other not in self_list:
+                self_list.append(other)
 
-        return LiteCollection(self.list)
+        return LiteCollection(self_list)
 
     def __len__(self):
         return len(self.list)
@@ -53,15 +52,9 @@ class LiteCollection:
 
     def __eq__(self, other):
         if other.__class__.__name__ == 'LiteCollection':
-            if self.list == other.list:
-                return True
-            else:
-                return False
+            return self.list == other.list
         elif other.__class__.__name__ == 'list':
-            if self.list == other:
-                return True
-            else:
-                return False
+            return self.list == other
 
 
     def __contains__(self, item):
@@ -73,16 +66,10 @@ class LiteCollection:
 
         # If an integer
         if type(item) is int:
-            for model in self.list:
-                if getattr(model,'id') == item:
-                    return True
-            return False
-
+            return any(getattr(model,'id') == item for model in self.list)
+        
         # If a LiteModel
-        if item in self.list:
-            return True
-        else:
-            return False
+        return item in self.list
 
 
     def __getitem__(self, item): return self.list[item]
