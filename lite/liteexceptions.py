@@ -1,3 +1,4 @@
+""" Contains Exceptions specific for Lite """
 class EnvFileNotFound(Exception):
     """Raised when the environment ('.env') file is not found within the working directory."""
     def __init__(self):
@@ -31,4 +32,4 @@ class RelationshipError(Exception):
 class DuplicateModelInstance(Exception):
     """Raised when more than one of the same model instance is added to a collection."""
     def __init__(self, message):
-       super().__init__(message)
+        super().__init__(message)

@@ -379,7 +379,7 @@ class LiteTable:
         Args:
             table_name (str): Name of table within database to connect to
             disable_isolation (bool, optional). Determines whether the SQLite connection disables isolation. Defaults to False.
-            disable_WAL (bool, optional): Determines whether the SQLite connection disables WAL. Defaults to False.
+            disable_WAL (bool, optional): Determines whether the SQLite connection disables wal. Defaults to False.
 
         Raises:
             DatabaseNotFoundError: Database not found
