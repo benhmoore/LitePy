@@ -38,12 +38,12 @@ First, we'll define two models to represent the two tables above. These classes 
 class Author(LiteModel):
 
     def books(self) -> LiteCollection:
-        return this.hasMany(Book)
+        return this.has_many(Book)
 
 class Book(LiteModel):
 
     def author(self) -> LiteModel:
-        return this.belongsTo(Author)
+        return this.belongs_to(Author)
 
 ```
 
@@ -72,7 +72,7 @@ jane.books() # Returns a list of her books!
 
 There are a host of methods provided by LitePy for manipulating the models we've created. Methods for updating, creating, deleting, relating, and even path finding!
 
-Of course, most use cases are orders of magnitude more complex than this example. LitePy supports all common database relationship types (hasOne, hasMany, belongsTo, belongsToMany), relationships that span multiple databases, nonstandard table names, and more.
+Of course, most use cases are orders of magnitude more complex than this example. LitePy supports all common database relationship types (has_one, has_many, belongs_to, belongs_to_many), relationships that span multiple databases, nonstandard table names, and more.
 
 If this example piqued your interest, continue on for all the gritty details.
 

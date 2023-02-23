@@ -13,11 +13,11 @@ class TestLiteCollection(unittest.TestCase):
     def setUpClass(self):
         """Create a test database"""
         
-        Lite.createDatabase(TEST_DB_PATH)
+        Lite.create_database(TEST_DB_PATH)
         Lite.connect(LiteConnection(database_path=TEST_DB_PATH))
 
         # Create Pet table
-        LiteTable.createTable("pets", {
+        LiteTable.create_table("pets", {
             "name": "TEXT",
             "age": "INTEGER",
             "owner_id": "INTEGER"
@@ -26,7 +26,7 @@ class TestLiteCollection(unittest.TestCase):
         })
 
         # Create Brain table
-        LiteTable.createTable("brains", {
+        LiteTable.create_table("brains", {
             "name": "TEXT",
             "person_id": "INTEGER"
         },{
@@ -34,13 +34,13 @@ class TestLiteCollection(unittest.TestCase):
         })
 
         # Create Person table
-        LiteTable.createTable("people", {
+        LiteTable.create_table("people", {
             "name": "TEXT",
             "age": "INTEGER",
         })
 
         # Create Dollar Bill table
-        LiteTable.createTable("dollar_bills", {
+        LiteTable.create_table("dollar_bills", {
             "owner_id": "INTEGER",
             "name": "TEXT"
         }, {
@@ -74,7 +74,7 @@ class TestLiteCollection(unittest.TestCase):
         self.person2.delete()
         self.person3.delete()
 
-        self.dollar_bills.deleteAll()
+        self.dollar_bills.delete_all()
 
     def test_add(self):
 
@@ -90,28 +90,28 @@ class TestLiteCollection(unittest.TestCase):
         with self.assertRaises(DuplicateModelInstance):
             collection.add(self.person1)
 
-    def test_attachToAll(self):    
-            self.dollar_bills.attachToAll(self.person1)
+    def test_attach_to_all(self):    
+            self.dollar_bills.attach_to_all(self.person1)
     
             assert len(self.person1.dollar_bills()) == 4
             assert len(self.person2.dollar_bills()) == 0
 
-    def test_detachFromAll(self):
-        self.dollar_bills.attachToAll(self.person1)
-        self.dollar_bills.detachFromAll(self.person1)
+    def test_detach_from_all(self):
+        self.dollar_bills.attach_to_all(self.person1)
+        self.dollar_bills.detach_from_all(self.person1)
 
         assert len(self.person1.dollar_bills()) == 0
 
-    def test_detachManyFromAll(self):
-        self.dollar_bills.attachToAll(self.person1)
-        self.dollar_bills.detachManyFromAll([self.person1])
+    def test_detach_many_from_all(self):
+        self.dollar_bills.attach_to_all(self.person1)
+        self.dollar_bills.detach_many_from_all([self.person1])
 
         assert len(self.person1.dollar_bills()) == 0
 
-    def test_attachManyToAll(self):
+    def test_attach_many_to_all(self):
         self.dollar_bills
         with self.assertRaises(RelationshipError):
-            self.dollar_bills.attachManyToAll([self.person1, self.person2])
+            self.dollar_bills.attach_many_to_all([self.person1, self.person2])
 
     def test_first(self):
         collection = LiteCollection([self.person1, self.person2])
@@ -227,14 +227,14 @@ class TestLiteCollection(unittest.TestCase):
 
         person1.delete()
 
-    def test_deleteAll(self):
+    def test_delete_all(self):
 
         all_people = Person.all()
-        all_people.deleteAll()
+        all_people.delete_all()
 
         assert len(Person.all()) == 0
 
-    def test_modelKeys(self):
+    def test_model_keys(self):
         # Create some test data
         person1 = Person.create({
             'name': 'Alice',
@@ -249,7 +249,7 @@ class TestLiteCollection(unittest.TestCase):
         collection = LiteCollection([person1, person2])
 
         # Check that the keys are returned correctly
-        assert collection.modelKeys() == [person1.id, person2.id]
+        assert collection.model_keys() == [person1.id, person2.id]
 
         # Clean up
         person1.delete()

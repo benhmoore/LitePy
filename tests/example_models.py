@@ -3,39 +3,39 @@ from lite import *
 class Pet(LiteModel):
 
     def owner(self) -> LiteModel:
-        return self.belongsTo(Person)
+        return self.belongs_to(Person)
 
 class Brain(LiteModel):
 
     def owner(self) -> LiteModel:
-        return self.belongsTo(Person)
+        return self.belongs_to(Person)
 
 class Membership(LiteModel):
     
     def people(self) -> LiteModel:
-        return self.belongsToMany(Person)
+        return self.belongs_to_many(Person)
 
 class DollarBill(LiteModel):
 
     TABLE_NAME = "dollar_bills"
 
     def owner(self) -> LiteModel:
-        return self.belongsTo(Person)
+        return self.belongs_to(Person)
 
 class Person(LiteModel):
 
     TABLE_NAME = "people"
 
     def pets(self) -> LiteModel:
-        return self.hasMany(Pet)
+        return self.has_many(Pet)
 
     def brain(self) -> LiteModel:
-        return self.hasOne(Brain)
+        return self.has_one(Brain)
 
     def memberships(self) -> LiteModel:
-        return self.belongsToMany(Membership)
+        return self.belongs_to_many(Membership)
 
     def dollar_bills(self) -> LiteModel:
-        return self.hasMany(DollarBill)
+        return self.has_many(DollarBill)
 
-Membership.pivotsWith(Person, 'membership_person')
+Membership.pivots_with(Person, 'membership_person')

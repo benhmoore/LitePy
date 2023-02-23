@@ -103,7 +103,7 @@ class LiteCollection:
         """
 
         for model in self.list:
-            model.attachMany(model_instances)
+            model.attach_many(model_instances)
 
     def detach_many_from_all(self, model_instances):
         """Detaches a list of model instances from all the model instances in the collection.
@@ -117,7 +117,7 @@ class LiteCollection:
             RelationshipError: Relationship does not exist.
         """
         for model in self.list:
-            model.detachMany(model_instances)
+            model.detach_many(model_instances)
 
     def attach_to_all(self, model_instance, self_fkey:str=None, model_fkey:str=None):
         """Attaches a model instance to the all model instances in the collection.

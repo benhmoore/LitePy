@@ -10,7 +10,7 @@ class Car(LiteModel):
 
     DEFAULT_CONNECTION = None
     def owner(self) -> LiteModel:
-        return self.belongsTo(Person)
+        return self.belongs_to(Person)
 
 class TestLiteModel(unittest.TestCase):
 
@@ -18,15 +18,15 @@ class TestLiteModel(unittest.TestCase):
     def setUpClass(self):
         """Create a test database"""
 
-        Lite.createDatabase(TEST_DB_PATH)
+        Lite.create_database(TEST_DB_PATH)
         Lite.connect(LiteConnection(database_path=TEST_DB_PATH))
 
         # Test models with default connections specified
-        Lite.createDatabase("additional.sqlite")
+        Lite.create_database("additional.sqlite")
         Car.DEFAULT_CONNECTION = LiteConnection(database_path="additional.sqlite")
 
         # Create Car table
-        LiteTable.createTable("cars", {
+        LiteTable.create_table("cars", {
             "name": "TEXT",
             "owner_id": "INTEGER"
         }, {
@@ -34,7 +34,7 @@ class TestLiteModel(unittest.TestCase):
         }, Car.DEFAULT_CONNECTION)
 
         # Create Pet table
-        LiteTable.createTable("pets", {
+        LiteTable.create_table("pets", {
             "name": "TEXT",
             "age": "INTEGER",
             "owner_id": "INTEGER"
@@ -43,7 +43,7 @@ class TestLiteModel(unittest.TestCase):
         })
 
         # Create Brain table
-        LiteTable.createTable("brains", {
+        LiteTable.create_table("brains", {
             "name": "TEXT",
             "person_id": "INTEGER"
         },{
@@ -51,25 +51,25 @@ class TestLiteModel(unittest.TestCase):
         })
 
         # Create Person table
-        LiteTable.createTable("people", {
+        LiteTable.create_table("people", {
             "name": "TEXT",
             "age": "INTEGER",
         })
 
         # Create Person table
-        LiteTable.createTable("memberships", {
+        LiteTable.create_table("memberships", {
             "name": "TEXT",
         })
 
         # Create Dollar Bill table
-        LiteTable.createTable("dollar_bills", {
+        LiteTable.create_table("dollar_bills", {
             "owner_id": "INTEGER",
             "name": "TEXT"
         }, {
             "owner_id": ("people", "id")
         })
 
-        LiteTable.createTable('membership_person', {
+        LiteTable.create_table('membership_person', {
             'person_id': 'INTEGER',
             'membership_id': 'INTEGER',
         },{
@@ -97,7 +97,7 @@ class TestLiteModel(unittest.TestCase):
             "age": 3,
         })
 
-        self.memberships = Membership.createMany([
+        self.memberships = Membership.create_many([
             {
                 "name": "membership1"
             },
@@ -113,7 +113,7 @@ class TestLiteModel(unittest.TestCase):
         self.person.delete()
         self.pet.delete()
 
-        self.memberships.deleteAll()
+        self.memberships.delete_all()
 
     def test_create(self):
         """Test the create() method"""
@@ -148,17 +148,17 @@ class TestLiteModel(unittest.TestCase):
         with self.assertRaises(TypeError):
             assert self.person < 1
 
-    def test_belongsToMany(self):
-        """Test the belongsToMany() method"""
+    def test_belongs_to_many(self):
+        """Test the belongs_to_many() method"""
 
         # Attach the membership to the person
-        self.memberships.attachToAll(self.person)
+        self.memberships.attach_to_all(self.person)
 
         # Check that the person's memberships are the membership
         self.assertEqual(self.person.memberships()[0].id, self.memberships[0].id)
 
-    def test_belongsTo(self):
-        """Test the belongsTo() method"""
+    def test_belongs_to(self):
+        """Test the belongs_to() method"""
 
         # Attach the pet to the person
         self.pet.attach(self.person)
@@ -166,8 +166,8 @@ class TestLiteModel(unittest.TestCase):
         # Check that the pet's owner is the person
         self.assertEqual(self.pet.owner().id, self.person.id)
 
-    def test_hasMany(self):
-        """Test the hasMany() method"""
+    def test_has_many(self):
+        """Test the has_many() method"""
 
         # Attach the pet to the person
         self.pet.attach(self.person)
@@ -175,8 +175,8 @@ class TestLiteModel(unittest.TestCase):
         # Check that the person's pets are the pet
         self.assertEqual(self.person.pets()[0].id, self.pet.id)
 
-    def test_hasOne(self):
-        """Test the hasOne() method"""
+    def test_has_one(self):
+        """Test the has_one() method"""
 
         # Attach the brain to the person
         brain = Brain.create({
@@ -188,15 +188,15 @@ class TestLiteModel(unittest.TestCase):
         self.assertEqual(self.person.brain().id, brain.id)
         self.assertEqual(brain.owner().id, self.person.id)
 
-    def test_findOrFail(self):
-        """Test the findOrFail() method"""
+    def test_find_or_fail(self):
+        """Test the find_or_fail() method"""
 
         # Check that the person can be found
-        self.assertEqual(Person.findOrFail(self.person.id).id, self.person.id)
+        self.assertEqual(Person.find_or_fail(self.person.id).id, self.person.id)
 
         # Check that an exception is raised if the person can't be found
         with self.assertRaises(ModelInstanceNotFoundError):
-            Person.findOrFail(100)
+            Person.find_or_fail(100)
 
     def test_find(self):
         """Test the find() method"""
@@ -265,11 +265,11 @@ class TestLiteModel(unittest.TestCase):
 
         assert self.car.name == "car1"
 
-    def test_createMany(self):
-        """Test the createMany() method"""
+    def test_create_many(self):
+        """Test the create_many() method"""
 
         # Create two pets
-        new_pets = Pet.createMany([
+        new_pets = Pet.create_many([
             {
                 "name": "Tulip",
                 "age": 3
@@ -284,7 +284,7 @@ class TestLiteModel(unittest.TestCase):
         self.assertEqual(len(Pet.all()), 3)
 
         # Delete the pets
-        new_pets.deleteAll()
+        new_pets.delete_all()
 
         assert len(Pet.all()) == 1
 
@@ -292,7 +292,7 @@ class TestLiteModel(unittest.TestCase):
         """Test the manyToMany() method"""
 
         # Attach the person to the memberships
-        self.person.attachMany(self.memberships)
+        self.person.attach_many(self.memberships)
 
         # Check that the person's memberships are the memberships
         self.assertEqual(len(self.person.memberships()), 2)
@@ -313,7 +313,7 @@ class TestLiteModel(unittest.TestCase):
         self.assertEqual(len(self.memberships[0].people()), 1)
 
         # Detach the person from the memberships
-        self.person.detachMany(self.memberships)
+        self.person.detach_many(self.memberships)
         self.assertEqual(len(self.person.memberships()), 0)
 
         person2.delete()
@@ -340,15 +340,15 @@ class TestLiteModel(unittest.TestCase):
         self.person.fresh()
         self.assertEqual(self.person.name, "John")
 
-    def test_findPath(self):
-        """Test the findPath() method"""
+    def test_find_path(self):
+        """Test the find_path() method"""
         
         # Set up people and attach to membership
         person2 = Person.create({ "name": "Jane", "age": 30 })
-        self.memberships[0].attachMany([self.person, person2])
+        self.memberships[0].attach_many([self.person, person2])
         person2.attach(self.memberships[1])
 
-        assert len(self.person.findPath(person2)) == 3
-        assert len(person2.findPath(self.pet)) == 0
+        assert len(self.person.find_path(person2)) == 3
+        assert len(person2.find_path(self.pet)) == 0
 
         person2.delete()
