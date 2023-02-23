@@ -1,8 +1,10 @@
-from pathlib import Path
-from colorama import Fore, Back, Style
+"""Contains the Lite class"""
 
 import os
-from lite import *
+from pathlib import Path
+from colorama import Fore
+from lite import LiteConnection
+from lite.liteexceptions import EnvFileNotFound, DatabaseNotFoundError, DatabaseAlreadyExists
 
 class Lite:
     """Helper functions for other Lite classes.
@@ -25,19 +27,18 @@ class Lite:
         Returns:
             dict: Dictionary containing the key-value pairings from the .env file.
         """
-        
+
         if not os.path.exists('.env'):
             raise EnvFileNotFound()
 
         env_dict = {}
-        with open('.env') as env:
+        with open('.env', encoding="utf-8") as env:
             for line in env:
                 key, value = line.split('=')
                 env_dict[key] = value
-                
+
         return env_dict
-    
-    
+
     @staticmethod
     def get_database_path() -> str:
         """Returns sqlite database filepath.
@@ -52,13 +53,11 @@ class Lite:
         db_path = os.environ.get('DB_DATABASE')
         if db_path is not None:
             return db_path
-            
+
         env = Lite.get_env()
         if 'DB_DATABASE' in env:
             return env['DB_DATABASE']
-        else:
-            raise DatabaseNotFoundError('')
-
+        raise DatabaseNotFoundError('')
 
     @staticmethod
     def create_database(database_path:str):
@@ -72,21 +71,25 @@ class Lite:
         """
 
         # Raise error if database already exists
-        if os.path.exists(database_path): raise DatabaseAlreadyExists(database_path)
+        if os.path.exists(database_path):
+            raise DatabaseAlreadyExists(database_path)
 
         # Create database
         Path(database_path).touch()
 
     @staticmethod
     def connect(lite_connection:LiteConnection):
+        """ Connects to a database. """
         Lite.DEFAULT_CONNECTION = lite_connection
         print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
 
     @staticmethod
     def disconnect():
+        """ Disconnects from the default connection. """
         Lite.DEFAULT_CONNECTION = None
         print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
     def declare_connection(label:str, lite_connection:LiteConnection):
+        """ Declares a connection to a database. """
         Lite.DATABASE_CONNECTIONS[label] = lite_connection

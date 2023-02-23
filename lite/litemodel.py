@@ -1,21 +1,4 @@
-"""Describes a distinct model for database storage and methods
-    for operating upon it.
-
-    Raises:
-        TypeError: Comparison between incompatible types.
-        ModelInstanceNotFoundError: Model does not exist in database.
-        RelationshipError: Relationship does not match required status.
-        TypeError: _description_
-        AttributeError: _description_
-        ModelInstanceNotFoundError: _description_
-        ModelInstanceNotFoundError: _description_
-        RelationshipError: _description_
-        RelationshipError: _description_
-        RelationshipError: _description_
-        RelationshipError: _description_
-        RelationshipError: _description_
-        ModelInstanceNotFoundError: _description_
-"""
+"""Contains the LiteModel class definition"""
 
 import re
 import typing
