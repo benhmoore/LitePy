@@ -19,7 +19,7 @@ class LiteCollection:
 
 
     def __str__(self):
-        print_list = [model_instance._toDict() for model_instance in self.list]
+        print_list = [model_instance.to_dict() for model_instance in self.list]
         return print_list.__str__()
 
 
@@ -43,6 +43,8 @@ class LiteCollection:
 
             if 'LiteModel' in base_classes and other not in self_list:
                 self_list.append(other)
+            else:
+                raise DuplicateModelInstance(other)
 
         return LiteCollection(self_list)
 
@@ -90,7 +92,7 @@ class LiteCollection:
 
         self.list.append(model_instance)
 
-    def attachManyToAll(self, model_instances:list, self_fkey:str=None, model_fkey:str=None):
+    def attachManyToAll(self, model_instances, self_fkey:str=None, model_fkey:str=None):
         """Attaches a list of model instances to the all model instances in the collection.
 
         Args:
@@ -102,6 +104,20 @@ class LiteCollection:
 
         for model in self.list:
             model.attachMany(model_instances)
+
+    def detachManyFromAll(self, model_instances):
+        """Detaches a list of model instances from all the model instances in the collection.
+
+        Args:
+            model_instances (list): List of LiteModel instances.
+            self_fkey (str, optional): Foreign key to use for the self-model. Defaults to None.
+            model_fkey (str, optional): Foreign key to use for the model being detached. Defaults to None.
+
+        Raises:
+            RelationshipError: Relationship does not exist.
+        """
+        for model in self.list:
+            model.detachMany(model_instances)
 
     def attachToAll(self, model_instance, self_fkey:str=None, model_fkey:str=None):
         """Attaches a model instance to the all model instances in the collection.
@@ -115,6 +131,19 @@ class LiteCollection:
 
         for model in self.list:
             model.attach(model_instance, self_fkey, model_fkey)
+
+    def detachFromAll(self, model_instance):
+        """
+        Detaches a given model instance from all the model instances in the collection.
+
+        Args:
+            model_instance (LiteModel): The model instance to detach from all the model instances.
+            self_fkey (str): The foreign key in this model instance that points to the other model instance (default is None).
+            model_fkey (str): The foreign key in the other model instance that points to this model instance (default is None).
+        """
+
+        for model in self.list:
+            model.detach(model_instance)
 
     def first(self):
         """Returns the first model instance in the collection."""
@@ -130,7 +159,6 @@ class LiteCollection:
         """Retrieves a fresh copy of each model instance in the collection from the database."""
 
         for model in self.list: model.fresh()
-
 
     def deleteAll(self):
         """Deletes all model instances in the collection from the database."""

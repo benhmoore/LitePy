@@ -35,8 +35,15 @@ class TestLiteTable(unittest.TestCase):
     def test_table_creation(self):
         self.assertTrue(LiteTable.exists(self.table.table_name))
 
+    def test_is_pivot_table(self):
+        self.assertFalse(self.table.isPivotTable("test"))
+        self.assertFalse(self.table.isPivotTable("test_table"))
+
     def test_column_names(self):
-        self.assertSetEqual(set(self.table.getColumnNames()), set(["created","updated","id", "name", "age", "parent_id"]))
+        self.assertSetEqual(
+            set(self.table.getColumnNames()),
+            {"created", "updated", "id", "name", "age", "parent_id"},
+        )
 
     def test_insert_row(self):
         row = {

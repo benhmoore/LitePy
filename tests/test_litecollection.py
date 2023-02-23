@@ -29,12 +29,22 @@ class TestLiteCollection(unittest.TestCase):
         LiteTable.createTable("brains", {
             "name": "TEXT",
             "person_id": "INTEGER"
+        },{
+            "person_id": ("people", "id")
         })
 
         # Create Person table
         LiteTable.createTable("people", {
             "name": "TEXT",
             "age": "INTEGER",
+        })
+
+        # Create Dollar Bill table
+        LiteTable.createTable("dollar_bills", {
+            "owner_id": "INTEGER",
+            "name": "TEXT"
+        }, {
+            "owner_id": ("people", "id")
         })
 
     @classmethod
@@ -56,12 +66,15 @@ class TestLiteCollection(unittest.TestCase):
         self.person3 = Person.create({
             'name': 'Jack Smith'
         })
-        
+
+        self.dollar_bills = LiteCollection([DollarBill.create({"name":n}) for n in range(4)])
 
     def tearDown(self):
         self.person1.delete()
         self.person2.delete()
         self.person3.delete()
+
+        self.dollar_bills.deleteAll()
 
     def test_add(self):
 
@@ -70,6 +83,35 @@ class TestLiteCollection(unittest.TestCase):
 
         assert len(collection) == 1
         assert collection[0] == self.person1
+
+        # Test adding a duplicate
+        with self.assertRaises(DuplicateModelInstance):
+            collection = collection + self.person1
+        with self.assertRaises(DuplicateModelInstance):
+            collection.add(self.person1)
+
+    def test_attachToAll(self):    
+            self.dollar_bills.attachToAll(self.person1)
+    
+            assert len(self.person1.dollar_bills()) == 4
+            assert len(self.person2.dollar_bills()) == 0
+
+    def test_detachFromAll(self):
+        self.dollar_bills.attachToAll(self.person1)
+        self.dollar_bills.detachFromAll(self.person1)
+
+        assert len(self.person1.dollar_bills()) == 0
+
+    def test_detachManyFromAll(self):
+        self.dollar_bills.attachToAll(self.person1)
+        self.dollar_bills.detachManyFromAll([self.person1])
+
+        assert len(self.person1.dollar_bills()) == 0
+
+    def test_attachManyToAll(self):
+        self.dollar_bills
+        with self.assertRaises(RelationshipError):
+            self.dollar_bills.attachManyToAll([self.person1, self.person2])
 
     def test_first(self):
         collection = LiteCollection([self.person1, self.person2])
@@ -170,20 +212,20 @@ class TestLiteCollection(unittest.TestCase):
         person1.delete()
         person2.delete()
 
-        def test_fresh(self):
-            person1 = Person.create({
-                'name': 'John Smith'
-            })
+    def test_fresh(self):
+        person1 = Person.create({
+            'name': 'John Smith'
+        })
 
-            collection = LiteCollection([person1])
-            person1.name = 'Mike'
-            person1.save()
-            collection.fresh()
+        collection = LiteCollection([person1])
+        person1.name = 'Mike'
+        person1.save()
+        collection.fresh()
 
-            assert len(collection) == 1
-            assert collection[0].name == 'John Smith'
+        assert len(collection) == 1
+        assert collection[0].name == 'Mike'
 
-            person1.delete()
+        person1.delete()
 
     def test_deleteAll(self):
 
@@ -192,6 +234,26 @@ class TestLiteCollection(unittest.TestCase):
 
         assert len(Person.all()) == 0
 
+    def test_modelKeys(self):
+        # Create some test data
+        person1 = Person.create({
+            'name': 'Alice',
+            'age': 25
+        })
+
+        person2 = Person.create({
+            'name': 'Bob',
+            'age': 30
+        })
+
+        collection = LiteCollection([person1, person2])
+
+        # Check that the keys are returned correctly
+        assert collection.modelKeys() == [person1.id, person2.id]
+
+        # Clean up
+        person1.delete()
+        person2.delete()
 
     def test_join(self):
         person1 = Person.create({
@@ -215,7 +277,6 @@ class TestLiteCollection(unittest.TestCase):
         person1.delete()
         person2.delete()
 
-
     def test_remove(self):
         person1 = Person.create({
             'name': 'Alice',
@@ -233,6 +294,26 @@ class TestLiteCollection(unittest.TestCase):
 
         assert len(collection) == 1
         assert person1 not in collection
+
+        with self.assertRaises(ModelInstanceNotFoundError):
+            collection.remove(person1)
+
+        person1.delete()
+        person2.delete()
+
+    def test_str(self):
+        person1 = Person.create({
+            'name': 'John Smith'
+        })
+
+        person2 = Person.create({
+            'name': 'Jane Smith'
+        })
+
+        collection = LiteCollection([person1, person2])
+
+        expected_output = [person1.to_dict(), person2.to_dict()].__str__()
+        assert collection.__str__() == expected_output
 
         person1.delete()
         person2.delete()
@@ -263,6 +344,7 @@ class TestLiteCollection(unittest.TestCase):
         collection2 = LiteCollection([person3, person4])
 
         # Test __add__ overload
+        # Test adding two collections
         collection3 = collection1 + collection2
         assert len(collection3) == 4
         assert person1 in collection3
@@ -270,11 +352,16 @@ class TestLiteCollection(unittest.TestCase):
         assert person3 in collection3
         assert person4 in collection3
 
+        # Test adding a collection and a model
         collection4 = collection1 + person3
         assert len(collection4) == 3
         assert person1 in collection4
         assert person2 in collection4
         assert person3 in collection4
+
+        # Test adding a list to a collection
+        collection5 = collection1 + [person3, person4]
+        assert len(collection5) == 4
 
         # Test __len__ overload
         assert len(collection1) == 2
@@ -283,9 +370,14 @@ class TestLiteCollection(unittest.TestCase):
         collection5 = LiteCollection([person1, person2])
         assert collection1 == collection5
 
+        assert collection1 == [person1, person2]
+
         # Test __contains__ overload
         assert person1 in collection1
         assert person3 not in collection1
+
+        model_id = collection1[0].id
+        assert model_id in collection1
 
         # Test __getitem__ overload
         assert collection1[0] == person1
