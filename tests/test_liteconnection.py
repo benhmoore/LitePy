@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import unittest
-from lite import Lite, DatabaseNotFoundError, DB, LiteConnection
+from tests import *
 
 # Define the database path for the test database
 TEST_DB_PATH = "test.sqlite"

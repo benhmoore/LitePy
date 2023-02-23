@@ -26,15 +26,16 @@ class Lite:
             dict: Dictionary containing the key-value pairings from the .env file.
         """
         
-        env_dict = {}
-        if os.path.exists('.env'):
-            with open('.env') as env:
-                for line in env:
-                    key, value = line.split('=')
-                    env_dict[key] = value
-            return env_dict
-        else:
+        if not os.path.exists('.env'):
             raise EnvFileNotFound()
+
+        env_dict = {}
+        with open('.env') as env:
+            for line in env:
+                key, value = line.split('=')
+                env_dict[key] = value
+                
+        return env_dict
     
     
     @staticmethod
@@ -49,14 +50,14 @@ class Lite:
         """
 
         db_path = os.environ.get('DB_DATABASE')
-        if db_path is not None: # Look for database path in environment variables first
+        if db_path is not None:
             return db_path
-        else: # Otherwise, pull from .env file
-            env = Lite.getEnv()
-            if 'DB_DATABASE' in env:
-                return env['DB_DATABASE']
-            else:
-                raise DatabaseNotFoundError('')
+            
+        env = Lite.getEnv()
+        if 'DB_DATABASE' in env:
+            return env['DB_DATABASE']
+        else:
+            raise DatabaseNotFoundError('')
 
 
     @staticmethod
@@ -80,6 +81,11 @@ class Lite:
     def connect(lite_connection:LiteConnection):
         Lite.DEFAULT_CONNECTION = lite_connection
         print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
+
+    @staticmethod
+    def disconnect():
+        Lite.DEFAULT_CONNECTION = None
+        print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
     def declareConnection(label:str, lite_connection:LiteConnection):

@@ -1,46 +1,17 @@
 import os
 import unittest
-from lite import *
+import time
+from tests import *
 
 # define a SQLite connection
 TEST_DB_PATH = "test.sqlite"
-
-
-class Pet(LiteModel):
-
-    def owner(self):
-        return self.belongsTo(Person)
-
-class Brain(LiteModel):
-
-    def owner(self):
-        return self.belongsTo(Person)
-
-class Person(LiteModel):
-
-    TABLE_NAME = "people"
-
-    def pets(self):
-        return self.hasMany(Pet)
-
-    def brain(self):
-        return self.hasOne(Brain)
-
-    def memberships(self):
-        return self.belongsToMany(Membership)
-
-class Membership(LiteModel):
-    
-        def people(self):
-            return self.belongsToMany(Person)
-
-Membership.pivotsWith(Person, 'membership_person')
 
 class TestLiteModel(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
         """Create a test database"""
+
         Lite.createDatabase(TEST_DB_PATH)
         Lite.connect(LiteConnection(database_path=TEST_DB_PATH))
 
@@ -81,6 +52,7 @@ class TestLiteModel(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         """Delete the test database"""
+        Lite.disconnect()
         os.remove(TEST_DB_PATH)
 
 
@@ -282,4 +254,10 @@ class TestLiteModel(unittest.TestCase):
 
     def test_findPath(self):
         """Test the findPath() method"""
-        pass
+        
+        # Set up people and attach to membership
+        person2 = Person.create({ "name": "Jane", "age": 30 })
+        self.memberships[0].attachMany([self.person, person2])
+        person2.attach(self.memberships[1])
+
+        person2.delete()
