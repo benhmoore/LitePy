@@ -1,3 +1,5 @@
+""" Import all the modules and classes for LitePy. """
+
 from lite.liteexceptions import *
 from lite.liteconnection import *
 from lite.lite import Lite

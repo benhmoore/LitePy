@@ -1,4 +1,4 @@
-""" Contains the LiteConnection class """
+""" Contains the LiteConnection class and DB Enum """
 try:
     import psycopg2
 except ImportError:
@@ -9,10 +9,12 @@ import sqlite3
 from enum import Enum
 from lite import DatabaseNotFoundError
 
+
 class DB(Enum):
     """ Enum for database types """
     SQLITE = 1
     POSTGRESQL = 2
+
 
 class LiteConnection:
     """This class is used to create a connection to a database and execute queries."""
@@ -29,16 +31,16 @@ class LiteConnection:
 
     def __init__(
             self,
-            connection_type:DB=DB.SQLITE,
-            host:str=None,
-            port:str=None,
-            database:str=None,
-            username:str=None,
-            password:str=None,
-            database_path:str=None,
-            isolation:bool=False,
-            wal:bool=True
-        ):
+            connection_type: DB = DB.SQLITE,
+            host: str = None,
+            port: str = None,
+            database: str = None,
+            username: str = None,
+            password: str = None,
+            database_path: str = None,
+            isolation: bool = False,
+            wal: bool = True
+    ):
         self.connection_type = connection_type
         self.host = host
         self.port = port
@@ -51,11 +53,11 @@ class LiteConnection:
             if not os.path.exists(database_path):
                 raise DatabaseNotFoundError(database_path)
 
-             # Enable/disable isolation
+            # Enable/disable isolation
             if isolation:
                 self.connection = sqlite3.connect(database_path)
             else:
-                self.connection = sqlite3.connect(database_path,isolation_level=None)
+                self.connection = sqlite3.connect(database_path, isolation_level=None)
 
             self.cursor = self.connection.cursor()
 
@@ -75,11 +77,10 @@ class LiteConnection:
             )
             self.cursor = self.connection.cursor()
 
-
     class ExecuteResult:
         """
         An instance of this class is returned by a call to LiteDriver.execute().
-        It includes modifier methods that can be stringed onto 
+        It includes modifier methods that can be stringed onto
         the .execute() call to commit or fetch.
         """
 
@@ -98,7 +99,7 @@ class LiteConnection:
             """Makes a fetchone call to the database using the query passed to .execute()."""
             return self.outer.cursor.fetchone()
 
-    def execute(self, sql_str:str, values:tuple=()):
+    def execute(self, sql_str: str, values: tuple = ()):
         """Executes a query on the database."""
         self.cursor.execute(sql_str, values)
         return self.ExecuteResult(self)

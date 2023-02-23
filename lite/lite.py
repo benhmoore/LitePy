@@ -6,6 +6,7 @@ from colorama import Fore
 from lite import LiteConnection
 from lite.liteexceptions import EnvFileNotFound, DatabaseNotFoundError, DatabaseAlreadyExists
 
+
 class Lite:
     """Helper functions for other Lite classes.
 
@@ -60,7 +61,7 @@ class Lite:
         raise DatabaseNotFoundError('')
 
     @staticmethod
-    def create_database(database_path:str):
+    def create_database(database_path: str):
         """Creates an empty SQLite database.
 
         Args:
@@ -78,7 +79,7 @@ class Lite:
         Path(database_path).touch()
 
     @staticmethod
-    def connect(lite_connection:LiteConnection):
+    def connect(lite_connection: LiteConnection):
         """ Connects to a database. """
         Lite.DEFAULT_CONNECTION = lite_connection
         print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
@@ -90,6 +91,6 @@ class Lite:
         print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
-    def declare_connection(label:str, lite_connection:LiteConnection):
+    def declare_connection(label: str, lite_connection: LiteConnection):
         """ Declares a connection to a database. """
         Lite.DATABASE_CONNECTIONS[label] = lite_connection

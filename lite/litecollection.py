@@ -1,16 +1,17 @@
 """Contains the LiteCollection class"""
 from lite.liteexceptions import ModelInstanceNotFoundError, DuplicateModelInstance
 
+
 class LiteCollection:
     """ A collection of LiteModel instances
 
     Raises:
-        DuplicateModelInstance: Occurs when a model instance is added to a collection 
+        DuplicateModelInstance: Occurs when a model instance is added to a collection
             that already exists in the collection.
         ModelInstanceNotFoundError: Occurs when a model instance is not found in the collection.
     """
 
-    def __init__(self, model_instances:list=None):
+    def __init__(self, model_instances: list = None):
         """Initializes new LiteCollection with given list of LiteModel instances.
 
         Args:
@@ -22,11 +23,9 @@ class LiteCollection:
                 if instance not in self.list:
                     self.list.append(instance)
 
-
     def __str__(self):
         print_list = [model_instance.to_dict() for model_instance in self.list]
         return print_list.__str__()
-
 
     def __add__(self, other):
 
@@ -67,7 +66,7 @@ class LiteCollection:
 
         # If an integer
         if isinstance(item, int):
-            return any(getattr(model,'id') == item for model in self.list)
+            return any(getattr(model, 'id') == item for model in self.list)
 
         # If a LiteModel
         return item in self.list
@@ -110,7 +109,7 @@ class LiteCollection:
         Args:
             model_instances (list): List of LiteModel instances.
             self_fkey (str, optional): Foreign key to use for the self-model. Defaults to None.
-            model_fkey (str, optional): 
+            model_fkey (str, optional):
                 Foreign key to use for the model being detached. Defaults to None.
 
         Raises:
@@ -119,7 +118,7 @@ class LiteCollection:
         for model in self.list:
             model.detach_many(model_instances)
 
-    def attach_to_all(self, model_instance, self_fkey:str=None, model_fkey:str=None):
+    def attach_to_all(self, model_instance, self_fkey: str = None, model_fkey: str = None):
         """Attaches a model instance to the all model instances in the collection.
 
         Args:
@@ -138,9 +137,9 @@ class LiteCollection:
 
         Args:
             model_instance (LiteModel): The model instance to detach from all the model instances.
-            self_fkey (str): The foreign key in this model instance 
+            self_fkey (str): The foreign key in this model instance
                 that points to the other model instance (default is None).
-            model_fkey (str): The foreign key in the other model instance 
+            model_fkey (str): The foreign key in the other model instance
                 that points to this model instance (default is None).
         """
 
@@ -169,12 +168,10 @@ class LiteCollection:
         for model in self.list:
             model.delete()
 
-
     def model_keys(self) -> list:
         """Returns a list of primary keys for models in the collection."""
 
         return [model.id for model in self.list]
-
 
     def join(self, lite_collection):
         """Merges two LiteCollection instances.
@@ -184,7 +181,6 @@ class LiteCollection:
         """
 
         self.list += lite_collection.list
-
 
     def intersection(self, lite_collection):
         """Returns the intersection of two collections.
@@ -225,7 +221,6 @@ class LiteCollection:
 
         return difference
 
-
     def remove(self, model_instance):
         """Removes a LiteModel instance from this collection.
 
@@ -240,7 +235,6 @@ class LiteCollection:
             self.list.remove(model_instance)
         except ValueError as exc:
             raise ModelInstanceNotFoundError(model_instance.id) from exc
-
 
     def where(self, where_columns: list):
         """Simulates a select query on this collection.
