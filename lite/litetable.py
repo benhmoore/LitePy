@@ -29,7 +29,7 @@ class LiteTable:
         elif self.connection.connection_type == DB.POSTGRESQL:
             foreign_keys = self.connection.execute(f"SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='{self.table_name}'::regclass").fetchall()
 
-        foreign_key_map = {
+        _foreign_key_map = {
             # table_name: [local_key, foreign_key]
         }
 
@@ -41,8 +41,8 @@ class LiteTable:
                 foreign_key = fkey[3]
                 local_key = fkey[4]
 
-                if table_name not in foreign_key_map: foreign_key_map[table_name] = []
-                foreign_key_map[table_name].append([local_key, foreign_key])
+                if table_name not in _foreign_key_map: _foreign_key_map[table_name] = []
+                _foreign_key_map[table_name].append([local_key, foreign_key])
 
             elif self.connection.connection_type == DB.POSTGRESQL:
                 phrases = fkey[0].split('REFERENCES')
@@ -53,10 +53,10 @@ class LiteTable:
                 foreign_key = foreign_key_phrase[foreign_key_phrase.find('(')+1:foreign_key_phrase.find(')')].strip()
                 table_name = local_key_phrase.split('(')[0].strip()
 
-                if table_name not in foreign_key_map: foreign_key_map[table_name] = []
-                foreign_key_map[table_name].append([local_key, foreign_key])
+                if table_name not in _foreign_key_map: _foreign_key_map[table_name] = []
+                _foreign_key_map[table_name].append([local_key, foreign_key])
 
-        return foreign_key_map
+        return _foreign_key_map
 
 
     # PostgreSQL Support: ✅

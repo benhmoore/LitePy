@@ -17,14 +17,14 @@ class Membership(LiteModel):
 
 class DollarBill(LiteModel):
 
-    TABLE_NAME = "dollar_bills"
+    table_name = "dollar_bills"
 
     def owner(self) -> LiteModel:
         return self.belongs_to(Person)
 
 class Person(LiteModel):
 
-    TABLE_NAME = "people"
+    table_name = "people"
 
     def pets(self) -> LiteModel:
         return self.has_many(Pet)
