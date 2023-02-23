@@ -12,7 +12,7 @@ class LiteTable:
     """
 
     # PostgreSQL Support: ✅
-    def getForeignKeyReferences(self) -> dict:
+    def get_foreign_key_references(self) -> dict:
         """Returns dictionary of foreign keys associated with table.
 
         Returns:
@@ -80,7 +80,7 @@ class LiteTable:
 
     # PostgreSQL Support: ✅
     @staticmethod
-    def isPivotTable(table_name:str, lite_connection:LiteConnection=None) -> bool:
+    def is_pivot_table(table_name:str, lite_connection:LiteConnection=None) -> bool:
         """Checks if table is pivot table by counting table columns and checking foreign key references.
 
         Args:
@@ -97,7 +97,7 @@ class LiteTable:
         except: return False
 
         # Check that number of columns in table is equal to 2, not including 'id' field
-        table_columns = temp_table.getColumnNames()
+        table_columns = temp_table.get_column_names()
 
         table_columns.remove('id')
         table_columns.remove('created')
@@ -107,7 +107,7 @@ class LiteTable:
 
         # Check that number of foreign key relations is equal to 2
         total_relations = 0
-        fkey_refs = temp_table.getForeignKeyReferences()
+        fkey_refs = temp_table.get_foreign_key_references()
         for fkey_ref in fkey_refs:
             for _ in fkey_refs[fkey_ref]:
                 total_relations += 1
@@ -115,7 +115,7 @@ class LiteTable:
 
     # PostgreSQL Support: ✅
     @staticmethod
-    def createTable(table_name:str, columns:dict, foreign_keys:dict={}, lite_connection:LiteConnection=None):
+    def create_table(table_name:str, columns:dict, foreign_keys:dict={}, lite_connection:LiteConnection=None):
         """Creates a table within the database.
 
         Args:
@@ -173,7 +173,7 @@ class LiteTable:
 
     # PostgreSQL Support: ✅
     @staticmethod
-    def deleteTable(table_name:str, lite_connection:LiteConnection=None):
+    def delete_table(table_name:str, lite_connection:LiteConnection=None):
         """Deletes a given table.
 
         Args:
@@ -189,7 +189,7 @@ class LiteTable:
 
     # PostgreSQL Support: ✅
     @staticmethod
-    def getAllTableNames(lite_connection:LiteConnection=None) -> list:
+    def get_table_names(lite_connection:LiteConnection=None) -> list:
         """Returns a list of all tables in database.
 
         Returns:
@@ -206,7 +206,7 @@ class LiteTable:
 
 
     # PostgreSQL Support: ✅
-    def getColumnNames(self) -> list:
+    def get_column_names(self) -> list:
         """Returns a list of the table's column names.
 
         Returns:
@@ -308,9 +308,9 @@ class LiteTable:
         where_str, values_list = self.__where_to_str(where_columns)
 
         sql_str = f"DELETE FROM {self.table_name} WHERE {where_str}"
-        
+
         # Delete all rows if no where conditions provided
-        if len(where_columns) < 1: sql_str = f"DELETE FROM {self.table_name}"
+        if not where_columns: sql_str = f"DELETE FROM {self.table_name}"
 
         self.connection.execute(sql_str,tuple(values_list)).commit()
 
