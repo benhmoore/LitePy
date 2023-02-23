@@ -37,11 +37,15 @@ class TestLiteConnection(unittest.TestCase):
         insert_data_sql = "INSERT INTO test_table VALUES (?, ?)"
         select_data_sql = "SELECT * FROM test_table"
         values = (1, "John")
+
         self.conn.execute(create_table_sql).commit()
         self.conn.execute(insert_data_sql, values).commit()
+
         result = self.conn.execute(select_data_sql).fetchall()
         self.assertEqual(result, [(1, "John")])
 
+        result = self.conn.execute(select_data_sql).fetchone()
+        self.assertEqual(result, (1, "John"))
 
 if __name__ == '__main__':
     unittest.main()

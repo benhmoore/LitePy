@@ -19,6 +19,9 @@ class TestLite(unittest.TestCase):
 
     # Test Lite.getEnv()
     def test_get_env(self):
+        os.remove('.env')
+        with self.assertRaises(EnvFileNotFound):
+            env = Lite.getEnv()
         with open(".env", "w") as env_file:
             env_file.write("DB_DATABASE=test.sqlite")
         env = Lite.getEnv()
@@ -53,6 +56,13 @@ class TestLite(unittest.TestCase):
         conn = LiteConnection(database_path=TEST_DB_PATH)
         Lite.connect(conn)
         self.assertEqual(Lite.DEFAULT_CONNECTION, conn)
+
+    # Test Lite.disconnect()
+    def test_disconnect(self):
+        conn = LiteConnection(database_path=TEST_DB_PATH)
+        Lite.connect(conn)
+        Lite.disconnect()
+        self.assertEqual(Lite.DEFAULT_CONNECTION, None)
 
     # Test Lite.declareConnection()
     def test_declare_connection(self):

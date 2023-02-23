@@ -15,6 +15,13 @@ class Membership(LiteModel):
     def people(self) -> LiteModel:
         return self.belongsToMany(Person)
 
+class DollarBill(LiteModel):
+
+    TABLE_NAME = "dollar_bills"
+
+    def owner(self) -> LiteModel:
+        return self.belongsTo(Person)
+
 class Person(LiteModel):
 
     TABLE_NAME = "people"
@@ -27,5 +34,8 @@ class Person(LiteModel):
 
     def memberships(self) -> LiteModel:
         return self.belongsToMany(Membership)
+
+    def dollar_bills(self) -> LiteModel:
+        return self.hasMany(DollarBill)
 
 Membership.pivotsWith(Person, 'membership_person')

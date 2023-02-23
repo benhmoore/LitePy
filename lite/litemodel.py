@@ -18,7 +18,7 @@ class LiteModel:
     PIVOT_TABLE_CACHE = {}  # Used by belongsToMany()
 
     def __str__(self):
-        return self._toDict().__str__()
+        return self.to_dict().__str__()
 
     def __repr__(self):
         attributes = [getattr(self, key) for key in self.table_columns]
@@ -92,7 +92,7 @@ class LiteModel:
         that references passed-in model.
 
         This is used to get the `primary key` value of the parent or
-        child to this model.For example, if a `User` belongs to an `Account`,
+        child to this model. For example, if a `User` belongs to an `Account`,
         calling this method on `User` and passing in `Account` would return
         the name of the foreign key column referencing
         the particular `Account` instance the current `User` belongs to.
@@ -107,13 +107,15 @@ class LiteModel:
         """
 
         # Get conventional foreign key name and table name
-        try:  # Passed model is actually an instance
-            self_fkey = f'{model.__class__.__name__.lower()}_id'
-            model_table_name = model.TABLE_NAME
-        except AttributeError:  # Passed model is a LiteModel class
-            self_fkey = f'{model.__name__.lower()}_id'
-            model_table_name = self.__pluralize(model.__name__.lower())
+        # try:  # Passed model is actually an instance
+        self_fkey = f'{model.__class__.__name__.lower()}_id'
+        model_table_name = model.TABLE_NAME
 
+        # !! This try block doesn't appear to be necessary
+        # except AttributeError:  # Passed model is a LiteModel class
+        #     self_fkey = f'{model.__name__.lower()}_id'
+        #     model_table_name = self.__pluralize(model.__name__.lower())
+        
         # Check if this table has a custom foreign key column name
         if model_table_name in self.FOREIGN_KEY_MAP:
             self_fkey = self.FOREIGN_KEY_MAP[model_table_name][0][1]
@@ -151,20 +153,22 @@ class LiteModel:
         # This table must be stored in the database denoted by Lite's
         # DEFAULT CONNECTION
 
-        model_names = [self.__class__.__name__.lower()]
-        try:
-            model_name = getattr(model, '__name__').lower()
-        except AttributeError:
-            model_name = model.__class__.__name__.lower()
+        #  !! Considering removing this functionality
 
-        model_names.append(model_name)
+        # model_names = [self.__class__.__name__.lower()]
+        # try:
+        #     model_name = getattr(model, '__name__').lower()
+        # except AttributeError:
+        #     model_name = model.__class__.__name__.lower()
 
-        model_names = sorted(model_names)  # Make alphabetical
-        pivot_table_name = '_'.join(model_names)  # Join into string
+        # model_names.append(model_name)
 
-        # Check to see if table with this name exists
-        if LiteTable.isPivotTable(pivot_table_name):
-            return pivot_table_name, None  # If it does, return the table name
+        # model_names = sorted(model_names)  # Make alphabetical
+        # pivot_table_name = '_'.join(model_names)  # Join into string
+
+        # # Check to see if table with this name exists
+        # if LiteTable.isPivotTable(pivot_table_name):
+        #     return pivot_table_name, None  # If it does, return the table name
 
     def __clean_attachments(self):
         """Internal method. Cleans up any references to a model instance
@@ -231,10 +235,7 @@ class LiteModel:
         for method in methods:
             result = getattr(current_node, method)()
             if result:
-                try:
-                    relationship_models.join(result) if isinstance(result, LiteCollection) else relationship_models.add(result)
-                except (TypeError, AttributeError, DuplicateModelInstance) as e:
-                    pass
+                relationship_models = relationship_models + result
 
         for model in relationship_models:
             setattr(model, 'parent', current_node)

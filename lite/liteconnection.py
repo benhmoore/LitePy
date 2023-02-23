@@ -11,7 +11,6 @@ class DB(Enum):
     SQLITE = 1
     POSTGRESQL = 2
 
-
 class LiteConnection:
 
     def __str__(self):

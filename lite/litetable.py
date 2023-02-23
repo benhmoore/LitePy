@@ -100,6 +100,8 @@ class LiteTable:
         table_columns = temp_table.getColumnNames()
 
         table_columns.remove('id')
+        table_columns.remove('created')
+        table_columns.remove('updated')
 
         if len(table_columns) != 2: return False
 

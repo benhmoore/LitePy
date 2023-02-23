@@ -6,6 +6,12 @@ from tests import *
 # define a SQLite connection
 TEST_DB_PATH = "test.sqlite"
 
+class Car(LiteModel):
+
+    DEFAULT_CONNECTION = None
+    def owner(self) -> LiteModel:
+        return self.belongsTo(Person)
+
 class TestLiteModel(unittest.TestCase):
 
     @classmethod
@@ -14,6 +20,18 @@ class TestLiteModel(unittest.TestCase):
 
         Lite.createDatabase(TEST_DB_PATH)
         Lite.connect(LiteConnection(database_path=TEST_DB_PATH))
+
+        # Test models with default connections specified
+        Lite.createDatabase("additional.sqlite")
+        Car.DEFAULT_CONNECTION = LiteConnection(database_path="additional.sqlite")
+
+        # Create Car table
+        LiteTable.createTable("cars", {
+            "name": "TEXT",
+            "owner_id": "INTEGER"
+        }, {
+            "owner_id": ("people", "id")
+        }, Car.DEFAULT_CONNECTION)
 
         # Create Pet table
         LiteTable.createTable("pets", {
@@ -28,6 +46,8 @@ class TestLiteModel(unittest.TestCase):
         LiteTable.createTable("brains", {
             "name": "TEXT",
             "person_id": "INTEGER"
+        },{
+            "person_id": ("people", "id")
         })
 
         # Create Person table
@@ -39,6 +59,14 @@ class TestLiteModel(unittest.TestCase):
         # Create Person table
         LiteTable.createTable("memberships", {
             "name": "TEXT",
+        })
+
+        # Create Dollar Bill table
+        LiteTable.createTable("dollar_bills", {
+            "owner_id": "INTEGER",
+            "name": "TEXT"
+        }, {
+            "owner_id": ("people", "id")
         })
 
         LiteTable.createTable('membership_person', {
@@ -54,6 +82,7 @@ class TestLiteModel(unittest.TestCase):
         """Delete the test database"""
         Lite.disconnect()
         os.remove(TEST_DB_PATH)
+        os.remove("additional.sqlite")
 
 
     def setUp(self):
@@ -62,6 +91,7 @@ class TestLiteModel(unittest.TestCase):
             "name": "John",
             "age": 25
         })
+
         self.pet = Pet.create({
             "name": "Fido",
             "age": 3,
@@ -75,6 +105,8 @@ class TestLiteModel(unittest.TestCase):
                 "name": "membership2"
             },
         ])
+
+        Car.create({ "name": "car1" })
 
     def tearDown(self):
         """Delete the Person and Pet"""
@@ -90,6 +122,31 @@ class TestLiteModel(unittest.TestCase):
 
         self.assertEqual(self.pet.name, "Fido")
         self.assertEqual(self.pet.age, 3)
+
+    def test_str(self):
+        # create a new instance of a model
+        person = Person.create({
+            "name": "John",
+            "age": 25
+        })
+
+        assert "'name': 'John'" in str(person)
+
+        person.delete()
+
+    def test_repr(self):
+        # create a new instance of a model
+        person = Person.create({"name": "John", "age": 30})
+
+        # check that the string representation of the model is correct
+        assert "'John', 30" in repr(person)
+
+    def test_lt(self):
+
+        person2 = Person.create({ "name": "John", "age": 30 })
+        assert self.person < person2
+        with self.assertRaises(TypeError):
+            assert self.person < 1
 
     def test_belongsToMany(self):
         """Test the belongsToMany() method"""
@@ -129,6 +186,7 @@ class TestLiteModel(unittest.TestCase):
 
         # Check that the person's brain is the brain
         self.assertEqual(self.person.brain().id, brain.id)
+        self.assertEqual(brain.owner().id, self.person.id)
 
     def test_findOrFail(self):
         """Test the findOrFail() method"""
@@ -149,6 +207,27 @@ class TestLiteModel(unittest.TestCase):
         # Check that None is returned if the person can't be found
         self.assertIsNone(Person.find(100))
 
+    def test_attach(self):
+        """Test the attach() method"""
+
+        membership42 = Membership.create({ "name": "membership42" })
+
+        # Attach the person to the membership
+        membership42.attach(self.person)
+
+        # Check that the person's memberships are the membership
+        self.assertEqual(self.person.memberships()[0].id, membership42.id)
+        self.assertEqual(membership42.people()[0].id, self.person.id)
+
+        membership42.detach(self.person)
+
+        # Attach the membership to the person
+        self.person.attach(membership42)
+
+         # Check that the person's memberships are the membership
+        self.assertEqual(self.person.memberships()[0].id, membership42.id)
+        self.assertEqual(membership42.people()[0].id, self.person.id)
+
     def test_all(self):
         """Test the all() method"""
 
@@ -161,6 +240,9 @@ class TestLiteModel(unittest.TestCase):
         self.assertEqual(len(Person.all()), 2)
 
         person2.delete()
+
+        self.car = Car(1)
+        self.car = Car.all()[0]
     
     def test_where(self):
         """Test the where() method"""
@@ -176,6 +258,12 @@ class TestLiteModel(unittest.TestCase):
         ]).first().id, person2.id)
 
         person2.delete()
+
+        self.car = Car.where([
+            ["name", "=", "car1"]
+        ])[0]
+
+        assert self.car.name == "car1"
 
     def test_createMany(self):
         """Test the createMany() method"""
@@ -259,5 +347,8 @@ class TestLiteModel(unittest.TestCase):
         person2 = Person.create({ "name": "Jane", "age": 30 })
         self.memberships[0].attachMany([self.person, person2])
         person2.attach(self.memberships[1])
+
+        assert len(self.person.findPath(person2)) == 3
+        assert len(person2.findPath(self.pet)) == 0
 
         person2.delete()
