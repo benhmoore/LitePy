@@ -1,9 +1,9 @@
 """ Contains the LiteQuery class """
-from lite import LiteTable, LiteModel, LiteCollection, Lite
+from lite import LiteTable, LiteCollection, Lite
 # from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
 
 class LiteQuery:
-    def __init__(self, lite_model: LiteModel, column_name: str):
+    def __init__(self, lite_model, column_name: str):
         self._check_single_word(column_name)
 
         self.model = lite_model
