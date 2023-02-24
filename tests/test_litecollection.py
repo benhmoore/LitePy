@@ -341,6 +341,8 @@ class TestLiteCollection(unittest.TestCase):
         collection1 = LiteCollection([person1, person2])
         collection2 = LiteCollection([person3, person4])
 
+        assert collection1.__repr__() == str(collection1.list)
+
         # Test __add__ overload
         # Test adding two collections
         collection3 = collection1 + collection2

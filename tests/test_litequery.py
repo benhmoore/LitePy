@@ -149,6 +149,12 @@ class TestLiteQuery(unittest.TestCase):
         # Test the contains() method
         assert Person.where("name").contains("i").all() == [person3]
 
+        # Test the or_where() method
+        assert Person.where("name").is_equal_to("Billy").or_where("name").is_equal_to("Kendall").all() == [person3, person4]
+
+        # Test the and_where() method
+        assert Person.where("name").is_equal_to("Billy").and_where("name").is_equal_to("Kendall").all() == []
+
     def test_complex_queries(self):
 
         # Remove all people

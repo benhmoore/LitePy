@@ -1,8 +1,6 @@
 """Contains the LiteModel class definition"""
-import re
 import typing
-from deprecated import deprecated
-from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB, LiteQuery
+from lite import Lite, LiteTable, LiteCollection, LiteConnection, LiteQuery
 from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
 
 
@@ -428,13 +426,13 @@ class LiteModel:
         table.insert(column_values)
 
         # Get latest instance with this id
-        if table.connection.connection_type == DB.SQLITE:
+        if table.connection.connection_type == LiteConnection.TYPE.SQLITE:
             sql_str = f"""
                 SELECT id FROM {table_name} 
                 WHERE {list(column_values.keys())[0]} = ? 
                 ORDER BY id DESC
             """
-        elif table.connection.connection_type == DB.POSTGRESQL:
+        elif table.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
             sql_str = f"""
                 SELECT id FROM {table_name} 
                 WHERE {list(column_values.keys())[0]} = %s 
@@ -860,7 +858,6 @@ class LiteModel:
         children_collection = [model.find(row[0]) for row in child_rows]
         return LiteCollection(children_collection)
 
-    @deprecated(reason="This method will be removed in a future release.")
     def find_path(self, to_model_instance, max_depth: int = 100):
         """Attempts to find a path from the current model instance 
         to another using Bidirectional BFS.

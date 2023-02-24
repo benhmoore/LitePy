@@ -9,15 +9,15 @@ import sqlite3
 from enum import Enum
 from lite import DatabaseNotFoundError
 
-
-class DB(Enum):
-    """ Enum for database types """
-    SQLITE = 1
-    POSTGRESQL = 2
-
-
 class LiteConnection:
     """This class is used to create a connection to a database and execute queries."""
+
+    class TYPE(Enum):
+        """ Enum for database types """
+        SQLITE = 1
+        POSTGRESQL = 2
+
+    TYPE = TYPE
 
     def __str__(self):
         connection_config = {
@@ -31,7 +31,7 @@ class LiteConnection:
 
     def __init__(
             self,
-            connection_type: DB = DB.SQLITE,
+            connection_type: TYPE = TYPE.SQLITE,
             host: str = None,
             port: str = None,
             database: str = None,
@@ -47,7 +47,7 @@ class LiteConnection:
         self.database = database
         self.database_path = database_path
 
-        if connection_type == DB.SQLITE:
+        if connection_type == self.TYPE.SQLITE:
 
             # Raise an error if the database doesn't exist
             if not os.path.exists(database_path):
@@ -67,7 +67,7 @@ class LiteConnection:
             else:
                 self.cursor.execute('PRAGMA journal_mode=delete;')
 
-        elif connection_type == DB.POSTGRESQL:
+        elif connection_type == self.TYPE.POSTGRESQL:
             self.connection = psycopg2.connect(
                 database=database,
                 host=host,
@@ -101,6 +101,6 @@ class LiteConnection:
 
     def execute(self, sql_str: str, values: tuple = ()):
         """Executes a query on the database."""
-        
+
         self.cursor.execute(sql_str, values)
         return self.ExecuteResult(self)

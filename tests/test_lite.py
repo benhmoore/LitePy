@@ -69,3 +69,10 @@ class TestLite(unittest.TestCase):
         conn = LiteConnection(database_path=TEST_DB_PATH)
         Lite.declare_connection("test", conn)
         self.assertEqual(Lite.DATABASE_CONNECTIONS["test"], conn)
+
+    # Test Lite.pluralize_noun()
+    def test_pluralize_noun(self):
+        assert Lite.pluralize_noun("peach") == "peaches"
+        assert Lite.pluralize_noun("class") == "classes"
+        assert Lite.pluralize_noun("toy") == "toys"
+        assert Lite.pluralize_noun("city") == "cities"
