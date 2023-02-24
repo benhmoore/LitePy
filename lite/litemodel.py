@@ -2,7 +2,7 @@
 
 import re
 import typing
-from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB
+from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB, LiteQuery
 from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
 
 
@@ -50,7 +50,7 @@ class LiteModel:
             )
         return False
 
-    def __pluralize(self, noun: str) -> str:
+    def pluralize(self, noun: str) -> str:
         """Returns plural form of noun. Used for table name derivations.
 
         Algorithm sourced from:
@@ -78,7 +78,7 @@ class LiteModel:
             str: Derived table name
         """
 
-        return self.__pluralize(self.__class__.__name__.lower())
+        return self.pluralize(self.__class__.__name__.lower())
 
     def __has_column(self, column_name: str) -> bool:
         """Checks if LiteModel instance has a given field or column.
@@ -119,7 +119,7 @@ class LiteModel:
         # !! This try block doesn't appear to be necessary
         # except AttributeError:  # Passed model is a LiteModel class
         #     self_fkey = f'{model.__name__.lower()}_id'
-        #     model_table_name = self.__pluralize(model.__name__.lower())
+        #     model_table_name = self.pluralize(model.__name__.lower())
 
         # Check if this table has a custom foreign key column name
         if model_table_name in self._foreign_key_map:
@@ -358,7 +358,7 @@ class LiteModel:
         else:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_name = cls.__pluralize(cls, cls.__name__.lower())
+        table_name = cls.pluralize(cls, cls.__name__.lower())
         if hasattr(cls, 'table_name'):
             table_name = cls.table_name
 
@@ -398,7 +398,7 @@ class LiteModel:
         else:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_name = cls.__pluralize(cls, cls.__name__.lower())
+        table_name = cls.pluralize(cls, cls.__name__.lower())
         if hasattr(cls, 'table_name'):
             table_name = cls.table_name
 
@@ -409,7 +409,7 @@ class LiteModel:
         return LiteCollection(collection)
 
     @classmethod
-    def where(cls, where_columns: list) -> LiteCollection:
+    def where(cls, column_name:str) -> LiteCollection:
         """Returns a LiteCollection containing all model instances matching where_columns.
 
         Args:
@@ -421,20 +421,22 @@ class LiteModel:
             LiteCollection: Collection of matching model instances
         """
 
-        if cls.DEFAULT_CONNECTION is not None:
-            lite_connection = cls.DEFAULT_CONNECTION
-        else:
-            lite_connection = Lite.DEFAULT_CONNECTION
+        return LiteQuery(cls, column_name)
 
-        table_name = cls.__pluralize(cls, cls.__name__.lower())
-        if hasattr(cls, 'table_name'):
-            table_name = cls.table_name
+        # if cls.DEFAULT_CONNECTION is not None:
+        #     lite_connection = cls.DEFAULT_CONNECTION
+        # else:
+        #     lite_connection = Lite.DEFAULT_CONNECTION
 
-        table = LiteTable(table_name, lite_connection)
+        # table_name = cls.pluralize(cls, cls.__name__.lower())
+        # if hasattr(cls, 'table_name'):
+        #     table_name = cls.table_name
 
-        rows = table.select(where_columns, ['id'])
-        collection = [cls.find_or_fail(row[0]) for row in rows]
-        return LiteCollection(collection)
+        # table = LiteTable(table_name, lite_connection)
+
+        # rows = table.select(where_columns, ['id'])
+        # collection = [cls.find_or_fail(row[0]) for row in rows]
+        # return LiteCollection(collection)
 
     @classmethod
     def create(cls, column_values: dict):
@@ -452,7 +454,7 @@ class LiteModel:
         else:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_name = cls.__pluralize(cls, cls.__name__.lower())
+        table_name = cls.pluralize(cls, cls.__name__.lower())
         if hasattr(cls, 'table_name'):
             table_name = cls.table_name
 
@@ -857,7 +859,7 @@ class LiteModel:
 
         # Get table name of model
         if not hasattr(model, 'table_name'):
-            model.table_name = self.__pluralize(model.__name__.lower())
+            model.table_name = self.pluralize(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
         model_instance = model()
@@ -885,7 +887,7 @@ class LiteModel:
 
         # Get table name of model
         if not hasattr(model, 'table_name'):
-            model.table_name = self.__pluralize(model.__name__.lower())
+            model.table_name = self.pluralize(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
         model_instance = model()

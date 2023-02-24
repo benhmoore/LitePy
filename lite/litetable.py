@@ -1,5 +1,5 @@
 """ Contains the LiteTable class """
-from lite import Lite, LiteConnection, DB
+from lite import Lite, LiteConnection, LiteQuery, DB
 from lite.liteexceptions import TableNotFoundError
 
 
