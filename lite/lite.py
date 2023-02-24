@@ -1,6 +1,7 @@
 """Contains the Lite class"""
 
 import os
+import re
 from pathlib import Path
 from colorama import Fore
 from lite import LiteConnection
@@ -94,3 +95,24 @@ class Lite:
     def declare_connection(label: str, lite_connection: LiteConnection):
         """ Declares a connection to a database. """
         Lite.DATABASE_CONNECTIONS[label] = lite_connection
+
+    @staticmethod
+    def pluralize_noun(noun: str) -> str:
+        """Returns plural form of noun. Used for table name derivations.
+
+        Algorithm sourced from:
+        https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
+
+        Args:
+            noun (str): Singular noun
+
+        Returns:
+            str: Plural noun
+        """
+        if re.search('[sxz]$', noun):
+            return re.sub('$', 'es', noun)
+        if re.search('[^aeioudgkprt]h$', noun):
+            return re.sub('$', 'es', noun)
+        if re.search('[aeiou]y$', noun):
+            return re.sub('y$', 'ies', noun)
+        return noun + 's'
