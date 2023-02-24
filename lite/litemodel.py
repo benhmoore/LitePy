@@ -1,6 +1,7 @@
 """Contains the LiteModel class definition"""
 import re
 import typing
+from deprecated import deprecated
 from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB, LiteQuery
 from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
 
@@ -402,20 +403,6 @@ class LiteModel:
 
         return LiteQuery(cls, column_name)
 
-        table_name = Lite.pluralize_noun(cls.__name__.lower())
-        if hasattr(cls, 'table_name'):
-            table_name = cls.table_name
-
-        # table_name = cls.pluralize(cls, cls.__name__.lower())
-        # if hasattr(cls, 'table_name'):
-        #     table_name = cls.table_name
-
-        # table = LiteTable(table_name, lite_connection)
-
-        # rows = table.select(where_columns, ['id'])
-        # collection = [cls.find_or_fail(row[0]) for row in rows]
-        # return LiteCollection(collection)
-
     @classmethod
     def create(cls, column_values: dict):
         """Creates a new instance of a LiteModel and returns it.
@@ -721,13 +708,6 @@ class LiteModel:
         _values = self.table.select([['id', '=', self.id]])
 
         # Set attributes of Python class instance
-        # for i in range(len(self.table_columns)):
-        #     try:
-        #         value = _values[0][i]
-        #     except IndexError as _:
-        #         value = None
-        #     setattr(self, self.table_columns[i], value)
-
         for col in enumerate(self.table_columns):
             value = _values[0][col[0]]
             setattr(self, col[1], value)

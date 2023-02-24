@@ -101,7 +101,6 @@ class LiteConnection:
 
     def execute(self, sql_str: str, values: tuple = ()):
         """Executes a query on the database."""
-
-        print(sql_str)
+        
         self.cursor.execute(sql_str, values)
         return self.ExecuteResult(self)

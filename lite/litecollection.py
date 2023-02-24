@@ -26,6 +26,9 @@ class LiteCollection:
     def __str__(self):
         print_list = [model_instance.to_dict() for model_instance in self.list]
         return print_list.__str__()
+    
+    def __repr__(self):
+        return str(self.list)
 
     def __add__(self, other):
 

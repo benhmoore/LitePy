@@ -355,7 +355,7 @@ class LiteTable:
         get_str = ",".join(list(result_columns))
         where_str, values_list = self.__where_to_str(where_columns)
         sql_str = f"SELECT {get_str} FROM {self.table_name} WHERE {where_str}"
-
+        
         if not where_columns:
             sql_str = f"SELECT {get_str} FROM {self.table_name}"
 
