@@ -1,8 +1,8 @@
 """Contains the LiteModel class definition"""
-
+import re
 import typing
 from deprecated import deprecated
-from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB
+from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB, LiteQuery
 from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
 
 
@@ -389,7 +389,7 @@ class LiteModel:
         return LiteCollection(collection)
 
     @classmethod
-    def where(cls, where_columns: list) -> LiteCollection:
+    def where(cls, column_name:str) -> LiteCollection:
         """Returns a LiteCollection containing all model instances matching where_columns.
 
         Args:
@@ -401,20 +401,7 @@ class LiteModel:
             LiteCollection: Collection of matching model instances
         """
 
-        if cls.DEFAULT_CONNECTION is not None:
-            lite_connection = cls.DEFAULT_CONNECTION
-        else:
-            lite_connection = Lite.DEFAULT_CONNECTION
-
-        table_name = Lite.pluralize_noun(cls.__name__.lower())
-        if hasattr(cls, 'table_name'):
-            table_name = cls.table_name
-
-        table = LiteTable(table_name, lite_connection)
-
-        rows = table.select(where_columns, ['id'])
-        collection = [cls.find_or_fail(row[0]) for row in rows]
-        return LiteCollection(collection)
+        return LiteQuery(cls, column_name)
 
     @classmethod
     def create(cls, column_values: dict):
@@ -721,13 +708,6 @@ class LiteModel:
         _values = self.table.select([['id', '=', self.id]])
 
         # Set attributes of Python class instance
-        # for i in range(len(self.table_columns)):
-        #     try:
-        #         value = _values[0][i]
-        #     except IndexError as _:
-        #         value = None
-        #     setattr(self, self.table_columns[i], value)
-
         for col in enumerate(self.table_columns):
             value = _values[0][col[0]]
             setattr(self, col[1], value)

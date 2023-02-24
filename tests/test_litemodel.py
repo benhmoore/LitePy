@@ -1,6 +1,5 @@
 import os
 import unittest
-import time
 from tests import *
 
 # define a SQLite connection
@@ -251,17 +250,30 @@ class TestLiteModel(unittest.TestCase):
             "name": "Jane",
             "age": 30
         })
+        person3 = Person.create({
+            "name": "Billy",
+            "age": 60
+        })
+        person4 = Person.create({
+            "name": "Kendall",
+            "age": 57
+        })
 
         # Check that the correct person is returned
-        self.assertEqual(Person.where([
-            ["name", "=", "Jane"]            
-        ]).first().id, person2.id)
+
+
+        assert Person.where("age").is_greater_than(30).all() == [person3, person4]
+
+
+        assert Person.where("age").is_greater_than_or_equal_to(31).all() == [person3, person4]
+        assert Person.where("age").is_greater_than_or_equal_to(31).and_where("age").is_less_than(60).all() == [person4]
+        assert Person.where("age").is_greater_than_or_equal_to(31).and_where("age").is_less_than(60).and_where("name").contains("end").all() == [person4]
+
+        self.assertEqual(Person.where("name").is_equal_to("Jane").last().id, person2.id)
 
         person2.delete()
 
-        self.car = Car.where([
-            ["name", "=", "car1"]
-        ])[0]
+        self.car = Car.where("name").is_equal_to("car1").all()[0]
 
         assert self.car.name == "car1"
 
