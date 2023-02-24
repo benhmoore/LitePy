@@ -9,7 +9,7 @@ class TestLiteTable(unittest.TestCase):
 
     def setUp(self):
         Lite.create_database(TEST_DB_PATH)
-        Lite.connect(LiteConnection(DB.SQLITE, database_path=TEST_DB_PATH))
+        Lite.connect(LiteConnection(LiteConnection.TYPE.SQLITE, database_path=TEST_DB_PATH))
 
         # test creating a table
         table_name = "test_table"
