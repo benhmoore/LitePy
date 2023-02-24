@@ -1,12 +1,11 @@
 import os
 import unittest
-import time
 from tests import *
 
 # define a SQLite connection
 TEST_DB_PATH = "test.sqlite"
 
-class TestLiteModel(unittest.TestCase):
+class TestLiteQuery(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):

@@ -1,6 +1,5 @@
 import os
 import unittest
-import time
 from tests import *
 
 # define a SQLite connection
