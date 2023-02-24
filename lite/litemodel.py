@@ -2,7 +2,7 @@
 import re
 import typing
 from deprecated import deprecated
-from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB, LiteQuery
+from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB
 from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
 
 
@@ -400,8 +400,8 @@ class LiteModel:
         Returns:
             LiteCollection: Collection of matching model instances
         """
-
-        return LiteQuery(cls, column_name)
+        return False
+        # return LiteQuery(cls, column_name)
 
     @classmethod
     def create(cls, column_values: dict):
