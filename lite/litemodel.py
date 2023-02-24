@@ -1,5 +1,4 @@
 """Contains the LiteModel class definition"""
-
 import re
 import typing
 from lite import Lite, LiteTable, LiteCollection, LiteConnection, DB, LiteQuery
@@ -50,26 +49,6 @@ class LiteModel:
             )
         return False
 
-    def pluralize(self, noun: str) -> str:
-        """Returns plural form of noun. Used for table name derivations.
-
-        Algorithm sourced from:
-        https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
-
-        Args:
-            noun (str): Singular noun
-
-        Returns:
-            str: Plural noun
-        """
-        if re.search('[sxz]$', noun):
-            return re.sub('$', 'es', noun)
-        if re.search('[^aeioudgkprt]h$', noun):
-            return re.sub('$', 'es', noun)
-        if re.search('[aeiou]y$', noun):
-            return re.sub('y$', 'ies', noun)
-        return noun + 's'
-
     def __get_table_name(self) -> str:
         """Returns the derived table name by getting the plural noun form of
         the LiteModel instance's name.
@@ -78,7 +57,7 @@ class LiteModel:
             str: Derived table name
         """
 
-        return self.pluralize(self.__class__.__name__.lower())
+        return Lite.pluralize_noun(self.__class__.__name__.lower())
 
     def __has_column(self, column_name: str) -> bool:
         """Checks if LiteModel instance has a given field or column.
@@ -119,7 +98,7 @@ class LiteModel:
         # !! This try block doesn't appear to be necessary
         # except AttributeError:  # Passed model is a LiteModel class
         #     self_fkey = f'{model.__name__.lower()}_id'
-        #     model_table_name = self.pluralize(model.__name__.lower())
+        #     model_table_name = Lite.pluralize_noun(model.__name__.lower())
 
         # Check if this table has a custom foreign key column name
         if model_table_name in self._foreign_key_map:
@@ -358,7 +337,7 @@ class LiteModel:
         else:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_name = cls.pluralize(cls, cls.__name__.lower())
+        table_name = Lite.pluralize_noun(cls.__name__.lower())
         if hasattr(cls, 'table_name'):
             table_name = cls.table_name
 
@@ -398,7 +377,7 @@ class LiteModel:
         else:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_name = cls.pluralize(cls, cls.__name__.lower())
+        table_name = Lite.pluralize_noun(cls.__name__.lower())
         if hasattr(cls, 'table_name'):
             table_name = cls.table_name
 
@@ -423,10 +402,9 @@ class LiteModel:
 
         return LiteQuery(cls, column_name)
 
-        # if cls.DEFAULT_CONNECTION is not None:
-        #     lite_connection = cls.DEFAULT_CONNECTION
-        # else:
-        #     lite_connection = Lite.DEFAULT_CONNECTION
+        table_name = Lite.pluralize_noun(cls.__name__.lower())
+        if hasattr(cls, 'table_name'):
+            table_name = cls.table_name
 
         # table_name = cls.pluralize(cls, cls.__name__.lower())
         # if hasattr(cls, 'table_name'):
@@ -454,7 +432,7 @@ class LiteModel:
         else:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_name = cls.pluralize(cls, cls.__name__.lower())
+        table_name = Lite.pluralize_noun(cls.__name__.lower())
         if hasattr(cls, 'table_name'):
             table_name = cls.table_name
 
@@ -859,7 +837,7 @@ class LiteModel:
 
         # Get table name of model
         if not hasattr(model, 'table_name'):
-            model.table_name = self.pluralize(model.__name__.lower())
+            model.table_name = Lite.pluralize_noun(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
         model_instance = model()
@@ -887,7 +865,7 @@ class LiteModel:
 
         # Get table name of model
         if not hasattr(model, 'table_name'):
-            model.table_name = self.pluralize(model.__name__.lower())
+            model.table_name = Lite.pluralize_noun(model.__name__.lower())
 
         # Derive foreign and local keys if none are provided
         model_instance = model()
@@ -902,6 +880,7 @@ class LiteModel:
         children_collection = [model.find(row[0]) for row in child_rows]
         return LiteCollection(children_collection)
 
+    @deprecated(reason="This method will be removed in a future release.")
     def find_path(self, to_model_instance, max_depth: int = 100):
         """Attempts to find a path from the current model instance 
         to another using Bidirectional BFS.
