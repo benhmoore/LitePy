@@ -206,7 +206,7 @@ class TestLiteModel(unittest.TestCase):
         # Check that None is returned if the person can't be found
         self.assertIsNone(Person.find(100))
 
-    def test_attach(self):
+    def test_attach_detach(self):
         """Test the attach() method"""
 
         membership42 = Membership.create({ "name": "membership42" })
@@ -226,6 +226,23 @@ class TestLiteModel(unittest.TestCase):
          # Check that the person's memberships are the membership
         self.assertEqual(self.person.memberships()[0].id, membership42.id)
         self.assertEqual(membership42.people()[0].id, self.person.id)
+
+        # Try tests that should fail
+        with self.assertRaises(TypeError):
+            self.person.attach(1)
+
+        with self.assertRaises(RelationshipError):
+            self.person.attach(self.person)
+
+        with self.assertRaises(RelationshipError):
+            self.person.attach_many([self.person])
+
+        with self.assertRaises(RelationshipError):
+            self.person.attach_many([membership42])
+
+        self.person.detach(membership42)
+        with self.assertRaises(RelationshipError):
+            self.person.detach(membership42)
 
     def test_all(self):
         """Test the all() method"""
@@ -261,8 +278,6 @@ class TestLiteModel(unittest.TestCase):
 
         # Check that the correct person is returned
         assert Person.where("age").is_greater_than(30).all() == [person3, person4]
-
-
         assert Person.where("age").is_greater_than_or_equal_to(31).all() == [person3, person4]
         assert Person.where("age").is_greater_than_or_equal_to(31).and_where("age").is_less_than(60).all() == [person4]
         assert Person.where("age").is_greater_than_or_equal_to(31).and_where("age").is_less_than(60).and_where("name").contains("end").all() == [person4]
@@ -295,7 +310,6 @@ class TestLiteModel(unittest.TestCase):
 
         # Delete the pets
         new_pets.delete_all()
-
         assert len(Pet.all()) == 1
 
     def test_manyToMany(self):
@@ -325,7 +339,6 @@ class TestLiteModel(unittest.TestCase):
         # Detach the person from the memberships
         self.person.detach_many(self.memberships)
         self.assertEqual(len(self.person.memberships()), 0)
-
         person2.delete()
 
     def test_save(self):

@@ -176,11 +176,13 @@ class LiteTable:
         table_desc.extend(
             f'"{column_name}"	{value}' for column_name, value in columns.items()
         )
+
         # Declare primary key (SQLite)
         if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
             table_desc.extend(
                 ('"id" INTEGER NOT NULL UNIQUE', 'PRIMARY KEY("id" AUTOINCREMENT)')
             )
+
         # Declare foreign key relationships
         table_desc.extend(
             f"""
@@ -189,6 +191,7 @@ class LiteTable:
             """
             for column_name, value_ in foreign_keys.items()
         )
+
         # Combine list of lines into newline-separated string,
         # and generate complete sql query string
         table_desc_str = ",\n".join(table_desc)
