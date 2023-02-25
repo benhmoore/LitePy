@@ -94,11 +94,6 @@ class LiteModel:
         self_fkey = f'{model.__class__.__name__.lower()}_id'
         model_table_name = model.table_name
 
-        # !! This try block doesn't appear to be necessary
-        # except AttributeError:  # Passed model is a LiteModel class
-        #     self_fkey = f'{model.__name__.lower()}_id'
-        #     model_table_name = Lite.pluralize_noun(model.__name__.lower())
-
         # Check if this table has a custom foreign key column name
         if model_table_name in self._foreign_key_map:
             self_fkey = self._foreign_key_map[model_table_name][0][1]
@@ -170,21 +165,6 @@ class LiteModel:
             if self.table.table_name in temp_foreign_keys:
                 check_tables[temp_table.table_name] = temp_foreign_keys[self.table.table_name]
 
-        # for t_name in check_tables:
-        #     # Get local and foreign keys
-        #     key_maps = check_tables[t_name]
-        #     for i in range(0, len(key_maps)):
-        #         local_key = key_maps[i][0]
-        #         foreign_key = key_maps[i][1]
-
-        #         local_key_value = getattr(self, local_key)
-
-        #         # Check if table is a pivot table, as detach procedure will be different
-        #         temp_table = LiteTable(t_name)
-        #         if LiteTable.is_pivot_table(t_name):
-        #             temp_table.delete([[foreign_key,'=',local_key_value]])
-        #         else:
-        #             temp_table.update({foreign_key: None}, [[foreign_key,'=',local_key_value]])
         for t_name, key_maps in check_tables.items():
             for local_key, foreign_key in key_maps:
                 local_key_value = getattr(self, local_key)
@@ -678,7 +658,10 @@ class LiteModel:
             ])
         else:  # Is not many-to-many relationship
             # Derive foreign keys
-            self_fkey = model_instance.get_foreign_key_from_model(self)
+            try:
+                self_fkey = model_instance.get_foreign_key_from_model(self)
+            except AttributeError as exc:
+                raise TypeError("The passed model instance is not a LiteModel.") from exc
             model_fkey = self.get_foreign_key_from_model(model_instance)
 
             # Determine which model instance contains the reference to the other
