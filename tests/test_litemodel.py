@@ -244,6 +244,9 @@ class TestLiteModel(unittest.TestCase):
         with self.assertRaises(RelationshipError):
             self.person.detach(membership42)
 
+        with self.assertRaises(TypeError):
+            self.person.detach(1)
+
     def test_all(self):
         """Test the all() method"""
 
@@ -311,6 +314,13 @@ class TestLiteModel(unittest.TestCase):
         # Delete the pets
         new_pets.delete_all()
         assert len(Pet.all()) == 1
+
+    # def test_values(self):
+    #     self.person.age = [{"value": 30, "unit": "years"}]
+    #     self.person.save()
+    #     self.person.fresh()
+    #     print(self.person)
+    #     assert 1 == 2
 
     def test_manyToMany(self):
         """Test the manyToMany() method"""
