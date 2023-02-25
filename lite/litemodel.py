@@ -271,7 +271,6 @@ class LiteModel:
                 LiteModel,
             ]:
                 relationship_definitions.append(method)
-
         return relationship_definitions
 
     def __init__(
@@ -315,6 +314,34 @@ class LiteModel:
 
             # Store list of all table column names. Used by .save()
             self.table_columns = columns
+
+    @classmethod
+    def requires_table(
+            cls,
+            columns: dict[str, str],
+            foreign_keys: dict[str, list[str, str]] = None,
+            lite_connection: LiteConnection = None
+    ):
+        """
+        Creates a database table for the LiteModel if it doesn't exist.
+        
+        Args:
+            table_name (str): Table name
+            columns (dict): {
+                column_name: field_attributes
+            }
+            foreign_keys (dict, optional): {
+                column_name: [foreign_table_name, foreign_column_name]
+            }
+        """
+
+        if not hasattr(cls, 'table_name'):
+            cls.table_name = cls.__get_table_name(cls)
+
+        if LiteTable.exists(cls.table_name, lite_connection):
+            return
+
+        LiteTable.create_table(cls.table_name, columns, foreign_keys, lite_connection)
 
     @classmethod
     def find_or_fail(cls, _id: int):
@@ -543,6 +570,7 @@ class LiteModel:
                     model_fkey = foreign_keys[model_instance.table_name][0][1]
 
                 self_fkey = foreign_keys[self.table_name][0][1]
+
             # Make sure this relationship doesn't already exist
             relationships = pivot_table.select([
                 [self_fkey, '=', self.id],
@@ -562,7 +590,10 @@ class LiteModel:
 
         # Is not a many-to-many relationship
         # Derive foreign keys
-        self_fkey = model_instance.get_foreign_key_from_model(self)
+        try:
+            self_fkey = model_instance.get_foreign_key_from_model(self)
+        except AttributeError as exc:
+            raise TypeError("The passed model instance is not a LiteModel.") from exc
         model_fkey = self.get_foreign_key_from_model(model_instance)
 
         # Determine which model instance contains the reference to the other,
@@ -573,15 +604,20 @@ class LiteModel:
                     """There is a pre-existing relationship. 
                     Remove it with .detach() before proceeding."""
                 )
-
             setattr(self, model_fkey, model_instance.id)
             self.save()
-        elif getattr(model_instance, self_fkey) is None:
+        elif hasattr(model_instance, self_fkey):
+            if getattr(model_instance, self_fkey) is not None:
+                raise RelationshipError(
+                    """There is a pre-existing relationship.
+                    Remove it with .detach() before proceeding."""
+                )
             setattr(model_instance, self_fkey, self.id)
             model_instance.save()
         else:
             raise RelationshipError(
-                "There is a pre-existing relationship. Remove it with .detach() before proceeding."
+                """Parent model has no relation to the passed model. 
+                Be sure that foreign keys reference the correct table names."""
             )
 
         return True
@@ -627,12 +663,19 @@ class LiteModel:
                 model_fkey = foreign_keys[model_instance.table_name][0][1]
 
             self_fkey = foreign_keys[self.table_name][0][1]
+
             # Make sure this relationship doesn't already exist
+
+            if len(pivot_table.select([
+                [self_fkey, '=', self.id],
+                [model_fkey, '=', model_instance.id]
+            ])) < 1:
+                raise RelationshipError("Relationship does not exist. Cannot detach.")
+
             pivot_table.delete([
                 [self_fkey, '=', self.id],
                 [model_fkey, '=', model_instance.id]
             ])
-
         else:  # Is not many-to-many relationship
             # Derive foreign keys
             self_fkey = model_instance.get_foreign_key_from_model(self)
