@@ -1,4 +1,5 @@
 import os
+import glob
 import unittest
 from tests import *
 
@@ -80,8 +81,10 @@ class TestLiteModel(unittest.TestCase):
     def tearDownClass(self):
         """Delete the test database"""
         Lite.disconnect()
-        os.remove(TEST_DB_PATH)
-        os.remove("additional.sqlite")
+
+        # remove test database
+        for file_name in glob.glob("*.sqlite*"):
+            os.remove(file_name)
 
 
     def setUp(self):

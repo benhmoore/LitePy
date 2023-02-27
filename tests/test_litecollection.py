@@ -1,4 +1,5 @@
 import os
+import glob
 import unittest
 from tests import *
 
@@ -50,7 +51,10 @@ class TestLiteCollection(unittest.TestCase):
         """Delete the test database"""
 
         Lite.disconnect()
-        os.remove(TEST_DB_PATH)
+        
+        # remove test database
+        for file_name in glob.glob("*.sqlite*"):
+            os.remove(file_name)
 
     def setUp(self):
         self.person1 = Person.create({
@@ -116,11 +120,10 @@ class TestLiteCollection(unittest.TestCase):
 
         assert collection.first() == self.person1
 
-    def test_first(self):
         collection = LiteCollection([self.person1, self.person2])
 
         assert collection.last() == self.person2
-
+        
     def test_intersection(self):
 
         collection1 = LiteCollection([self.person1, self.person2])

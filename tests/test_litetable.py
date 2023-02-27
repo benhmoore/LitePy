@@ -1,4 +1,5 @@
 import os
+import glob
 import unittest
 from tests import *
 
@@ -30,7 +31,8 @@ class TestLiteTable(unittest.TestCase):
         self.assertFalse(LiteTable.exists(self.table.table_name))
 
         # remove test database
-        os.remove(TEST_DB_PATH)
+        for file_name in glob.glob("*.sqlite*"):
+            os.remove(file_name)
 
     def test_table_creation(self):
         self.assertTrue(LiteTable.exists(self.table.table_name))

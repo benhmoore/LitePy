@@ -24,8 +24,7 @@ class LiteCollection:
                     self.list.append(instance)
 
     def __str__(self):
-        print_list = [model_instance.to_dict() for model_instance in self.list]
-        return print_list.__str__()
+        return [model_instance.to_dict() for model_instance in self.list].__str__()
 
     def __repr__(self):
         return str(self.list)
@@ -57,8 +56,7 @@ class LiteCollection:
     def __eq__(self, other):
         if other.__class__.__name__ == 'LiteCollection':
             return self.list == other.list
-        elif other.__class__.__name__ == 'list':
-            return self.list == other
+        return self.list == other
 
     def __contains__(self, item):
         """Used by 'in' Python comparison.
@@ -200,11 +198,10 @@ class LiteCollection:
 
         intersection_keys = list(self_keys.intersection(other_keys))
 
-        intersection = LiteCollection()
-        for model in self.list:
-            if model.id in intersection_keys:
-                intersection.add(model)
-
+        intersection = LiteCollection([
+            model for model in self.list
+            if model.id in intersection_keys
+        ])
         return intersection
 
     def difference(self, lite_collection):

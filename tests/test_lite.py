@@ -1,4 +1,5 @@
 import os
+import glob
 import unittest
 from tests import *
 
@@ -15,7 +16,8 @@ class TestLite(unittest.TestCase):
         """Remove the test database"""
         
         # remove test database
-        os.remove(TEST_DB_PATH)
+        for file_name in glob.glob("*.sqlite*"):
+            os.remove(file_name)
 
     # Test Lite.get_env()
     def test_get_env(self):

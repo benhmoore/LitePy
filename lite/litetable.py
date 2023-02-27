@@ -36,9 +36,7 @@ class LiteTable:
                 WHERE conrelid='{self.table_name}'::regclass
             """).fetchall()
 
-        _foreign_key_map = {
-            # table_name: [local_key, foreign_key]
-        }
+        _foreign_key_map = {}
 
         # Generate key mapping
         for fkey in foreign_keys:
@@ -153,6 +151,7 @@ class LiteTable:
                 column_name: [foreign_table_name, foreign_column_name]
             }
         """
+        
         if not foreign_keys:
             foreign_keys = {}
         if not lite_connection:

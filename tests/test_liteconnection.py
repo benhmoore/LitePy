@@ -1,4 +1,5 @@
 import os
+import glob
 import sqlite3
 import unittest
 from tests import *
@@ -17,9 +18,10 @@ class TestLiteConnection(unittest.TestCase):
         # Delete the test database
         self.conn.cursor.close()
         self.conn.connection.close()
-        
+
         # remove test database
-        os.remove(TEST_DB_PATH)
+        for file_name in glob.glob("*.sqlite*"):
+            os.remove(file_name)
 
     def test_sqlite_connection(self):
         # Test that the SQLite connection was created successfully
