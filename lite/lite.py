@@ -96,23 +96,26 @@ class Lite:
         """ Declares a connection to a database. """
         Lite.DATABASE_CONNECTIONS[label] = lite_connection
 
-    @staticmethod
-    def pluralize_noun(noun: str) -> str:
-        """Returns plural form of noun. Used for table name derivations.
+    class HelperFunctions:
+        """Helper functions for other Lite classes."""
 
-        Algorithm sourced from:
-        https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
+        @staticmethod
+        def pluralize_noun(noun: str) -> str:
+            """Returns plural form of noun. Used for table name derivations.
 
-        Args:
-            noun (str): Singular noun
+            Algorithm sourced from:
+            https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
 
-        Returns:
-            str: Plural noun
-        """
-        if re.search('[sxz]$', noun):
-            return re.sub('$', 'es', noun)
-        if re.search('[^aeioudgkprt]h$', noun):
-            return re.sub('$', 'es', noun)
-        if re.search('[^aeiou]y$', noun):
-            return re.sub('y$', 'ies', noun)
-        return noun + 's'
+            Args:
+                noun (str): Singular noun
+
+            Returns:
+                str: Plural noun
+            """
+            if re.search('[sxz]$', noun):
+                return re.sub('$', 'es', noun)
+            if re.search('[^aeioudgkprt]h$', noun):
+                return re.sub('$', 'es', noun)
+            if re.search('[^aeiou]y$', noun):
+                return re.sub('y$', 'ies', noun)
+            return noun + 's'

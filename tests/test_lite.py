@@ -70,9 +70,9 @@ class TestLite(unittest.TestCase):
         Lite.declare_connection("test", conn)
         self.assertEqual(Lite.DATABASE_CONNECTIONS["test"], conn)
 
-    # Test Lite.pluralize_noun()
+    # Test Lite.HelperFunctions.pluralize_noun()
     def test_pluralize_noun(self):
-        assert Lite.pluralize_noun("peach") == "peaches"
-        assert Lite.pluralize_noun("class") == "classes"
-        assert Lite.pluralize_noun("toy") == "toys"
-        assert Lite.pluralize_noun("city") == "cities"
+        assert Lite.HelperFunctions.pluralize_noun("peach") == "peaches"
+        assert Lite.HelperFunctions.pluralize_noun("class") == "classes"
+        assert Lite.HelperFunctions.pluralize_noun("toy") == "toys"
+        assert Lite.HelperFunctions.pluralize_noun("city") == "cities"
