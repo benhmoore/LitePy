@@ -10,7 +10,7 @@ class LiteQuery:
         self.where_clause = ""
         self.params = []
 
-        table_name = Lite.pluralize_noun(self.model.__name__.lower())
+        table_name = Lite.HelperFunctions.pluralize_noun(self.model.__name__.lower())
 
         if self.model.DEFAULT_CONNECTION is not None:
             lite_connection = self.model.DEFAULT_CONNECTION
@@ -33,57 +33,40 @@ class LiteQuery:
 
     def is_equal_to(self, value):
         """ Checks if the column is equal to the value """
-        self._check_single_word(value)
-        self.where_clause += " = ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " = ?")
 
     def is_not_equal_to(self, value):
         """ Checks if the column is not equal to the value """
-        self._check_single_word(value)
-        self.where_clause += " != ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " != ?")
 
     def is_greater_than(self, value):
         """ Checks if the column is greater than the value """
-        self._check_single_word(value)
-        self.where_clause += " > ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " > ?")
 
     def is_greater_than_or_equal_to(self, value):
         """ Checks if the column is greater than or equal to the value """
-        self._check_single_word(value)
-        self.where_clause += " >= ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " >= ?")
 
     def is_less_than(self, value):
         """ Checks if the column is less than the value """
-        self._check_single_word(value)
-        self.where_clause += " < ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " < ?")
 
     def is_less_than_or_equal_to(self, value):
         """ Checks if the column is less than or equal to the value """
-        self._check_single_word(value)
-        self.where_clause += " <= ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " <= ?")
 
     def is_like(self, value):
         """ Checks if the column is like the value """
-        self._check_single_word(value)
-        self.where_clause += " LIKE ?"
-        self.params.append(value)
-        return self
+        return self._add_to_query(value, " LIKE ?")
 
     def is_not_like(self, value):
         """ Checks if the column is not like the value """
+        return self._add_to_query(value, " NOT LIKE ?")
+
+    def _add_to_query(self, value, arg1):
+        """ Adds the value and argument to the query """
         self._check_single_word(value)
-        self.where_clause += " NOT LIKE ?"
+        self.where_clause += arg1
         self.params.append(value)
         return self
 
