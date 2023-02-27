@@ -151,7 +151,7 @@ class LiteTable:
                 column_name: [foreign_table_name, foreign_column_name]
             }
         """
-        
+
         if not foreign_keys:
             foreign_keys = {}
         if not lite_connection:
@@ -239,8 +239,8 @@ class LiteTable:
         Returns:
             list: [table_name,..]
         """
-        if not lite_connection:
-            lite_connection = Lite.DEFAULT_CONNECTION
+
+        lite_connection = Lite.DEFAULT_CONNECTION if not lite_connection else lite_connection
 
         if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
             rows = lite_connection.execute("""
@@ -326,7 +326,7 @@ class LiteTable:
         elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
             set_str = ",".join([f'{cname} = %s' for cname in update_columns])
         values_list = [update_columns[cname] for cname in update_columns]  # collect update values
-        where_str, where_values = self.__where_to_str(where_columns)
+        where_str, where_values = self._where_to_string(where_columns)
 
         values_list += where_values
 
@@ -355,7 +355,7 @@ class LiteTable:
 
         # Refactor pythonic variables into SQLite query string
         get_str = ",".join(list(result_columns))
-        where_str, values_list = self.__where_to_str(where_columns)
+        where_str, values_list = self._where_to_string(where_columns)
         sql_str = f"SELECT {get_str} FROM {self.table_name} WHERE {where_str}"
 
         if not where_columns:
@@ -373,7 +373,7 @@ class LiteTable:
             ]
         """
 
-        where_str, values_list = self.__where_to_str(where_columns)
+        where_str, values_list = self._where_to_string(where_columns)
 
         sql_str = f"DELETE FROM {self.table_name} WHERE {where_str}"
 
@@ -384,7 +384,7 @@ class LiteTable:
         self.connection.execute(sql_str, tuple(values_list)).commit()
 
     # PostgreSQL Support: ✅
-    def __where_to_str(self, where_columns: list) -> tuple:
+    def _where_to_string(self, where_columns: list) -> tuple:
         """Internal method. Converts where_columns dict to a proper SQL query substring.
 
         Args:
@@ -400,7 +400,7 @@ class LiteTable:
         values_list = [column[2] for column in where_columns]  # add where values
 
         # Convert Python's None to NULL for the SQL query
-        insert_positions = self.__find_char_occurrences(where_str, '?')
+        insert_positions = self._find_char_occurrences(where_str, '?')
         where_str = list(where_str)
 
         remove_values = []
@@ -421,7 +421,7 @@ class LiteTable:
         return (new_where_str, values_list)
 
     # PostgreSQL Support: ✅
-    def __find_char_occurrences(self, _str: str, char: str) -> list:
+    def _find_char_occurrences(self, _str: str, char: str) -> list:
         """Internal method. Returns a list of indices where a character appears within string.
 
         Args:

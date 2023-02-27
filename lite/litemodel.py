@@ -77,16 +77,12 @@ class LiteModel:
             str: Name of foreign key column referencing `parent` model instance
         """
 
-        # Get conventional foreign key name and table name
-        # try:  # Passed model is actually an instance
-        self_fkey = f'{model.__class__.__name__.lower()}_id'
-        model_table_name = model.table_name
-
         # Check if this table has a custom foreign key column name
-        if model_table_name in self._foreign_key_map:
-            self_fkey = self._foreign_key_map[model_table_name][0][1]
+        if model.table_name in self._foreign_key_map:
+            return self._foreign_key_map[model.table_name][0][1]
 
-        return self_fkey
+        # Get conventional foreign key name and table name
+        return f'{model.__class__.__name__.lower()}_id'
 
     def _get_pivot_name(self, model) -> str:
         """Returns the pivot table between `self` and the given LiteModel
@@ -96,12 +92,11 @@ class LiteModel:
             model (LiteModel): LiteModel class or instance
 
         Returns:
-            str: Name of pivot table
+            tuple: (pivot table name, lite_connection)
         """
 
         # Check CUSTOM_PIVOT_TABLES for custom pivot table names
         # that define relationships between these two models
-        self_name = self.__class__.__name__
         try:
             model_name = model.__class__.__name__
             if model_name == 'type':
@@ -111,13 +106,8 @@ class LiteModel:
 
         for pivot_table_name, values in self.CUSTOM_PIVOT_TABLES.items():
             # Check if this pivot table is between these two models
-            if set(values[:2]) == {model_name, self_name}:
-                lite_connection = values[2]
-                return pivot_table_name, lite_connection
-
-        # Otherwise, derive conventional naming scheme for pivot tables
-        # This table must be stored in the database denoted by Lite's
-        # DEFAULT CONNECTION
+            if set(values[:2]) == {model_name, self.__class__.__name__}:
+                return pivot_table_name, values[2]
 
     def _clean_attachments(self):
         """Cleans up any references to a model instance that's being deleted.
