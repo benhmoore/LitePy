@@ -1,9 +1,4 @@
 """ Contains the LiteConnection class and DB Enum """
-try:
-    import psycopg2
-except ImportError:
-    pass
-
 import os
 import sqlite3
 from enum import Enum

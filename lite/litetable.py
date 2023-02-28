@@ -297,7 +297,7 @@ class LiteTable:
 
         return self.connection.execute(sql_str, tuple(values_list)).fetchall()
 
-    def delete(self, where_columns: list):
+    def delete(self, where_columns: list = None):
         """Deletes rows from a database table. If where_columns is an empty list, deletes all rows.
 
         Args:
@@ -306,13 +306,13 @@ class LiteTable:
             ]
         """
 
-        where_str, values_list = self._where_to_string(where_columns)
-
-        sql_str = f"DELETE FROM {self.table_name} WHERE {where_str}"
-
         # Delete all rows if no where conditions provided
+        values_list = []
         if not where_columns:
             sql_str = f"DELETE FROM {self.table_name}"
+        else:
+            where_str, values_list = self._where_to_string(where_columns)
+            sql_str = f"DELETE FROM {self.table_name} WHERE {where_str}"
 
         self.connection.execute(sql_str, tuple(values_list)).commit()
 
