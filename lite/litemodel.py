@@ -13,6 +13,7 @@ class LiteModel:
         ModelInstanceNotFoundError: Model does not exist in database.
         RelationshipError: Relationship does not match required status.
     """
+
     DEFAULT_CONNECTION = None  # Overridden by LiteModel.connect()
     CUSTOM_PIVOT_TABLES = {}  # Filled by calls to .pivots_with()
     PIVOT_TABLE_CACHE = {}  # Used by belongs_to_many()
@@ -58,7 +59,7 @@ class LiteModel:
 
         return Lite.HelperFunctions.pluralize_noun(self.__class__.__name__.lower())
 
-    def get_foreign_key_column_name_for_model(self, model) -> str:
+    def get_foreign_key_column_for_model(self, model) -> str:
         """Derives name of foreign key within current instance
         that references passed-in model.
 
@@ -104,10 +105,14 @@ class LiteModel:
         except AttributeError:
             model_name = getattr(model, '__name__')
 
-        for pivot_table_name, values in self.CUSTOM_PIVOT_TABLES.items():
-            # Check if this pivot table is between these two models
-            if set(values[:2]) == {model_name, self.__class__.__name__}:
-                return pivot_table_name, values[2]
+        return next(
+            (
+                (pivot_table_name, values[2])
+                for pivot_table_name, values in self.CUSTOM_PIVOT_TABLES.items()
+                if set(values[:2]) == {model_name, self.__class__.__name__}
+            ),
+            False,
+        )
 
     def _clean_attachments(self):
         """Cleans up any references to a model instance that's being deleted.
@@ -235,7 +240,7 @@ class LiteModel:
         self.table = _table or LiteTable(self.table_name, _lite_conn)
 
         # Generate dict map of foreign key references.
-        # Used by .get_foreign_key_column_name_for_model()
+        # Used by .get_foreign_key_column_for_model()
         self._foreign_key_map = self.table.get_foreign_key_references()
 
         # Load model instance from database if an id is provided
@@ -277,10 +282,8 @@ class LiteModel:
         if not hasattr(cls, 'table_name'):
             cls.table_name = cls._get_table_name(cls)
 
-        if LiteTable.exists(cls.table_name, lite_connection):
-            return
-
-        LiteTable.create_table(cls.table_name, columns, foreign_keys, lite_connection)
+        if not LiteTable.exists(cls.table_name, lite_connection):
+            LiteTable.create_table(cls.table_name, columns, foreign_keys, lite_connection)
 
     @classmethod
     def find_or_fail(cls, _id: int):
@@ -349,17 +352,14 @@ class LiteModel:
         table = LiteTable(table_name, lite_connection)
 
         rows = table.select([], ['id'])
-        collection = [cls.find_or_fail(row[0]) for row in rows]
-        return LiteCollection(collection)
+        return LiteCollection([cls.find_or_fail(row[0]) for row in rows])
 
     @classmethod
-    def where(cls, column_name:str) -> LiteCollection:
-        """Returns a LiteCollection containing all model instances matching where_columns.
+    def where(cls, column_name:str) -> LiteQuery:
+        """Returns a new LiteQuery instance.
 
         Args:
-            where_columns (list): [
-                [column_name, ('=','<','>','LIKE'), column_value]
-            ]
+            column_name (str): Name of column to query
 
         Returns:
             LiteCollection: Collection of matching model instances
@@ -443,6 +443,7 @@ class LiteModel:
             lite_connection (LiteConnection): 
                 Connection pointed to the database in which this model is stored
         """
+
         cls.DEFAULT_CONNECTION = lite_connection
 
     def to_dict(self) -> dict:
@@ -452,6 +453,7 @@ class LiteModel:
         Returns:
             dict: LiteModel attributes as dictionary
         """
+
         print_dict = {}
 
         for column in self.table_columns:
@@ -519,10 +521,10 @@ class LiteModel:
         # Is not a many-to-many relationship
         # Derive foreign keys
         try:
-            self_fkey = model_instance.get_foreign_key_column_name_for_model(self)
+            self_fkey = model_instance.get_foreign_key_column_for_model(self)
         except AttributeError as exc:
             raise TypeError("The passed model instance is not a LiteModel.") from exc
-        model_fkey = self.get_foreign_key_column_name_for_model(model_instance)
+        model_fkey = self.get_foreign_key_column_for_model(model_instance)
 
         # Determine which model instance contains the reference to the other,
         # and make sure a relationship doesn't already exist.
@@ -582,13 +584,14 @@ class LiteModel:
             return self._detach_from_pivot_table(
                 pivot_table_name, lite_connection, model_instance
             )
+
         # Is not many-to-many relationship
         # Derive foreign keys
         try:
-            self_fkey = model_instance.get_foreign_key_column_name_for_model(self)
+            self_fkey = model_instance.get_foreign_key_column_for_model(self)
         except AttributeError as exc:
             raise TypeError("The passed model instance is not a LiteModel.") from exc
-        model_fkey = self.get_foreign_key_column_name_for_model(model_instance)
+        model_fkey = self.get_foreign_key_column_for_model(model_instance)
 
         # Determine which model instance contains the reference to the other
         if model_fkey in self.table_columns:
@@ -602,8 +605,11 @@ class LiteModel:
         else:
             raise RelationshipError("Relationship does not exist. Cannot detach.")
 
+        return True
+
     def _detach_from_pivot_table(self, pivot_table_name, lite_connection, model_instance):
         """Removes a relationship between two model instances from a pivot table."""
+
         pivot_table = LiteTable(pivot_table_name, lite_connection)
 
         # Derive foreign keys
@@ -652,6 +658,7 @@ class LiteModel:
         Raises:
             ModelInstanceNotFoundError: Model does not exist in database.
         """
+
         if self.id is None:
             raise ModelInstanceNotFoundError("Model instance not found in database")
 
@@ -667,6 +674,7 @@ class LiteModel:
 
     def save(self):
         """Saves any changes to model instance attributes."""
+
         update_columns = {
             column: getattr(self, column)
             for column in self.table_columns
@@ -702,7 +710,7 @@ class LiteModel:
 
         # Derive foreign key if not provided
         if not foreign_key:
-            foreign_key = self.get_foreign_key_column_name_for_model(model)
+            foreign_key = self.get_foreign_key_column_for_model(model)
 
         # Get database row ID of parent model
         parent_model_id = getattr(self, foreign_key)
@@ -711,6 +719,7 @@ class LiteModel:
 
     def get_pivot_table(self, model):
         """Returns the pivot table for a given sibling model."""
+
         model_class_name = getattr(model, '__name__').lower()
         if model_class_name not in self.PIVOT_TABLE_CACHE:
             pivot_table_name, lite_connection = self._get_pivot_name(model)
@@ -723,6 +732,7 @@ class LiteModel:
 
     def get_foreign_key_column_names(self, foreign_keys, model_instance):
         """Returns the foreign keys for a given model instance."""
+
         if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
             self_fkey = [foreign_keys[self.table_name][0][1], foreign_keys[self.table_name][1][1]]
             model_fkey = [
@@ -737,6 +747,7 @@ class LiteModel:
     def get_relationships(self, pivot_table, self_fkey, model_fkey):
         """Returns the many-to-many relationships for a given pivot table, 
         self foreign key, and model foreign key."""
+
         if not isinstance(self_fkey, list):
             return pivot_table.connection.execute(
                 f"""
@@ -759,6 +770,7 @@ class LiteModel:
 
     def find_sibling(self, model, rel):
         """Attempts to find a sibling model instance for a given model class and relationship ID."""
+
         try:
             sibling = model.find(rel[0])
         except ModelInstanceNotFoundError:
@@ -774,6 +786,7 @@ class LiteModel:
         Returns:
             LiteCollection: Sibling model instances
         """
+
         foreign_keys, pivot_table = self.get_pivot_table(model)
         model_instance = model()
         self_fkey, model_fkey = self.get_foreign_key_column_names(foreign_keys, model_instance)
@@ -805,7 +818,7 @@ class LiteModel:
         # Derive foreign and local keys if none are provided
         model_instance = model()
         if not foreign_key:
-            foreign_key = model_instance.get_foreign_key_column_name_for_model(self)
+            foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
         child_table = LiteTable(model.table_name)
         child_ids = child_table.select([
@@ -833,7 +846,7 @@ class LiteModel:
         # Derive foreign and local keys if none are provided
         model_instance = model()
         if not foreign_key:
-            foreign_key = model_instance.get_foreign_key_column_name_for_model(self)
+            foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
         child_table = LiteTable(model.table_name, model.DEFAULT_CONNECTION)
         child_rows = child_table.select([

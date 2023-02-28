@@ -201,7 +201,7 @@ class LiteTable:
             list: [table_name,..]
         """
 
-        lite_connection = Lite.DEFAULT_CONNECTION if not lite_connection else lite_connection
+        lite_connection = lite_connection or Lite.DEFAULT_CONNECTION
 
         rows = lite_connection.execute("""
             SELECT name FROM sqlite_schema 
