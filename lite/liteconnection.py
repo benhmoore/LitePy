@@ -9,34 +9,24 @@ class LiteConnection:
 
     class TYPE(Enum):
         """ Enum for database types """
+
         SQLITE = 1
 
     TYPE = TYPE
 
     def __str__(self):
         connection_config = {
-            "type": self.connection_type,
-            "host": self.host,
-            "port": self.port,
-            "database": self.database,
             "database_path": self.database_path,
         }
         return connection_config.__str__()
 
     def __init__(
             self,
-            connection_type: TYPE = TYPE.SQLITE,
-            host: str = None,
-            port: str = None,
-            database: str = None,
             database_path: str = None,
             isolation: bool = False,
             wal: bool = True
     ):
-        self.connection_type = connection_type
-        self.host = host
-        self.port = port
-        self.database = database
+        self.connection_type = self.TYPE.SQLITE
         self.database_path = database_path
 
         # Raise an error if the database doesn't exist
@@ -69,14 +59,17 @@ class LiteConnection:
 
         def commit(self) -> None:
             """Commits changes made by .execute() to the database."""
+
             self.outer.connection.commit()
 
         def fetchall(self) -> list:
             """Makes a fetchall call to the database using the query passed to .execute()."""
+
             return self.outer.cursor.fetchall()
 
         def fetchone(self):
             """Makes a fetchone call to the database using the query passed to .execute()."""
+
             return self.outer.cursor.fetchone()
 
     def execute(self, sql_str: str, values: tuple = ()):

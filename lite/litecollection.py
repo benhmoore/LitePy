@@ -17,6 +17,7 @@ class LiteCollection:
         Args:
             model_instances (list, optional): List of LiteModel instances. Defaults to None.
         """
+
         self.list = []
         if model_instances:
             for instance in model_instances:
@@ -30,7 +31,6 @@ class LiteCollection:
         return str(self.list)
 
     def __add__(self, other):
-
         self_list = self.list[:]
 
         if other.__class__.__name__ == 'LiteCollection':
@@ -116,6 +116,7 @@ class LiteCollection:
         Raises:
             RelationshipError: Relationship does not exist.
         """
+
         for model in self.list:
             model.detach_many(model_instances)
 
@@ -198,11 +199,9 @@ class LiteCollection:
 
         intersection_keys = list(self_keys.intersection(other_keys))
 
-        intersection = LiteCollection([
-            model for model in self.list
-            if model.id in intersection_keys
-        ])
-        return intersection
+        return LiteCollection(
+            [model for model in self.list if model.id in intersection_keys]
+        )
 
     def difference(self, lite_collection):
         """Returns all models not in the passed collection.

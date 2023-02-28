@@ -12,7 +12,7 @@ class TestLiteConnection(unittest.TestCase):
     def setUp(self):
         # Create a new test database
         Lite.create_database(TEST_DB_PATH)
-        self.conn = LiteConnection(LiteConnection.TYPE.SQLITE, database_path=TEST_DB_PATH)
+        self.conn = LiteConnection(database_path=TEST_DB_PATH)
 
     def tearDown(self):
         # Delete the test database
@@ -31,7 +31,7 @@ class TestLiteConnection(unittest.TestCase):
     def test_database_not_found_error(self):
         # Test that a DatabaseNotFoundError is raised if the database doesn't exist
         with self.assertRaises(DatabaseNotFoundError):
-            LiteConnection(LiteConnection.TYPE.SQLITE, database_path="non_existent.db")
+            LiteConnection(database_path="non_existent.db")
 
     def test_execute(self):
         # Test the execute() method
