@@ -34,7 +34,7 @@ class TestLiteModel(unittest.TestCase):
         }, Car.DEFAULT_CONNECTION)
 
         # Create Pet table
-        LiteTable.create_table("pets", {
+        Pet.requires_table({
             "name": "TEXT",
             "age": "INTEGER",
             "owner_id": "INTEGER"

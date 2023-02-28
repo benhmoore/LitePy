@@ -67,6 +67,13 @@ class TestLiteTable(unittest.TestCase):
         self.table.delete([("id", "=", 1)])
         self.assertListEqual(self.table.select([]), [])
 
+    def test_delete_all(self):
+        self.table.insert({"id": 1, "name": "John", "age": 25, "parent_id": None})
+        self.table.insert({"id": 2, "name": "John", "age": 25, "parent_id": None})
+        self.table.insert({"id": 3, "name": "John", "age": 25, "parent_id": None})
+        self.table.delete()
+        self.assertListEqual(self.table.select([]), [])
+
 if __name__ == '__main__':
     unittest.main(exit=False)
     os.remove(TEST_DB_PATH)

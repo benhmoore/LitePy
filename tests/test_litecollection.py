@@ -16,7 +16,7 @@ class TestLiteCollection(unittest.TestCase):
         Lite.connect(LiteConnection(database_path=TEST_DB_PATH))
 
         # Create Pet table
-        LiteTable.create_table("pets", {
+        Pet.requires_table({
             "name": "TEXT",
             "age": "INTEGER",
             "owner_id": "INTEGER"

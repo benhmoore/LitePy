@@ -402,10 +402,7 @@ class LiteModel:
             sql_str, (column_values[list(column_values.keys())[0]],)
         ).fetchall()
 
-        # This check should never fail
-        if len(ids) > 0:
-            return cls.find_or_fail(ids[0][0])
-        raise ModelInstanceNotFoundError(-1)
+        return cls.find_or_fail(ids[0][0])
 
     @classmethod
     def create_many(cls, column_list: list) -> LiteCollection:
