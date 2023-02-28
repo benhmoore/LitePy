@@ -9,7 +9,7 @@ This is an ongoing project to develop a better, pythonic, model-based system for
 The goal is to abstract away the necessity of writing SQL queries and maintaining complex relationships between tables. You can instead define readable model classes that represent tables, declare relationships between these models, and manipulate data in way that complements Python syntax.
 
 ### Database Support
-LitePy currently supports SQLite (hence the name), with early support for PostgreSQL.
+LitePy currently supports SQLite (hence the name).
 
 ## Why use LitePy? A quick example.
 Consider a rudimentary system that maintains a database of authors and books for a library. An author may have written one book, multiple books, or none at all. We would like to be able to relate each book with an author. That way, we can ask the system for all books written by an author or for the author of a given book. Nice and simple, right?
@@ -80,14 +80,6 @@ If this example piqued your interest, continue on for all the gritty details.
 To build from source, clone this repository and install a live, development version with pip:
 
 ```pip3 install -e [litepy_repo_directory]```
-
-### PostgreSQL Support
-To use your LitePy installation with PostgreSQL databases, you need to install PostgreSQL Server, then psycopg2:
-
-```
-brew install postgresql
-pip3 install psycopg2-binary
-```
 
 ## Documentation
 

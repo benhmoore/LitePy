@@ -392,18 +392,11 @@ class LiteModel:
         table.insert(column_values)
 
         # Get latest instance with this id
-        if table.connection.connection_type == LiteConnection.TYPE.SQLITE:
-            sql_str = f"""
-                SELECT id FROM {table_name} 
-                WHERE {list(column_values.keys())[0]} = ? 
-                ORDER BY id DESC
-            """
-        elif table.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            sql_str = f"""
-                SELECT id FROM {table_name} 
-                WHERE {list(column_values.keys())[0]} = %s 
-                ORDER BY id DESC
-            """
+        sql_str = f"""
+            SELECT id FROM {table_name} 
+            WHERE {list(column_values.keys())[0]} = ? 
+            ORDER BY id DESC
+        """
 
         ids = table.connection.execute(
             sql_str, (column_values[list(column_values.keys())[0]],)

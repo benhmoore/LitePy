@@ -12,7 +12,6 @@ class LiteTable:
         TableNotFoundError: Table not found within database
     """
 
-    # PostgreSQL Support: ✅
     def get_foreign_key_references(self) -> dict:
         """Returns dictionary of foreign keys associated with table.
 
@@ -25,52 +24,25 @@ class LiteTable:
         """
 
         # Get raw list of foreign key relationships using 'PRAGMA'
-        if self.connection.connection_type == LiteConnection.TYPE.SQLITE:
-            foreign_keys = self.connection.execute(
-                f"PRAGMA foreign_key_list({self.table_name})"
-            ).fetchall()
-        elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            foreign_keys = self.connection.execute(f"""
-                SELECT pg_get_constraintdef(oid) 
-                FROM pg_constraint 
-                WHERE conrelid='{self.table_name}'::regclass
-            """).fetchall()
+        foreign_keys = self.connection.execute(
+            f"PRAGMA foreign_key_list({self.table_name})"
+        ).fetchall()
 
         _foreign_key_map = {}
 
         # Generate key mapping
         for fkey in foreign_keys:
             # Generate key mapping
-            if self.connection.connection_type == LiteConnection.TYPE.SQLITE:
-                table_name = fkey[2]
-                foreign_key = fkey[3]
-                local_key = fkey[4]
+            table_name = fkey[2]
+            foreign_key = fkey[3]
+            local_key = fkey[4]
 
-                if table_name not in _foreign_key_map:
-                    _foreign_key_map[table_name] = []
-                _foreign_key_map[table_name].append([local_key, foreign_key])
-
-            elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-                phrases = fkey[0].split('REFERENCES')
-                if len(phrases) != 2:
-                    continue
-
-                foreign_key_phrase, local_key_phrase = phrases
-                local_key = local_key_phrase[
-                    local_key_phrase.find('(') + 1: local_key_phrase.find(')')
-                ].strip()
-                foreign_key = foreign_key_phrase[
-                    foreign_key_phrase.find('(') + 1: foreign_key_phrase.find(')')
-                ].strip()
-                table_name = local_key_phrase.split('(')[0].strip()
-
-                if table_name not in _foreign_key_map:
-                    _foreign_key_map[table_name] = []
-                _foreign_key_map[table_name].append([local_key, foreign_key])
+            if table_name not in _foreign_key_map:
+                _foreign_key_map[table_name] = []
+            _foreign_key_map[table_name].append([local_key, foreign_key])
 
         return _foreign_key_map
 
-    # PostgreSQL Support: ✅
     @staticmethod
     def exists(table_name: str, lite_connection: LiteConnection = None) -> bool:
         """Checks if table exists in database.
@@ -91,7 +63,6 @@ class LiteTable:
             return False
         return True
 
-    # PostgreSQL Support: ✅
     @staticmethod
     def is_pivot_table(table_name: str, lite_connection: LiteConnection = None) -> bool:
         """Checks if table is pivot table by counting table columns 
@@ -132,7 +103,6 @@ class LiteTable:
 
         return total_relations == 2
 
-    # PostgreSQL Support: ✅
     @staticmethod
     def create_table(
             table_name: str,
@@ -167,9 +137,6 @@ class LiteTable:
                     '"updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
                 )
             )
-        # Declare primary key (PostgreSQL)
-        if lite_connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            table_desc.append('"id" serial primary key')
 
         # Convert columns dict into lines for SQL query
         table_desc.extend(
@@ -177,10 +144,9 @@ class LiteTable:
         )
 
         # Declare primary key (SQLite)
-        if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
-            table_desc.extend(
-                ('"id" INTEGER NOT NULL UNIQUE', 'PRIMARY KEY("id" AUTOINCREMENT)')
-            )
+        table_desc.extend(
+            ('"id" INTEGER NOT NULL UNIQUE', 'PRIMARY KEY("id" AUTOINCREMENT)')
+        )
 
         # Declare foreign key relationships
         table_desc.extend(
@@ -214,7 +180,6 @@ class LiteTable:
 
         return LiteTable(table_name, lite_connection)
 
-    # PostgreSQL Support: ✅
     @staticmethod
     def delete_table(table_name: str, lite_connection: LiteConnection = None):
         """Deletes a given table.
@@ -226,12 +191,8 @@ class LiteTable:
         if not lite_connection:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
-            lite_connection.execute(f"DROP TABLE IF EXISTS {table_name}").commit()
-        elif lite_connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            lite_connection.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE").commit()
+        lite_connection.execute(f"DROP TABLE IF EXISTS {table_name}").commit()
 
-    # PostgreSQL Support: ✅
     @staticmethod
     def get_table_names(lite_connection: LiteConnection = None) -> list:
         """Returns a list of all tables in database.
@@ -242,23 +203,14 @@ class LiteTable:
 
         lite_connection = Lite.DEFAULT_CONNECTION if not lite_connection else lite_connection
 
-        if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
-            rows = lite_connection.execute("""
-                SELECT name FROM sqlite_schema 
-                WHERE type='table' 
-                ORDER BY name
-            """).fetchall()
-        elif lite_connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            rows = lite_connection.execute("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                ORDER BY table_name
-            """).fetchall()
+        rows = lite_connection.execute("""
+            SELECT name FROM sqlite_schema 
+            WHERE type='table' 
+            ORDER BY name
+        """).fetchall()
 
         return [row[0] for row in rows]
 
-    # PostgreSQL Support: ✅
     def get_column_names(self) -> list:
         """Returns a list of the table's column names.
 
@@ -266,20 +218,10 @@ class LiteTable:
             list: Column names
         """
 
-        if self.connection.connection_type == LiteConnection.TYPE.SQLITE:
-            table_columns = [column[1] for column in self.connection.execute(
-                f'PRAGMA table_info({self.table_name})'
-            ).fetchall()]
-        elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            table_columns = [column[0] for column in self.connection.execute(f"""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = '{self.table_name}'
-            """).fetchall()]
+        return [column[1] for column in self.connection.execute(
+            f'PRAGMA table_info({self.table_name})'
+        ).fetchall()]
 
-        return table_columns
-
-    # PostgreSQL Support: ✅
     def insert(self, columns, or_ignore=False):
         """Inserts row into database table.
 
@@ -293,10 +235,7 @@ class LiteTable:
         # Refactor pythonic variables into SQLite query string
         columns_str = ", ".join(list(columns))
 
-        if self.connection.connection_type == LiteConnection.TYPE.SQLITE:
-            values_str = ", ".join(["?" for _ in columns])
-        elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            values_str = ", ".join(["%s" for _ in columns])
+        values_str = ", ".join(["?" for _ in columns])
         values_list = [columns[cname] for cname in columns]
 
         insert_sql = f"""
@@ -306,7 +245,6 @@ class LiteTable:
         """
         self.connection.execute(insert_sql, tuple(values_list)).commit()
 
-    # PostgreSQL Support: ✅
     def update(self, update_columns: dict, where_columns: list, or_ignore: bool = False):
         """Updates a row in database table.
 
@@ -321,10 +259,7 @@ class LiteTable:
         """
 
         # Refactor pythonic variables into SQLite query string
-        if self.connection.connection_type == LiteConnection.TYPE.SQLITE:
-            set_str = ",".join([f'{cname} = ?' for cname in update_columns])
-        elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            set_str = ",".join([f'{cname} = %s' for cname in update_columns])
+        set_str = ",".join([f'{cname} = ?' for cname in update_columns])
         values_list = [update_columns[cname] for cname in update_columns]  # collect update values
         where_str, where_values = self._where_to_string(where_columns)
 
@@ -336,7 +271,6 @@ class LiteTable:
             WHERE {where_str}
         """, tuple(values_list)).commit()
 
-    # PostgreSQL Support: ✅
     def select(self, where_columns: list, result_columns: list = None) -> list:
         """Executes a select statement on database table.
 
@@ -363,7 +297,6 @@ class LiteTable:
 
         return self.connection.execute(sql_str, tuple(values_list)).fetchall()
 
-    # PostgreSQL Support: ✅
     def delete(self, where_columns: list):
         """Deletes rows from a database table. If where_columns is an empty list, deletes all rows.
 
@@ -383,7 +316,6 @@ class LiteTable:
 
         self.connection.execute(sql_str, tuple(values_list)).commit()
 
-    # PostgreSQL Support: ✅
     def _where_to_string(self, where_columns: list) -> tuple:
         """Internal method. Converts where_columns dict to a proper SQL query substring.
 
@@ -414,13 +346,9 @@ class LiteTable:
             del values_list[i]
 
         new_where_str = ''.join(where_str)
-        # Convert '?' to '%s' when using PostgreSQL
-        if self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            new_where_str = new_where_str.replace('?', '%s')
 
         return (new_where_str, values_list)
 
-    # PostgreSQL Support: ✅
     def _find_char_occurrences(self, _str: str, char: str) -> list:
         """Internal method. Returns a list of indices where a character appears within string.
 
@@ -434,7 +362,6 @@ class LiteTable:
 
         return [i for i, letter in enumerate(_str) if letter == char]
 
-    # PostgreSQL Support: ✅
     def __init__(self, table_name: str, lite_connection: LiteConnection = None):
         """LiteTable initializer.
 
@@ -456,25 +383,14 @@ class LiteTable:
         self.connection = lite_connection
 
         # Check if table with provided name exists
-        if self.connection.connection_type == LiteConnection.TYPE.SQLITE:
-            if len(self.connection.execute(f"""
-                SELECT name 
-                FROM sqlite_master 
-                WHERE type='table' 
-                AND name='{table_name}'
-            """).fetchall()) < 1:  # Table doesn't exist
-                raise TableNotFoundError(table_name)
-
-        elif self.connection.connection_type == LiteConnection.TYPE.POSTGRESQL:
-            if len(self.connection.execute(f"""
-                    SELECT table_name 
-                    FROM information_schema.tables 
-                    WHERE table_schema='public' 
-                    AND table_type='BASE TABLE' 
-                    AND table_name='{table_name}'
-            """).fetchall()) < 1:
-                raise TableNotFoundError(table_name)
+        if len(self.connection.execute(f"""
+            SELECT name 
+            FROM sqlite_master 
+            WHERE type='table' 
+            AND name='{table_name}'
+        """).fetchall()) < 1:  # Table doesn't exist
+            raise TableNotFoundError(table_name)
 
         # Store database and table attributes for later use
-        self.database_path = lite_connection.database_path
+        # self.database_path = lite_connection.database_path
         self.table_name = table_name

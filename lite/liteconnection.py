@@ -15,7 +15,6 @@ class LiteConnection:
     class TYPE(Enum):
         """ Enum for database types """
         SQLITE = 1
-        POSTGRESQL = 2
 
     TYPE = TYPE
 
@@ -35,8 +34,6 @@ class LiteConnection:
             host: str = None,
             port: str = None,
             database: str = None,
-            username: str = None,
-            password: str = None,
             database_path: str = None,
             isolation: bool = False,
             wal: bool = True
@@ -47,35 +44,23 @@ class LiteConnection:
         self.database = database
         self.database_path = database_path
 
-        if connection_type == self.TYPE.SQLITE:
+        # Raise an error if the database doesn't exist
+        if not os.path.exists(database_path):
+            raise DatabaseNotFoundError(database_path)
 
-            # Raise an error if the database doesn't exist
-            if not os.path.exists(database_path):
-                raise DatabaseNotFoundError(database_path)
+        # Enable/disable isolation
+        if isolation:
+            self.connection = sqlite3.connect(database_path)
+        else:
+            self.connection = sqlite3.connect(database_path, isolation_level=None)
 
-            # Enable/disable isolation
-            if isolation:
-                self.connection = sqlite3.connect(database_path)
-            else:
-                self.connection = sqlite3.connect(database_path, isolation_level=None)
+        self.cursor = self.connection.cursor()
 
-            self.cursor = self.connection.cursor()
-
-            # Set journal mode
-            if wal:
-                self.cursor.execute('PRAGMA journal_mode=wal;')
-            else:
-                self.cursor.execute('PRAGMA journal_mode=delete;')
-
-        elif connection_type == self.TYPE.POSTGRESQL:
-            self.connection = psycopg2.connect(
-                database=database,
-                host=host,
-                user=username,
-                password=password,
-                port=port
-            )
-            self.cursor = self.connection.cursor()
+        # Set journal mode
+        if wal:
+            self.cursor.execute('PRAGMA journal_mode=wal;')
+        else:
+            self.cursor.execute('PRAGMA journal_mode=delete;')
 
     class ExecuteResult:
         """
