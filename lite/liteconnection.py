@@ -1,4 +1,4 @@
-""" Contains the LiteConnection class and DB Enum """
+"""Contains the LiteConnection class and DB Enum"""
 import os
 import sqlite3
 from enum import Enum
@@ -8,7 +8,7 @@ class LiteConnection:
     """This class is used to create a connection to a database and execute queries."""
 
     class TYPE(Enum):
-        """ Enum for database types """
+        """Enum for database types """
 
         SQLITE = 1
 
@@ -48,8 +48,7 @@ class LiteConnection:
             self.cursor.execute('PRAGMA journal_mode=delete;')
 
     class ExecuteResult:
-        """
-        An instance of this class is returned by a call to LiteDriver.execute().
+        """An instance of this class is returned by a call to LiteDriver.execute().
         It includes modifier methods that can be stringed onto
         the .execute() call to commit or fetch.
         """

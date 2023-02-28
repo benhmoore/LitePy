@@ -3,7 +3,7 @@ from lite.liteexceptions import ModelInstanceNotFoundError, DuplicateModelInstan
 
 
 class LiteCollection:
-    """ A collection of LiteModel instances
+    """A collection of LiteModel instances
 
     Raises:
         DuplicateModelInstance: Occurs when a model instance is added to a collection

@@ -1,4 +1,4 @@
-""" Contains Exceptions specific for Lite """
+"""Contains Exceptions specific for Lite """
 
 
 class EnvFileNotFound(Exception):

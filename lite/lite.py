@@ -81,19 +81,19 @@ class Lite:
 
     @staticmethod
     def connect(lite_connection: LiteConnection):
-        """ Connects to a database. """
+        """Connects to a database. """
         Lite.DEFAULT_CONNECTION = lite_connection
         print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
 
     @staticmethod
     def disconnect():
-        """ Disconnects from the default connection. """
+        """Disconnects from the default connection. """
         Lite.DEFAULT_CONNECTION = None
         print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
     def declare_connection(label: str, lite_connection: LiteConnection):
-        """ Declares a connection to a database. """
+        """Declares a connection to a database. """
         Lite.DATABASE_CONNECTIONS[label] = lite_connection
 
     class HelperFunctions:
