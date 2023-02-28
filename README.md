@@ -1,7 +1,7 @@
 # LitePy
 **An object relational mapper (ORM) project inspired by Laravel's Eloquent, built for Python.**
 
-Tests: [![Coverage Status](https://img.shields.io/badge/coverage-92%25-brightgreen.svg)](https://github.com/benhmoore/LitePy)
+Tests: [![Coverage Status](https://img.shields.io/badge/coverage-96%25-brightgreen.svg)](https://github.com/benhmoore/LitePy)
 --------
 
 This is an ongoing project to develop a better, pythonic, model-based system for database manipulation, *heavily* inspired by Laravel's ORM, Eloquent.
@@ -80,6 +80,11 @@ If this example piqued your interest, continue on for all the gritty details.
 To build from source, clone this repository and install a live, development version with pip:
 
 ```pip3 install -e [litepy_repo_directory]```
+
+### Run Tests
+```coverage run --omit="*/tests/*" -m pytest tests```
+
+```coverage report --show-missing```
 
 ## Documentation
 
