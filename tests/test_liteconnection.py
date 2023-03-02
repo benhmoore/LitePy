@@ -49,5 +49,47 @@ class TestLiteConnection(unittest.TestCase):
         result = self.conn.execute(select_data_sql).fetchone()
         self.assertEqual(result, (1, "John"))
 
+    def test_connection_modes(self):
+
+        # Create test databases
+        isolation_wal_db = "isolation_wal.sqlite"
+        isolation_db = "isolation.sqlite"
+        wal_db = "wal.sqlite"
+        Lite.create_database(isolation_wal_db)
+        Lite.create_database(isolation_db)
+        Lite.create_database(wal_db)
+
+        # Test the isolation and wal modes
+        self.conn = LiteConnection(database_path=isolation_wal_db, isolation=True)
+        self.conn.execute("CREATE TABLE test_table (id INTEGER, name TEXT)").commit()
+        self.conn.execute("INSERT INTO test_table VALUES (?, ?)", (1, "John")).commit()
+        self.conn.execute("INSERT INTO test_table VALUES (?, ?)", (2, "Jane")).commit()
+        self.conn.execute("INSERT INTO test_table VALUES (?, ?)", (3, "Jack")).commit()
+
+        # Test isolation mode
+        self.conn2 = LiteConnection(database_path=isolation_db, isolation=True, wal=False)
+        self.conn2.execute("CREATE TABLE test_table (id INTEGER, name TEXT)").commit()
+        result = self.conn2.execute("SELECT * FROM test_table").fetchall()
+        self.assertEqual(result, [])
+
+        # Test wal mode
+        self.conn3 = LiteConnection(database_path=wal_db, isolation=False)
+        self.conn3.execute("CREATE TABLE test_table (id INTEGER, name TEXT)").commit()
+        self.conn3.execute("INSERT INTO test_table VALUES (?, ?)", (4, "Jill")).commit()
+        result = self.conn3.execute("SELECT * FROM test_table").fetchall()
+        self.assertEqual(result, [(4, "Jill")])
+
+        # Close the connections
+        self.conn.cursor.close()
+
+        self.conn2.cursor.close()
+
+        self.conn3.cursor.close()
+
+        # Delete the test databases
+        os.remove(isolation_wal_db)
+        os.remove(isolation_db)
+        os.remove(wal_db)
+
 if __name__ == '__main__':
     unittest.main()

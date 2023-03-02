@@ -33,11 +33,8 @@ class Lite:
         if not os.path.exists('.env'):
             raise EnvFileNotFound()
 
-        env_dict = {}
         with open('.env', encoding="utf-8") as env:
-            for line in env:
-                key, value = line.split('=')
-                env_dict[key] = value
+            env_dict = dict([line.split('=') for line in env])
 
         return env_dict
 
@@ -81,19 +78,21 @@ class Lite:
 
     @staticmethod
     def connect(lite_connection: LiteConnection):
-        """ Connects to a database. """
+        """Connects to a database. """
         Lite.DEFAULT_CONNECTION = lite_connection
         print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
 
     @staticmethod
     def disconnect():
-        """ Disconnects from the default connection. """
-        Lite.DEFAULT_CONNECTION = None
+        """Disconnects from the default connection. """
+        if Lite.DEFAULT_CONNECTION is not None:
+            Lite.DEFAULT_CONNECTION.close()
+            Lite.DEFAULT_CONNECTION = None
         print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
     def declare_connection(label: str, lite_connection: LiteConnection):
-        """ Declares a connection to a database. """
+        """Declares a connection to a database. """
         Lite.DATABASE_CONNECTIONS[label] = lite_connection
 
     class HelperFunctions:

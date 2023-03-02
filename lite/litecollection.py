@@ -3,7 +3,7 @@ from lite.liteexceptions import ModelInstanceNotFoundError, DuplicateModelInstan
 
 
 class LiteCollection:
-    """ A collection of LiteModel instances
+    """A collection of LiteModel instances
 
     Raises:
         DuplicateModelInstance: Occurs when a model instance is added to a collection
@@ -33,11 +33,11 @@ class LiteCollection:
     def __add__(self, other):
         self_list = self.list[:]
 
-        if other.__class__.__name__ == 'LiteCollection':
+        if isinstance(other, LiteCollection):
             for model in other.list:
                 if model not in self_list:
                     self_list.append(model)
-        elif other.__class__.__name__ == 'list':
+        elif isinstance(other, list):
             for model in other:
                 if model not in self_list:
                     self_list.append(model)

@@ -14,7 +14,7 @@ class TestLite(unittest.TestCase):
 
     def tearDown(self):
         """Remove the test database"""
-        
+
         # remove test database
         for file_name in glob.glob("*.sqlite*"):
             os.remove(file_name)
@@ -27,7 +27,11 @@ class TestLite(unittest.TestCase):
         with open(".env", "w") as env_file:
             env_file.write("DB_DATABASE=test.sqlite")
         env = Lite.get_env()
+
         self.assertIsInstance(env, dict)
+        self.assertEqual(env, {"DB_DATABASE": "test.sqlite"})
+
+        os.remove('.env')
 
     # Test Lite.get_database_path()
     def test_get_database_path(self):

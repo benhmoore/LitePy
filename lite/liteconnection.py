@@ -1,4 +1,4 @@
-""" Contains the LiteConnection class and DB Enum """
+"""Contains the LiteConnection class and DB Enum"""
 import os
 import sqlite3
 from enum import Enum
@@ -8,24 +8,16 @@ class LiteConnection:
     """This class is used to create a connection to a database and execute queries."""
 
     class TYPE(Enum):
-        """ Enum for database types """
+        """Enum for database types """
 
         SQLITE = 1
-
-    TYPE = TYPE
-
-    def __str__(self):
-        connection_config = {
-            "database_path": self.database_path,
-        }
-        return connection_config.__str__()
 
     def __init__(
             self,
             database_path: str = None,
             isolation: bool = False,
             wal: bool = True
-    ):
+    ) -> None:
         self.connection_type = self.TYPE.SQLITE
         self.database_path = database_path
 
@@ -48,13 +40,12 @@ class LiteConnection:
             self.cursor.execute('PRAGMA journal_mode=delete;')
 
     class ExecuteResult:
-        """
-        An instance of this class is returned by a call to LiteDriver.execute().
+        """An instance of this class is returned by a call to LiteDriver.execute().
         It includes modifier methods that can be stringed onto
         the .execute() call to commit or fetch.
         """
 
-        def __init__(self, lite_driver):
+        def __init__(self, lite_driver) -> None:
             self.outer = lite_driver
 
         def commit(self) -> None:
@@ -62,17 +53,22 @@ class LiteConnection:
 
             self.outer.connection.commit()
 
-        def fetchall(self) -> list:
+        def fetchall(self) -> list[tuple]:
             """Makes a fetchall call to the database using the query passed to .execute()."""
 
             return self.outer.cursor.fetchall()
 
-        def fetchone(self):
+        def fetchone(self) -> tuple:
             """Makes a fetchone call to the database using the query passed to .execute()."""
 
             return self.outer.cursor.fetchone()
 
-    def execute(self, sql_str: str, values: tuple = ()):
+    def close(self) -> None:
+        """Closes the connection to the database."""
+
+        self.connection.close()
+
+    def execute(self, sql_str: str, values: tuple = ()) -> ExecuteResult:
         """Executes a query on the database."""
 
         self.cursor.execute(sql_str, values)
