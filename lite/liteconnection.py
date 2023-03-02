@@ -63,6 +63,11 @@ class LiteConnection:
 
             return self.outer.cursor.fetchone()
 
+    def close(self) -> None:
+        """Closes the connection to the database."""
+
+        self.connection.close()
+
     def execute(self, sql_str: str, values: tuple = ()) -> ExecuteResult:
         """Executes a query on the database."""
 

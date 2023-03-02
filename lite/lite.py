@@ -33,11 +33,8 @@ class Lite:
         if not os.path.exists('.env'):
             raise EnvFileNotFound()
 
-        env_dict = {}
         with open('.env', encoding="utf-8") as env:
-            for line in env:
-                key, value = line.split('=')
-                env_dict[key] = value
+            env_dict = dict([line.split('=') for line in env])
 
         return env_dict
 
@@ -88,7 +85,9 @@ class Lite:
     @staticmethod
     def disconnect():
         """Disconnects from the default connection. """
-        Lite.DEFAULT_CONNECTION = None
+        if Lite.DEFAULT_CONNECTION is not None:
+            Lite.DEFAULT_CONNECTION.close()
+            Lite.DEFAULT_CONNECTION = None
         print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
