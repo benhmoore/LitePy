@@ -12,20 +12,12 @@ class LiteConnection:
 
         SQLITE = 1
 
-    TYPE = TYPE
-
-    def __str__(self):
-        connection_config = {
-            "database_path": self.database_path,
-        }
-        return connection_config.__str__()
-
     def __init__(
             self,
             database_path: str = None,
             isolation: bool = False,
             wal: bool = True
-    ):
+    ) -> None:
         self.connection_type = self.TYPE.SQLITE
         self.database_path = database_path
 
@@ -53,7 +45,7 @@ class LiteConnection:
         the .execute() call to commit or fetch.
         """
 
-        def __init__(self, lite_driver):
+        def __init__(self, lite_driver) -> None:
             self.outer = lite_driver
 
         def commit(self) -> None:
@@ -61,17 +53,17 @@ class LiteConnection:
 
             self.outer.connection.commit()
 
-        def fetchall(self) -> list:
+        def fetchall(self) -> list[tuple]:
             """Makes a fetchall call to the database using the query passed to .execute()."""
 
             return self.outer.cursor.fetchall()
 
-        def fetchone(self):
+        def fetchone(self) -> tuple:
             """Makes a fetchone call to the database using the query passed to .execute()."""
 
             return self.outer.cursor.fetchone()
 
-    def execute(self, sql_str: str, values: tuple = ()):
+    def execute(self, sql_str: str, values: tuple = ()) -> ExecuteResult:
         """Executes a query on the database."""
 
         self.cursor.execute(sql_str, values)

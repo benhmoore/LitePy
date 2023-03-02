@@ -427,7 +427,7 @@ class LiteModel:
             table_name (str): Name of the pivot table storing the relationships.
         """
 
-        if not lite_connection and cls.DEFAULT_CONNECTION is not None:
+        if lite_connection is None and cls.DEFAULT_CONNECTION is not None:
             lite_connection = Lite.DEFAULT_CONNECTION
 
         self_name = cls.__name__
