@@ -158,6 +158,17 @@ class LiteCollection:
 
         return self.list[-1]
 
+    def sort(self, field: str = "id", reverse: bool = False):
+        """Sorts the collection by the given field. Defaults to model's id.
+
+        Args:
+            field (str): Field to order by
+            reverse (bool, optional): Whether to reverse the order. Defaults to False.
+        """
+
+        self.list.sort(key=lambda x: getattr(x, field), reverse=reverse)
+        return self
+
     def fresh(self):
         """Retrieves a fresh copy of each model instance in the collection from the database."""
 

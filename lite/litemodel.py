@@ -686,7 +686,7 @@ class LiteModel:
 
         if self.id is None:  # Create model if no id is provided
             self.table.insert(update_columns)
-            self.id = self.__class__().where('id').order_by('id', 'desc').first().id
+            self.id = self.__class__().all().sort("id").last().id # Get id of last inserted row
         else:
             self.table.update(update_columns, [['id', '=', self.id]])
 
