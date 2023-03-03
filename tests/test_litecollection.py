@@ -171,12 +171,12 @@ class TestLiteCollection(unittest.TestCase):
         collection = LiteCollection([person1, person2, pet1, pet2])
 
         # Query for results with name "Alice"
-        results = collection.where([["name", "=", "Alice"]])
+        results = collection.where("name").is_equal_to("Alice").all()
         assert len(results) == 1
         assert results[0].name == "Alice"
 
         # Query for results with age less than 3
-        results = collection.where([["age", "<", 3]])
+        results = collection.where("age").is_less_than(3).all()
         assert len(results) == 1
         assert results[0].name == "Fluffy"
         

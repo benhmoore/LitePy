@@ -107,6 +107,14 @@ class LiteQuery:
         self.params.append("%" + value)
         return self
 
+    def is_in(self, values):
+        """Checks if the column is in the given values list """
+
+        self.where_clause += f" IN ({ ','.join('?' * len(values)) })"
+        for value in values:
+            self.params.append(value)
+        return self
+
     def contains(self, value):
         """Checks if the column contains the value """
 
