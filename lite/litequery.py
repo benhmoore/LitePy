@@ -1,6 +1,7 @@
 """Contains the LiteQuery class """
 from lite import LiteTable, LiteCollection, Lite
 
+
 class LiteQuery:
     """This class is used to create and execute queries on a LiteModel."""
 

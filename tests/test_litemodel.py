@@ -460,6 +460,7 @@ class TestLiteModel(unittest.TestCase):
         person2.attach(self.memberships[1])
 
         assert len(self.person.find_path(person2)) == 3
+        assert len(person2.find_path(self.person)) == 3
         assert len(person2.find_path(self.pet)) == 0
 
         person2.delete()
@@ -520,7 +521,7 @@ class TestLiteModel(unittest.TestCase):
 
         # Test that brain was deleted
         self.assertEqual(brain1.id, None)
-        
+
         # Try to delete brain again
         self.assertRaises(ModelInstanceNotFoundError, brain1.delete)
 
