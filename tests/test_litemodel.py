@@ -77,6 +77,18 @@ class TestLiteModel(unittest.TestCase):
             "membership_id":['memberships','id']
         })
 
+        LiteTable.create_table("siblings", {
+            "name": "TEXT",
+        })
+
+        LiteTable.create_table("sibling_sibling", {
+            "sibling_1_id": "INTEGER",
+            "sibling_2_id": "INTEGER",
+        }, {
+            "sibling_1_id": ["siblings", "id"],
+            "sibling_2_id": ["siblings", "id"],
+        })
+
     @classmethod
     def tearDownClass(self):
         """Delete the test database"""
@@ -118,12 +130,28 @@ class TestLiteModel(unittest.TestCase):
         self.memberships.delete_all()
 
     def test_create(self):
-        """Test the create() method"""
+        """Test LiteModel creation"""
         self.assertEqual(self.person.name, "John")
         self.assertEqual(self.person.age, 25)
 
         self.assertEqual(self.pet.name, "Fido")
         self.assertEqual(self.pet.age, 3)
+
+
+        # Create a new person using the initializer
+        george = Person()
+        george.name = "George"
+        george.age = 42
+        george.save()
+
+        # Check that the person was created
+        person = Person.find_or_fail(george.id)
+        self.assertEqual(person.name, "George")
+
+        george.delete()
+
+        # Check that the person was deleted
+        self.assertRaises(ModelInstanceNotFoundError, Person.find_or_fail, person.id)
 
     def test_str(self):
         # create a new instance of a model
@@ -226,9 +254,13 @@ class TestLiteModel(unittest.TestCase):
         # Attach the membership to the person
         self.person.attach(membership42)
 
-         # Check that the person's memberships are the membership
+        # Check that the person's memberships are the membership
         self.assertEqual(self.person.memberships()[0].id, membership42.id)
         self.assertEqual(membership42.people()[0].id, self.person.id)
+
+        # Attach person to brain
+        brain1 = Brain.create({ "name": "brain1" })
+        self.person.attach(brain1)
 
         # Try tests that should fail
         with self.assertRaises(TypeError):
@@ -249,6 +281,49 @@ class TestLiteModel(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.person.detach(1)
+
+        with self.assertRaises(RelationshipError):
+            brain1 = Brain.create({ "name": "brain1" })
+            brain1.attach(self.person)
+
+            # This should fail
+            brain1.attach(self.person)
+            self.person.attach(brain1)
+        
+        with self.assertRaises(RelationshipError):
+            brain1 = Brain.create({ "name": "brain1" })
+            brain1.attach(self.person)
+
+            # This should fail
+            self.person.attach(brain1)
+
+        with self.assertRaises(RelationshipError):
+            brain1 = Brain.create({ "name": "brain1" })
+            brain1.attach(self.person)
+
+            # This should fail
+            self.person.detach(brain1)
+            brain1.detach(self.person)
+
+        with self.assertRaises(RelationshipError):
+            brain1 = Brain.create({ "name": "brain1" })
+            brain1.attach(self.person)
+
+            # This should fail
+            brain1.detach(self.person)
+            self.person.detach(brain1)
+
+
+    def test_pivot_with_self(self):
+        """Test many-to-many relationships within the same model"""
+
+        sibling1 = Sibling.create({ "name": "sibling1" })
+        sibling2 = Sibling.create({ "name": "sibling2" })
+
+        sibling1.attach(sibling2)
+
+        self.assertEqual(sibling1.siblings().first(), sibling2)
+
 
     def test_all(self):
         """Test the all() method"""
@@ -388,3 +463,75 @@ class TestLiteModel(unittest.TestCase):
         assert len(person2.find_path(self.pet)) == 0
 
         person2.delete()
+
+    def test_accessed_through(self):
+        """Test the accessed_through() method"""
+
+        Lite.create_database("accessed_through.sqlite")
+        conn = LiteConnection("accessed_through.sqlite")
+
+        LiteTable.create_table('computers', {
+            'name': 'text'
+        }, {}, lite_connection=conn)
+
+        LiteTable.create_table('users_computers', {
+            'user_id': 'integer',
+            'computer_id': 'integer'
+        }, {
+            'user_id': ('people', 'id'),
+            'computer_id': ('computers', 'id')
+        })
+
+
+        class UserOfComputer(Person):
+
+            def computers(self) -> LiteModel:
+                return self.belongs_to_many(Computer)
+
+        class Computer(LiteModel):
+
+            def users(self) -> LiteModel:
+                return self.belongs_to_many(UserOfComputer)
+
+        Computer.accessed_through(lite_connection=conn)
+        Computer.pivots_with(UserOfComputer, 'users_computers')
+
+        user1 = UserOfComputer.create({
+            "name": "John",
+            "age": 20
+        })
+
+        computer1 = Computer.create({
+            "name": "computer1"
+        })
+
+        user1.attach(computer1)
+        self.assertEqual(LiteCollection([computer1]), user1.computers())
+
+        user1.delete()
+        computer1.delete()
+
+    def test_delete(self):
+        """Test the delete() method"""
+
+        # Create and delete brain
+        brain1 = Brain.create({"name": "brain1"})
+        brain1.delete()
+
+        # Test that brain was deleted
+        self.assertEqual(brain1.id, None)
+        
+        # Try to delete brain again
+        self.assertRaises(ModelInstanceNotFoundError, brain1.delete)
+
+    def test_print(self):
+        """Test various printing various variants of a LiteModel"""
+
+        # Test representing a LiteModel with bytes as a string
+        bt = b"Hello, world!"
+        self.person.name = bt
+        self.assertIn("Hello, world!", str(self.person))
+
+        # Test representing a LiteModel with a string longer than 50 characters
+        self.person.name = "Hello, world! Hello, world! Hello, world! Hello, world!"
+        self.assertIn("Hello, world! Hello, world! Hello, world! Hello, w...", str(self.person))
