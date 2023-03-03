@@ -39,3 +39,10 @@ class Person(LiteModel):
         return self.has_many(DollarBill)
 
 Membership.pivots_with(Person, 'membership_person')
+
+class Sibling(LiteModel):
+
+    def siblings(self) -> LiteModel:
+        return self.belongs_to_many(Sibling)
+
+Sibling.pivots_with(Sibling, 'sibling_sibling')

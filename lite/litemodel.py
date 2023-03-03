@@ -244,9 +244,8 @@ class LiteModel:
         self._foreign_key_map = self.table.get_foreign_key_references()
 
         # Load model instance from database if an id is provided
+        columns = self.table.get_column_names()
         if _id is not None:
-
-            columns = self.table.get_column_names()
 
             if not _values:
                 _values = self.table.select([['id', '=', _id]])
@@ -257,7 +256,7 @@ class LiteModel:
                 setattr(self, col[1], value)
 
             # Store list of all table column names. Used by .save()
-            self.table_columns = columns
+        self.table_columns = columns
 
     @classmethod
     def requires_table(
@@ -425,6 +424,9 @@ class LiteModel:
         Args:
             other_model (LiteModel): The other model forming the many-to-many relationship.
             table_name (str): Name of the pivot table storing the relationships.
+            lite_connection (LiteConnection, optional): 
+                A connection to the database in which the pivot table is stored. If the pivot table
+                exists in the same database as the models, this argument can be omitted.
         """
 
         if lite_connection is None and cls.DEFAULT_CONNECTION is not None:
@@ -493,6 +495,7 @@ class LiteModel:
             # user should provide a self and model foreign keys if the pivot
             # table associates two rows from the *same* table
             if not self_fkey or not model_fkey:
+
                 if (model_instance.table_name == self.table_name
                         and len(foreign_keys[self.table_name]) > 1):
                     model_fkey = foreign_keys[model_instance.table_name][1][1]
@@ -536,7 +539,7 @@ class LiteModel:
                 )
             setattr(self, model_fkey, model_instance.id)
             self.save()
-        elif hasattr(model_instance, self_fkey):
+        elif hasattr(model_instance, self_fkey): # model_instance contains foreign key reference
             if getattr(model_instance, self_fkey) is not None:
                 raise RelationshipError(
                     """There is a pre-existing relationship.
@@ -660,7 +663,7 @@ class LiteModel:
         """
 
         if self.id is None:
-            raise ModelInstanceNotFoundError("Model instance not found in database")
+            raise ModelInstanceNotFoundError(self.id)
 
         # Take care of attachments that stick around after deleting the model instance
         self._clean_attachments()
@@ -678,10 +681,12 @@ class LiteModel:
         update_columns = {
             column: getattr(self, column)
             for column in self.table_columns
-            if column != 'id'
+            if column not in ['id', 'created', 'updated']
         }
+
         if self.id is None:  # Create model if no id is provided
             self.table.insert(update_columns)
+            self.id = self.__class__().where('id').order_by('id', 'desc').first().id
         else:
             self.table.update(update_columns, [['id', '=', self.id]])
 
@@ -839,12 +844,9 @@ class LiteModel:
             LiteCollection: Children model instances
         """
 
-        # Get table name of model
-        if not hasattr(model, 'table_name'):
-            model.table_name = Lite.HelperFunctions.pluralize_noun(model.__name__.lower())
+        model_instance = model()
 
         # Derive foreign and local keys if none are provided
-        model_instance = model()
         if not foreign_key:
             foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
