@@ -96,7 +96,7 @@ class LiteQuery:
 
         self._check_single_word(value)
         self.where_clause += " LIKE ?"
-        self.params.append(value + "%")
+        self.params.append(f"{value}%")
         return self
 
     def ends_with(self, value):
@@ -104,7 +104,15 @@ class LiteQuery:
 
         self._check_single_word(value)
         self.where_clause += " LIKE ?"
-        self.params.append("%" + value)
+        self.params.append(f"%{value}")
+        return self
+
+    def is_in(self, values):
+        """Checks if the column is in the given values list """
+
+        self.where_clause += f" IN ({ ','.join('?' * len(values)) })"
+        for value in values:
+            self.params.append(value)
         return self
 
     def contains(self, value):
@@ -112,9 +120,17 @@ class LiteQuery:
 
         self._check_single_word(value)
         self.where_clause += " LIKE ?"
-        self.params.append("%" + value + "%")
+        self.params.append(f"%{value}%")
         return self
 
+    def does_not_contain(self, value):
+        """Checks if the column does not contain the value """
+
+        self._check_single_word(value)
+        self.where_clause += " NOT LIKE ?"
+        self.params.append(f"%{value}%")
+        return self
+    
     def or_where(self, column_name):
         """Adds an OR clause to the query """
 

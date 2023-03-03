@@ -3,26 +3,16 @@ from lite.liteexceptions import ModelInstanceNotFoundError, DuplicateModelInstan
 
 
 class LiteCollection:
-    """A collection of LiteModel instances
+    """A collection of LiteModel instances"""
 
-    Raises:
-        DuplicateModelInstance: Occurs when a model instance is added to a collection
-            that already exists in the collection.
-        ModelInstanceNotFoundError: Occurs when a model instance is not found in the collection.
-    """
+    # Class-level attribute to store the table name
+    table = None
 
-    def __init__(self, model_instances: list = None):
-        """Initializes new LiteCollection with given list of LiteModel instances.
-
-        Args:
-            model_instances (list, optional): List of LiteModel instances. Defaults to None.
-        """
-
+    def __init__(self, model_instances=None):
         self.list = []
         if model_instances:
             for instance in model_instances:
-                if instance not in self.list:
-                    self.list.append(instance)
+                self.add(instance)
 
     def __str__(self):
         return [model_instance.to_dict() for model_instance in self.list].__str__()
@@ -35,11 +25,11 @@ class LiteCollection:
 
         if isinstance(other, LiteCollection):
             for model in other.list:
-                if model not in self_list:
+                if model not in self_list and self._model_is_consistent(model):
                     self_list.append(model)
         elif isinstance(other, list):
             for model in other:
-                if model not in self_list:
+                if model not in self_list and self._model_is_consistent(model):
                     self_list.append(model)
         else:
             base_classes = [b_c.__name__ for b_c in other.__class__.__bases__]
@@ -74,6 +64,15 @@ class LiteCollection:
 
     def __getitem__(self, item):
         return self.list[item]
+    
+    def _model_is_consistent(self, model_instance):
+        """Checks if the model instance is the same type as the existing models in the collection."""
+        
+        # Check if table name matches existing models
+        if self.table is not None and model_instance.table.table_name != self.table.table_name:
+            raise TypeError("Model instance is not of the same type as existing models.")
+        
+        return True
 
     def add(self, model_instance):
         """Adds a LiteModel instance to the collection.
@@ -83,13 +82,20 @@ class LiteCollection:
 
         Raises:
             DuplicateModelInstance: Model instance already exists in LiteCollection
+            WrongModelType: Model instance has a different table name than the existing models
         """
 
         # Check if LiteModel instance is already in this collection
         if model_instance in self.list:
             raise DuplicateModelInstance(model_instance)
 
-        self.list.append(model_instance)
+        # Check if model is consistent with the collection
+        if self._model_is_consistent(model_instance):
+            self.list.append(model_instance)
+
+        # Set the table name if it hasn't been set already
+        if not self.table:
+            self.table = model_instance.table
 
     def attach_many_to_all(self, model_instances):
         """Attaches a list of model instances to the all model instances in the collection.
@@ -246,7 +252,7 @@ class LiteCollection:
         except ValueError as exc:
             raise ModelInstanceNotFoundError(model_instance.id) from exc
 
-    def where(self, where_columns: list):
+    def where(self, column_name):
         """Simulates a select query on this collection.
 
         Args:
@@ -258,23 +264,28 @@ class LiteCollection:
             LiteCollection: Matching LiteModel instances
         """
 
-        # Define a dictionary to map operator strings to their corresponding comparison functions
-        ops = {
-            '=': lambda a, b: a == b,
-            '!=': lambda a, b: a != b,
-            'LIKE': lambda a, b: b[1:-1] in a,  # clip removes SQL's '%'
-            'NOT LIKE': lambda a, b: b[1:-1] not in a,  # clip removes SQL's '%'
-            '<': lambda a, b: a < b,
-            '<=': lambda a, b: a <= b,
-            '>': lambda a, b: a > b,
-            '>=': lambda a, b: a >= b,
-        }
+        # Collect ids of models inside collection
+        ids = [model.id for model in self.list]
 
-        # Filter the collection based on the where conditions
-        results_collection = []
-        for model in self.list:
-            should_add = all(ops[op](getattr(model, col), val) for col, op, val in where_columns)
-            if should_add:
-                results_collection.append(model)
+        return self.list[0].where("id").is_in(ids).and_where(column_name)
 
-        return LiteCollection(results_collection)
+        # # Define a dictionary to map operator strings to their corresponding comparison functions
+        # ops = {
+        #     '=': lambda a, b: a == b,
+        #     '!=': lambda a, b: a != b,
+        #     'LIKE': lambda a, b: b[1:-1] in a,  # clip removes SQL's '%'
+        #     'NOT LIKE': lambda a, b: b[1:-1] not in a,  # clip removes SQL's '%'
+        #     '<': lambda a, b: a < b,
+        #     '<=': lambda a, b: a <= b,
+        #     '>': lambda a, b: a > b,
+        #     '>=': lambda a, b: a >= b,
+        # }
+
+        # # Filter the collection based on the where conditions
+        # results_collection = []
+        # for model in self.list:
+        #     should_add = all(ops[op](getattr(model, col), val) for col, op, val in where_columns)
+        #     if should_add:
+        #         results_collection.append(model)
+
+        # return LiteCollection(results_collection)
