@@ -773,15 +773,6 @@ class LiteModel:
             ' UNION '.join(select_queries)
         ).fetchall()
 
-    def find_sibling(self, model, rel):
-        """Attempts to find a sibling model instance for a given model class and relationship ID."""
-
-        try:
-            sibling = model.find(rel[0])
-        except ModelInstanceNotFoundError:
-            return None
-        return sibling
-
     def belongs_to_many(self, model) -> LiteCollection:
         """Defines a many-to-many relationship between the current model instance and a model class.
 
@@ -794,13 +785,17 @@ class LiteModel:
 
         foreign_keys, pivot_table = self.get_pivot_table(model)
         model_instance = model()
+
         self_fkey, model_fkey = self.get_foreign_key_column_names(foreign_keys, model_instance)
+
         relationships = self.get_relationships(pivot_table, self_fkey, model_fkey)
+
         siblings_collection = []
         for rel in relationships:
-            sibling = self.find_sibling(model, rel)
+            sibling = model.find(rel[0])
             if sibling:
                 siblings_collection.append(sibling)
+
         return LiteCollection(siblings_collection)
 
     def has_one(self, model, foreign_key: str = None):

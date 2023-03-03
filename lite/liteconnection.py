@@ -4,6 +4,7 @@ import sqlite3
 from enum import Enum
 from lite import DatabaseNotFoundError
 
+
 class LiteConnection:
     """This class is used to create a connection to a database and execute queries."""
 
