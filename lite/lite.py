@@ -116,4 +116,4 @@ class Lite:
                 return re.sub('$', 'es', noun)
             if re.search('[^aeiou]y$', noun):
                 return re.sub('y$', 'ies', noun)
-            return noun + 's'
+            return f'{noun}s'

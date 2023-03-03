@@ -92,6 +92,10 @@ class TestLiteCollection(unittest.TestCase):
         with self.assertRaises(DuplicateModelInstance):
             collection.add(self.person1)
 
+        # Test adding incompatible model type to existing collection
+        with self.assertRaises(TypeError):
+            collection.add(Pet.create({"name": "Fido"}))
+
     def test_attach_to_all(self):    
             self.dollar_bills.attach_to_all(self.person1)
     
@@ -156,19 +160,22 @@ class TestLiteCollection(unittest.TestCase):
             'age': 30
         })
 
-        pet1 = Pet.create({
-            'name': 'Fluffy',
-            'age': 2,
-            'owner_id': person1.id
+        person3 = Person.create({
+            'name': 'Axel',
+            'age': 3
         })
 
-        pet2 = Pet.create({
+        person4 = Person.create({
+            'name': 'Toby',
+            'age': 55
+        })
+
+        person5 = Person.create({
             'name': 'Rex',
-            'age': 4,
-            'owner_id': person2.id
+            'age': 42
         })
 
-        collection = LiteCollection([person1, person2, pet1, pet2])
+        collection = LiteCollection([person1, person2, person3, person4, person5])
 
         # Query for results with name "Alice"
         results = collection.where("name").is_equal_to("Alice").all()
@@ -176,54 +183,54 @@ class TestLiteCollection(unittest.TestCase):
         assert results[0].name == "Alice"
 
         # Query for results with age less than 3
-        results = collection.where("age").is_less_than(3).all()
+        results = collection.where("age").is_less_than(4).all()
         assert len(results) == 1
-        assert results[0].name == "Fluffy"
+        assert results[0].name == "Axel"
         
         # Query for results with age greater than or equal to 3
-        results = collection.where([["age", ">=", 3]])
-        assert len(results) == 3
-        assert [result.name for result in results] == ["Alice", "Bob", "Rex"]
+        results = collection.where("age").is_greater_than_or_equal_to(4).all()
+        assert len(results) == 4
+        assert [result.name for result in results] == ["Alice", "Bob", "Toby", "Rex"]
 
         # Query for results with age not equal to 30
-        results = collection.where([["age", "!=", 30]])
-        assert len(results) == 3
+        results = collection.where("age").is_not_equal_to(30).all()
+        assert len(results) == 4
         assert person2 not in results
 
         # Query for results with name containing "u"
-        results = collection.where([["name", "LIKE", "%u%"]])
-        assert len(results) == 1
+        results = collection.where("name").contains("x").all()
+        assert len(results) == 2
 
         # Query for results with name not containing "u"
-        results = collection.where([["name", "NOT LIKE", "%u%"]])
+        results = collection.where("name").does_not_contain("x").all()
         assert len(results) == 3
 
         # Query for results with age less than or equal to 25
-        results = collection.where([["age", "<=", 25]])
-        assert len(results) == 3
+        results = collection.where("age").is_less_than_or_equal_to(25).all()
+        assert len(results) == 2
 
         # Query for results with age greater than 25
-        results = collection.where([["age", ">", 25]])
-        assert len(results) == 1
-        assert results[0].name == "Bob"
+        results = collection.where("age").is_greater_than(25).all()
+        assert len(results) == 3
 
         # Test sorting
         result = collection.sort("age").first()
-        self.assertEqual(result, pet1) # Fluffy is the youngest
+        self.assertEqual(result, person3) # Fluffy is the youngest
 
         # Test sorting in reverse
         result = collection.sort("age", reverse=True).first()
-        self.assertEqual(result, person2) # Bob is the oldest
+        self.assertEqual(result, person4) # Bob is the oldest
 
         # Test sorting by id
         result = collection.sort().last()
-        self.assertEqual(result, person2) # Bob should have highest id
+        self.assertEqual(result, person5) # Bob should have highest id
 
         # Clean up
-        pet1.delete()
-        pet2.delete()
         person1.delete()
         person2.delete()
+        person3.delete()
+        person4.delete()
+        person5.delete()
 
     def test_fresh(self):
         person1 = Person.create({
@@ -355,12 +362,18 @@ class TestLiteCollection(unittest.TestCase):
 
         collection1 = LiteCollection([person1, person2])
         collection2 = LiteCollection([person3, person4])
+        collection3 = LiteCollection(self.dollar_bills)
+
+        # Test attempting to add incompatible types
+        with self.assertRaises(TypeError):
+            collection3 = collection3 + collection1
 
         assert collection1.__repr__() == str(collection1.list)
 
         # Test __add__ overload
         # Test adding two collections
         collection3 = collection1 + collection2
+        print(collection3)
         assert len(collection3) == 4
         assert person1 in collection3
         assert person2 in collection3

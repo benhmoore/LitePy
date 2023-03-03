@@ -159,8 +159,7 @@ class LiteModel:
         relationship_models = LiteCollection()
 
         for method in methods:
-            result = getattr(current_node, method)()
-            if result:
+            if result := getattr(current_node, method)():
                 relationship_models = relationship_models + result
 
         for model in relationship_models:
@@ -792,8 +791,7 @@ class LiteModel:
 
         siblings_collection = []
         for rel in relationships:
-            sibling = model.find(rel[0])
-            if sibling:
+            if sibling := model.find(rel[0]):
                 siblings_collection.append(sibling)
 
         return LiteCollection(siblings_collection)
@@ -876,7 +874,7 @@ class LiteModel:
         for _ in range(max_depth):
             path = self.find_path_iter(open_nodes, closed_nodes, to_model_instance)
             if path is not False:
-                return LiteCollection(path)
+                return path
 
             reversed_path = to_model_instance.find_path_iter(
                 reversed_open_nodes,
@@ -884,6 +882,6 @@ class LiteModel:
                 self
             )
             if reversed_path is not False:
-                return LiteCollection(reversed(reversed_path))
+                return list(reversed(reversed_path))
 
         return LiteCollection([])

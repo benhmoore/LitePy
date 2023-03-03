@@ -25,12 +25,18 @@ class LiteCollection:
 
         if isinstance(other, LiteCollection):
             for model in other.list:
-                self.add(model)
+                if model not in self_list and self._model_is_consistent(model):
+                    self_list.append(model)
         elif isinstance(other, list):
             for model in other:
-                self.add(model)
+                if model not in self_list and self._model_is_consistent(model):
+                    self_list.append(model)
         else:
-            self.add(other)
+            base_classes = [b_c.__name__ for b_c in other.__class__.__bases__]
+            if 'LiteModel' in base_classes and other not in self_list:
+                self_list.append(other)
+            else:
+                raise DuplicateModelInstance(other)
 
         return LiteCollection(self_list)
 
@@ -58,6 +64,15 @@ class LiteCollection:
 
     def __getitem__(self, item):
         return self.list[item]
+    
+    def _model_is_consistent(self, model_instance):
+        """Checks if the model instance is the same type as the existing models in the collection."""
+        
+        # Check if table name matches existing models
+        if self.table is not None and model_instance.table.table_name != self.table.table_name:
+            raise TypeError("Model instance is not of the same type as existing models.")
+        
+        return True
 
     def add(self, model_instance):
         """Adds a LiteModel instance to the collection.
@@ -74,12 +89,9 @@ class LiteCollection:
         if model_instance in self.list:
             raise DuplicateModelInstance(model_instance)
 
-        # Check if table name matches existing models
-        if self.table and model_instance.table != self.table:
-            raise TypeError("Model instance is not of the same type as existing models.")
-
-        # Add model to list
-        self.list.append(model_instance)
+        # Check if model is consistent with the collection
+        if self._model_is_consistent(model_instance):
+            self.list.append(model_instance)
 
         # Set the table name if it hasn't been set already
         if not self.table:
