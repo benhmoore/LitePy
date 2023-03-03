@@ -16,7 +16,6 @@ class LiteQuery:
 
         self.model = lite_model
         self.where_clause = ""
-        self.order_by_clause = ""
         self.params = []
 
         table_name = Lite.HelperFunctions.pluralize_noun(self.model.__name__.lower())
@@ -129,30 +128,10 @@ class LiteQuery:
         self.where_clause += f" AND {column_name}"
         return self
 
-    def order_by(self, column_name, desc=False):
-        """Adds an ORDER BY clause to the query.
-        
-        Args:
-            column_name (str): The column to order the results by.
-            desc (bool, optional): If True, orders the results in descending order.
-                Defaults to False.
-        
-        Returns:
-            self: The LiteQuery object for method chaining.
-        """
-        
-        self._check_single_word(column_name)
-        self.order_by_clause = f" ORDER BY {column_name}"
-        
-        if desc:
-            self.order_by_clause += " DESC"
-        
-        return self
-
     def all(self):
         """Executes the query and returns a LiteCollection """
 
-        query = f"SELECT id FROM {self.table.table_name}{self.where_clause}{self.order_by_clause}"
+        query = f"SELECT id FROM {self.table.table_name}{self.where_clause}"
         rows = self.table.connection.execute(query, self.params).fetchall()
         collection = [self.model.find(row[0]) for row in rows]
         return LiteCollection(collection)

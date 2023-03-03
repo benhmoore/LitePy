@@ -207,6 +207,18 @@ class TestLiteCollection(unittest.TestCase):
         assert len(results) == 1
         assert results[0].name == "Bob"
 
+        # Test sorting
+        result = collection.sort("age").first()
+        self.assertEqual(result, pet1) # Fluffy is the youngest
+
+        # Test sorting in reverse
+        result = collection.sort("age", reverse=True).first()
+        self.assertEqual(result, person2) # Bob is the oldest
+
+        # Test sorting by id
+        result = collection.sort().last()
+        self.assertEqual(result, person2) # Bob should have highest id
+
         # Clean up
         pet1.delete()
         pet2.delete()
