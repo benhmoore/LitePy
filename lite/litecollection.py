@@ -64,14 +64,15 @@ class LiteCollection:
 
     def __getitem__(self, item):
         return self.list[item]
-    
+
     def _model_is_consistent(self, model_instance):
-        """Checks if the model instance is the same type as the existing models in the collection."""
-        
+        """Checks if the model instance is the same type as
+        the existing models in the collection."""
+
         # Check if table name matches existing models
         if self.table is not None and model_instance.table.table_name != self.table.table_name:
             raise TypeError("Model instance is not of the same type as existing models.")
-        
+
         return True
 
     def add(self, model_instance):
@@ -267,25 +268,5 @@ class LiteCollection:
         # Collect ids of models inside collection
         ids = [model.id for model in self.list]
 
+        # Return a new LiteCollection with the matching models
         return self.list[0].where("id").is_in(ids).and_where(column_name)
-
-        # # Define a dictionary to map operator strings to their corresponding comparison functions
-        # ops = {
-        #     '=': lambda a, b: a == b,
-        #     '!=': lambda a, b: a != b,
-        #     'LIKE': lambda a, b: b[1:-1] in a,  # clip removes SQL's '%'
-        #     'NOT LIKE': lambda a, b: b[1:-1] not in a,  # clip removes SQL's '%'
-        #     '<': lambda a, b: a < b,
-        #     '<=': lambda a, b: a <= b,
-        #     '>': lambda a, b: a > b,
-        #     '>=': lambda a, b: a >= b,
-        # }
-
-        # # Filter the collection based on the where conditions
-        # results_collection = []
-        # for model in self.list:
-        #     should_add = all(ops[op](getattr(model, col), val) for col, op, val in where_columns)
-        #     if should_add:
-        #         results_collection.append(model)
-
-        # return LiteCollection(results_collection)
