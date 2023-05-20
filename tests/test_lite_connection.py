@@ -7,8 +7,8 @@ from tests import *
 # Define the database path for the test database
 TEST_DB_PATH = "test.sqlite"
 
-class TestLiteConnection(unittest.TestCase):
 
+class TestLiteConnection(unittest.TestCase):
     def setUp(self):
         # Create a new test database
         Lite.create_database(TEST_DB_PATH)
@@ -50,7 +50,6 @@ class TestLiteConnection(unittest.TestCase):
         self.assertEqual(result, (1, "John"))
 
     def test_connection_modes(self):
-
         # Create test databases
         isolation_wal_db = "isolation_wal.sqlite"
         isolation_db = "isolation.sqlite"
@@ -67,7 +66,9 @@ class TestLiteConnection(unittest.TestCase):
         self.conn.execute("INSERT INTO test_table VALUES (?, ?)", (3, "Jack")).commit()
 
         # Test isolation mode
-        self.conn2 = LiteConnection(database_path=isolation_db, isolation=True, wal=False)
+        self.conn2 = LiteConnection(
+            database_path=isolation_db, isolation=True, wal=False
+        )
         self.conn2.execute("CREATE TABLE test_table (id INTEGER, name TEXT)").commit()
         result = self.conn2.execute("SELECT * FROM test_table").fetchall()
         self.assertEqual(result, [])
@@ -91,5 +92,6 @@ class TestLiteConnection(unittest.TestCase):
         os.remove(isolation_db)
         os.remove(wal_db)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 """Contains the LiteTable class """
 from lite import Lite, LiteConnection
-from lite.liteexceptions import TableNotFoundError
+from lite.lite_exceptions import TableNotFoundError
 
 
 class LiteTable:
@@ -65,7 +65,7 @@ class LiteTable:
 
     @staticmethod
     def is_pivot_table(table_name: str, lite_connection: LiteConnection = None) -> bool:
-        """Checks if table is pivot table by counting table columns 
+        """Checks if table is pivot table by counting table columns
         and checking foreign key references.
 
         Args:
@@ -87,9 +87,9 @@ class LiteTable:
         # Check that number of columns in table is equal to 2, not including 'id' field
         table_columns = temp_table.get_column_names()
 
-        table_columns.remove('id')
-        table_columns.remove('created')
-        table_columns.remove('updated')
+        table_columns.remove("id")
+        table_columns.remove("created")
+        table_columns.remove("updated")
 
         if len(table_columns) != 2:
             return False
@@ -105,10 +105,10 @@ class LiteTable:
 
     @staticmethod
     def create_table(
-            table_name: str,
-            columns: dict,
-            foreign_keys: dict = None,
-            lite_connection: LiteConnection = None
+        table_name: str,
+        columns: dict,
+        foreign_keys: dict = None,
+        lite_connection: LiteConnection = None,
     ):
         """Creates a table within the database.
 
@@ -127,7 +127,9 @@ class LiteTable:
         if not lite_connection:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_desc = []  # list of lines that will be combined to create SQL query string
+        table_desc = (
+            []
+        )  # list of lines that will be combined to create SQL query string
 
         # Create timestamp fields
         if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
@@ -170,13 +172,15 @@ class LiteTable:
         # Create table within database
         lite_connection.execute(table_sql).commit()
 
-        lite_connection.execute(f"""
+        lite_connection.execute(
+            f"""
             CREATE TRIGGER update_timestamp_{table_name} 
             AFTER UPDATE ON {table_name} 
             BEGIN UPDATE {table_name} 
             SET updated = CURRENT_TIMESTAMP 
             WHERE id = OLD.id; END;
-        """).commit()
+        """
+        ).commit()
 
         return LiteTable(table_name, lite_connection)
 
@@ -203,11 +207,13 @@ class LiteTable:
 
         lite_connection = lite_connection or Lite.DEFAULT_CONNECTION
 
-        rows = lite_connection.execute("""
+        rows = lite_connection.execute(
+            """
             SELECT name FROM sqlite_schema 
             WHERE type='table' 
             ORDER BY name
-        """).fetchall()
+        """
+        ).fetchall()
 
         return [row[0] for row in rows]
 
@@ -218,9 +224,12 @@ class LiteTable:
             list: Column names
         """
 
-        return [column[1] for column in self.connection.execute(
-            f'PRAGMA table_info({self.table_name})'
-        ).fetchall()]
+        return [
+            column[1]
+            for column in self.connection.execute(
+                f"PRAGMA table_info({self.table_name})"
+            ).fetchall()
+        ]
 
     def insert(self, columns, or_ignore=False):
         """Inserts row into database table.
@@ -245,7 +254,9 @@ class LiteTable:
         """
         self.connection.execute(insert_sql, tuple(values_list)).commit()
 
-    def update(self, update_columns: dict, where_columns: list, or_ignore: bool = False):
+    def update(
+        self, update_columns: dict, where_columns: list, or_ignore: bool = False
+    ):
         """Updates a row in database table.
 
         Args:
@@ -259,17 +270,22 @@ class LiteTable:
         """
 
         # Refactor pythonic variables into SQLite query string
-        set_str = ",".join([f'{cname} = ?' for cname in update_columns])
-        values_list = [update_columns[cname] for cname in update_columns]  # collect update values
+        set_str = ",".join([f"{cname} = ?" for cname in update_columns])
+        values_list = [
+            update_columns[cname] for cname in update_columns
+        ]  # collect update values
         where_str, where_values = self._where_to_string(where_columns)
 
         values_list += where_values
 
-        self.connection.execute(f"""
+        self.connection.execute(
+            f"""
             UPDATE {'OR IGNORE' if or_ignore else ''} {self.table_name} 
             SET {set_str} 
             WHERE {where_str}
-        """, tuple(values_list)).commit()
+        """,
+            tuple(values_list),
+        ).commit()
 
     def select(self, where_columns: list, result_columns: list = None) -> list:
         """Executes a select statement on database table.
@@ -285,7 +301,7 @@ class LiteTable:
         """
 
         if not result_columns:
-            result_columns = ['*']
+            result_columns = ["*"]
 
         # Refactor pythonic variables into SQLite query string
         get_str = ",".join(list(result_columns))
@@ -328,24 +344,26 @@ class LiteTable:
             tuple: (sql_substr <str>, values <list>)
         """
 
-        where_str = " AND ".join([f'{column[0]} {column[1]} ?' for column in where_columns])
+        where_str = " AND ".join(
+            [f"{column[0]} {column[1]} ?" for column in where_columns]
+        )
         values_list = [column[2] for column in where_columns]  # add where values
 
         # Convert Python's None to NULL for the SQL query
-        insert_positions = self._find_char_occurrences(where_str, '?')
+        insert_positions = self._find_char_occurrences(where_str, "?")
         where_str = list(where_str)
 
         remove_values = []
         for i, value in enumerate(values_list):
             if value is None:
                 del where_str[insert_positions[i]]
-                where_str.insert(insert_positions[i], 'NULL')
+                where_str.insert(insert_positions[i], "NULL")
                 remove_values.append(i)
 
         for i in remove_values:
             del values_list[i]
 
-        new_where_str = ''.join(where_str)
+        new_where_str = "".join(where_str)
 
         return (new_where_str, values_list)
 
@@ -367,9 +385,9 @@ class LiteTable:
 
         Args:
             table_name (str): Name of table within database to connect to
-            disable_isolation (bool, optional): 
+            disable_isolation (bool, optional):
                 Determines whether the SQLite connection disables isolation. Defaults to False.
-            disable_WAL (bool, optional): 
+            disable_WAL (bool, optional):
                 Determines whether the SQLite connection disables wal. Defaults to False.
 
         Raises:
@@ -383,12 +401,19 @@ class LiteTable:
         self.connection = lite_connection
 
         # Check if table with provided name exists
-        if len(self.connection.execute(f"""
+        if (
+            len(
+                self.connection.execute(
+                    f"""
             SELECT name 
             FROM sqlite_master 
             WHERE type='table' 
             AND name='{table_name}'
-        """).fetchall()) < 1:  # Table doesn't exist
+        """
+                ).fetchall()
+            )
+            < 1
+        ):  # Table doesn't exist
             raise TableNotFoundError(table_name)
 
         # Store database and table attributes for later use

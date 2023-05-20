@@ -6,14 +6,15 @@ from tests import *
 # define a SQLite connection
 TEST_DB_PATH = "test.sqlite"
 
-class Car(LiteModel):
 
+class Car(LiteModel):
     DEFAULT_CONNECTION = None
+
     def owner(self) -> LiteModel:
         return self.belongs_to(Person)
 
-class TestLiteModel(unittest.TestCase):
 
+class TestLiteModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         """Create a test database"""
@@ -26,68 +27,77 @@ class TestLiteModel(unittest.TestCase):
         Car.DEFAULT_CONNECTION = LiteConnection(database_path="additional.sqlite")
 
         # Create Car table
-        LiteTable.create_table("cars", {
-            "name": "TEXT",
-            "owner_id": "INTEGER"
-        }, {
-            "owner_id": ("people", "id")
-        }, Car.DEFAULT_CONNECTION)
+        LiteTable.create_table(
+            "cars",
+            {"name": "TEXT", "owner_id": "INTEGER"},
+            {"owner_id": ("people", "id")},
+            Car.DEFAULT_CONNECTION,
+        )
 
         # Create Pet table
-        Pet.requires_table({
-            "name": "TEXT",
-            "age": "INTEGER",
-            "owner_id": "INTEGER"
-        }, {
-            "owner_id": ("people", "id")
-        })
+        Pet.requires_table(
+            {"name": "TEXT", "age": "INTEGER", "owner_id": "INTEGER"},
+            {"owner_id": ("people", "id")},
+        )
 
         # Create Brain table
-        LiteTable.create_table("brains", {
-            "name": "TEXT",
-            "person_id": "INTEGER"
-        },{
-            "person_id": ("people", "id")
-        })
+        LiteTable.create_table(
+            "brains",
+            {"name": "TEXT", "person_id": "INTEGER"},
+            {"person_id": ("people", "id")},
+        )
 
         # Create Person table
-        LiteTable.create_table("people", {
-            "name": "TEXT",
-            "age": "INTEGER",
-        })
+        LiteTable.create_table(
+            "people",
+            {
+                "name": "TEXT",
+                "age": "INTEGER",
+            },
+        )
 
         # Create Person table
-        LiteTable.create_table("memberships", {
-            "name": "TEXT",
-        })
+        LiteTable.create_table(
+            "memberships",
+            {
+                "name": "TEXT",
+            },
+        )
 
         # Create Dollar Bill table
-        LiteTable.create_table("dollar_bills", {
-            "owner_id": "INTEGER",
-            "name": "TEXT"
-        }, {
-            "owner_id": ("people", "id")
-        })
+        LiteTable.create_table(
+            "dollar_bills",
+            {"owner_id": "INTEGER", "name": "TEXT"},
+            {"owner_id": ("people", "id")},
+        )
 
-        LiteTable.create_table('membership_person', {
-            'person_id': 'INTEGER',
-            'membership_id': 'INTEGER',
-        },{
-            "person_id":['people','id'],
-            "membership_id":['memberships','id']
-        })
+        LiteTable.create_table(
+            "membership_person",
+            {
+                "person_id": "INTEGER",
+                "membership_id": "INTEGER",
+            },
+            {"person_id": ["people", "id"], "membership_id": ["memberships", "id"]},
+        )
 
-        LiteTable.create_table("siblings", {
-            "name": "TEXT",
-        })
+        LiteTable.create_table(
+            "siblings",
+            {
+                "name": "TEXT",
+            },
+        )
 
-        LiteTable.create_table("sibling_sibling", {
-            "sibling_1_id": "INTEGER",
-            "sibling_2_id": "INTEGER",
-        }, {
-            "sibling_1_id": ["siblings", "id"],
-            "sibling_2_id": ["siblings", "id"],
-        })
+        LiteTable.create_table(
+            "sibling_sibling",
+            {
+                "sibling_1_id": "INTEGER",
+                "sibling_2_id": "INTEGER",
+            },
+            {
+                "sibling_1_id": ["siblings", "id"],
+                "sibling_2_id": ["siblings", "id"],
+            },
+        )
 
     @classmethod
     def tearDownClass(self):
@@ -98,29 +108,25 @@ class TestLiteModel(unittest.TestCase):
         for file_name in glob.glob("*.sqlite*"):
             os.remove(file_name)
 
-
     def setUp(self):
         """Create a new Person and Pet"""
-        self.person = Person.create({
-            "name": "John",
-            "age": 25
-        })
+        self.person = Person.create({"name": "John", "age": 25})
 
-        self.pet = Pet.create({
-            "name": "Fido",
-            "age": 3,
-        })
-
-        self.memberships = Membership.create_many([
+        self.pet = Pet.create(
             {
-                "name": "membership1"
-            },
-            {
-                "name": "membership2"
-            },
-        ])
+                "name": "Fido",
+                "age": 3,
+            }
+        )
 
-        Car.create({ "name": "car1" })
+        self.memberships = Membership.create_many(
+            [
+                {"name": "membership1"},
+                {"name": "membership2"},
+            ]
+        )
+
+        Car.create({"name": "car1"})
 
     def tearDown(self):
         """Delete the Person and Pet"""
@@ -136,7 +142,6 @@ class TestLiteModel(unittest.TestCase):
 
         self.assertEqual(self.pet.name, "Fido")
         self.assertEqual(self.pet.age, 3)
-
 
         # Create a new person using the initializer
         george = Person()
@@ -155,10 +160,7 @@ class TestLiteModel(unittest.TestCase):
 
     def test_str(self):
         # create a new instance of a model
-        person = Person.create({
-            "name": "John",
-            "age": 25
-        })
+        person = Person.create({"name": "John", "age": 25})
 
         assert "'name': 'John'" in str(person)
 
@@ -172,8 +174,7 @@ class TestLiteModel(unittest.TestCase):
         assert "'John', 30" in repr(person)
 
     def test_lt(self):
-
-        person2 = Person.create({ "name": "John", "age": 30 })
+        person2 = Person.create({"name": "John", "age": 30})
         assert self.person < person2
         with self.assertRaises(TypeError):
             assert self.person < 1
@@ -209,9 +210,11 @@ class TestLiteModel(unittest.TestCase):
         """Test the has_one() method"""
 
         # Attach the brain to the person
-        brain = Brain.create({
-            "name": "Brain",
-        })
+        brain = Brain.create(
+            {
+                "name": "Brain",
+            }
+        )
         brain.attach(self.person)
 
         # Check that the person's brain is the brain
@@ -240,7 +243,7 @@ class TestLiteModel(unittest.TestCase):
     def test_attach_detach(self):
         """Test the attach() method"""
 
-        membership42 = Membership.create({ "name": "membership42" })
+        membership42 = Membership.create({"name": "membership42"})
 
         # Attach the person to the membership
         membership42.attach(self.person)
@@ -259,7 +262,7 @@ class TestLiteModel(unittest.TestCase):
         self.assertEqual(membership42.people()[0].id, self.person.id)
 
         # Attach person to brain
-        brain1 = Brain.create({ "name": "brain1" })
+        brain1 = Brain.create({"name": "brain1"})
         self.person.attach(brain1)
 
         # Try tests that should fail
@@ -283,22 +286,22 @@ class TestLiteModel(unittest.TestCase):
             self.person.detach(1)
 
         with self.assertRaises(RelationshipError):
-            brain1 = Brain.create({ "name": "brain1" })
+            brain1 = Brain.create({"name": "brain1"})
             brain1.attach(self.person)
 
             # This should fail
             brain1.attach(self.person)
             self.person.attach(brain1)
-        
+
         with self.assertRaises(RelationshipError):
-            brain1 = Brain.create({ "name": "brain1" })
+            brain1 = Brain.create({"name": "brain1"})
             brain1.attach(self.person)
 
             # This should fail
             self.person.attach(brain1)
 
         with self.assertRaises(RelationshipError):
-            brain1 = Brain.create({ "name": "brain1" })
+            brain1 = Brain.create({"name": "brain1"})
             brain1.attach(self.person)
 
             # This should fail
@@ -306,32 +309,27 @@ class TestLiteModel(unittest.TestCase):
             brain1.detach(self.person)
 
         with self.assertRaises(RelationshipError):
-            brain1 = Brain.create({ "name": "brain1" })
+            brain1 = Brain.create({"name": "brain1"})
             brain1.attach(self.person)
 
             # This should fail
             brain1.detach(self.person)
             self.person.detach(brain1)
-
 
     def test_pivot_with_self(self):
         """Test many-to-many relationships within the same model"""
 
-        sibling1 = Sibling.create({ "name": "sibling1" })
-        sibling2 = Sibling.create({ "name": "sibling2" })
+        sibling1 = Sibling.create({"name": "sibling1"})
+        sibling2 = Sibling.create({"name": "sibling2"})
 
         sibling1.attach(sibling2)
 
         self.assertEqual(sibling1.siblings().first(), sibling2)
 
-
     def test_all(self):
         """Test the all() method"""
 
-        person2 = Person.create({
-            "name": "Jane",
-            "age": 30
-        })
+        person2 = Person.create({"name": "Jane", "age": 30})
 
         # Check that all people are returned
         self.assertEqual(len(Person.all()), 2)
@@ -340,28 +338,26 @@ class TestLiteModel(unittest.TestCase):
 
         self.car = Car(1)
         self.car = Car.all()[0]
-    
+
     def test_where(self):
         """Test the where() method"""
 
-        person2 = Person.create({
-            "name": "Jane",
-            "age": 30
-        })
-        person3 = Person.create({
-            "name": "Billy",
-            "age": 60
-        })
-        person4 = Person.create({
-            "name": "Kendall",
-            "age": 57
-        })
+        person2 = Person.create({"name": "Jane", "age": 30})
+        person3 = Person.create({"name": "Billy", "age": 60})
+        person4 = Person.create({"name": "Kendall", "age": 57})
 
         # Check that the correct person is returned
         assert Person.where("age").is_greater_than(30).all() == [person3, person4]
-        assert Person.where("age").is_greater_than_or_equal_to(31).all() == [person3, person4]
-        assert Person.where("age").is_greater_than_or_equal_to(31).and_where("age").is_less_than(60).all() == [person4]
-        assert Person.where("age").is_greater_than_or_equal_to(31).and_where("age").is_less_than(60).and_where("name").contains("end").all() == [person4]
+        assert Person.where("age").is_greater_than_or_equal_to(31).all() == [
+            person3,
+            person4,
+        ]
+        assert Person.where("age").is_greater_than_or_equal_to(31).and_where(
+            "age"
+        ).is_less_than(60).all() == [person4]
+        assert Person.where("age").is_greater_than_or_equal_to(31).and_where(
+            "age"
+        ).is_less_than(60).and_where("name").contains("end").all() == [person4]
 
         self.assertEqual(Person.where("name").is_equal_to("Jane").last().id, person2.id)
 
@@ -375,16 +371,12 @@ class TestLiteModel(unittest.TestCase):
         """Test the create_many() method"""
 
         # Create two pets
-        new_pets = Pet.create_many([
-            {
-                "name": "Tulip",
-                "age": 3
-            },
-            {
-                "name": "Spot",
-                "age": 5
-            },
-        ])
+        new_pets = Pet.create_many(
+            [
+                {"name": "Tulip", "age": 3},
+                {"name": "Spot", "age": 5},
+            ]
+        )
 
         # Check that the pets were created
         self.assertEqual(len(Pet.all()), 3)
@@ -409,10 +401,7 @@ class TestLiteModel(unittest.TestCase):
         # Check that the person's memberships are the memberships
         self.assertEqual(len(self.person.memberships()), 2)
 
-        person2 = Person.create({
-            "name": "Jane",
-            "age": 30
-        })
+        person2 = Person.create({"name": "Jane", "age": 30})
 
         # Attach the person to the first membership
         person2.attach(self.memberships[0])
@@ -453,9 +442,9 @@ class TestLiteModel(unittest.TestCase):
 
     def test_find_path(self):
         """Test the find_path() method"""
-        
+
         # Set up people and attach to membership
-        person2 = Person.create({ "name": "Jane", "age": 30 })
+        person2 = Person.create({"name": "Jane", "age": 30})
         self.memberships[0].attach_many([self.person, person2])
         person2.attach(self.memberships[1])
 
@@ -471,40 +460,28 @@ class TestLiteModel(unittest.TestCase):
         Lite.create_database("accessed_through.sqlite")
         conn = LiteConnection("accessed_through.sqlite")
 
-        LiteTable.create_table('computers', {
-            'name': 'text'
-        }, {}, lite_connection=conn)
+        LiteTable.create_table("computers", {"name": "text"}, {}, lite_connection=conn)
 
-        LiteTable.create_table('users_computers', {
-            'user_id': 'integer',
-            'computer_id': 'integer'
-        }, {
-            'user_id': ('people', 'id'),
-            'computer_id': ('computers', 'id')
-        })
-
+        LiteTable.create_table(
+            "users_computers",
+            {"user_id": "integer", "computer_id": "integer"},
+            {"user_id": ("people", "id"), "computer_id": ("computers", "id")},
+        )
 
         class UserOfComputer(Person):
-
             def computers(self) -> LiteModel:
                 return self.belongs_to_many(Computer)
 
         class Computer(LiteModel):
-
             def users(self) -> LiteModel:
                 return self.belongs_to_many(UserOfComputer)
 
         Computer.accessed_through(lite_connection=conn)
-        Computer.pivots_with(UserOfComputer, 'users_computers')
+        Computer.pivots_with(UserOfComputer, "users_computers")
 
-        user1 = UserOfComputer.create({
-            "name": "John",
-            "age": 20
-        })
+        user1 = UserOfComputer.create({"name": "John", "age": 20})
 
-        computer1 = Computer.create({
-            "name": "computer1"
-        })
+        computer1 = Computer.create({"name": "computer1"})
 
         user1.attach(computer1)
         self.assertEqual(LiteCollection([computer1]), user1.computers())
@@ -535,4 +512,6 @@ class TestLiteModel(unittest.TestCase):
 
         # Test representing a LiteModel with a string longer than 50 characters
         self.person.name = "Hello, world! Hello, world! Hello, world! Hello, world!"
-        self.assertIn("Hello, world! Hello, world! Hello, world! Hello, w...", str(self.person))
+        self.assertIn(
+            "Hello, world! Hello, world! Hello, world! Hello, w...", str(self.person)
+        )

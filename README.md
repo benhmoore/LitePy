@@ -1,17 +1,19 @@
 # LitePy
+
 **An object relational mapper (ORM) project inspired by Laravel's Eloquent, built for Python.**
 
-Tests: [![Coverage Status](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/benhmoore/LitePy)
---------
+## Tests: [![Coverage Status](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/benhmoore/LitePy)
 
-This is an ongoing project to develop a better, pythonic, model-based system for database manipulation, *heavily* inspired by Laravel's ORM, Eloquent.
+This is an ongoing project to develop a better, pythonic, model-based system for database manipulation, _heavily_ inspired by Laravel's ORM, Eloquent.
 
 The goal is to abstract away the necessity of writing SQL queries and maintaining complex relationships between tables. You can instead define readable model classes that represent tables, declare relationships between these models, and manipulate data in way that complements Python syntax.
 
 ### Database Support
+
 LitePy currently supports SQLite (hence the name).
 
 ## Why use LitePy? A quick example.
+
 Consider a rudimentary system that maintains a database of authors and books for a library. An author may have written one book, multiple books, or none at all. We would like to be able to relate each book with an author. That way, we can ask the system for all books written by an author or for the author of a given book. Nice and simple, right?
 
 The database for this system consists of the following two tables:
@@ -31,7 +33,7 @@ Python offers excellent support of SQLite out of the box, but you'll still need 
 
 LitePy abstracts all that away.
 
-First, we'll define two models to represent the two tables above. These classes inherit from ```LiteModel```, which will later be explored in detail. They each represent a single object, or row, in their respective tables:
+First, we'll define two models to represent the two tables above. These classes inherit from `LiteModel`, which will later be explored in detail. They each represent a single object, or row, in their respective tables:
 
 ```python
 
@@ -77,14 +79,16 @@ Of course, most use cases are orders of magnitude more complex than this example
 If this example piqued your interest, continue on for all the gritty details.
 
 ## Installation
+
 To build from source, clone this repository and install a live, development version with pip:
 
-```pip3 install -e [litepy_repo_directory]```
+`pip3 install -e [litepy_repo_directory]`
 
 ### Run Tests
-```coverage run --omit="*/tests/*" -m pytest tests```
 
-```coverage report --show-missing```
+`coverage run --omit="*/tests/*" -m pytest tests`
+
+`coverage report --show-missing`
 
 ## Documentation
 

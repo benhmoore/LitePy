@@ -1,3 +1,14 @@
+[project]
+name = "lite_py"
+version = "0.0.1"
+description = "An SQLite ORM for Python, inspired by Laravel's Eloquent."
+authors = [
+    {name = "Ben Moore", email = "ben@benhmoore.com"}
+]
+license = {file = "LICENSE.txt"}
+readme = "README.md"
+
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
