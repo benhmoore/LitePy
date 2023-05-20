@@ -6,70 +6,64 @@ from tests import *
 # Define the database path for the test database
 TEST_DB_PATH = "test.sqlite"
 
-class TestLiteCollection(unittest.TestCase):
 
+class TestLiteCollection(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         """Create a test database"""
-        
+
         Lite.create_database(TEST_DB_PATH)
         Lite.connect(LiteConnection(database_path=TEST_DB_PATH))
 
         # Create Pet table
-        Pet.requires_table({
-            "name": "TEXT",
-            "age": "INTEGER",
-            "owner_id": "INTEGER"
-        }, {
-            "owner_id": ("people", "id")
-        })
+        Pet.requires_table(
+            {"name": "TEXT", "age": "INTEGER", "owner_id": "INTEGER"},
+            {"owner_id": ("people", "id")},
+        )
 
         # Create Brain table
-        LiteTable.create_table("brains", {
-            "name": "TEXT",
-            "person_id": "INTEGER"
-        },{
-            "person_id": ("people", "id")
-        })
+        LiteTable.create_table(
+            "brains",
+            {"name": "TEXT", "person_id": "INTEGER"},
+            {"person_id": ("people", "id")},
+        )
 
         # Create Person table
-        LiteTable.create_table("people", {
-            "name": "TEXT",
-            "age": "INTEGER",
-        })
+        LiteTable.create_table(
+            "people",
+            {
+                "name": "TEXT",
+                "age": "INTEGER",
+            },
+        )
 
         # Create Dollar Bill table
-        LiteTable.create_table("dollar_bills", {
-            "owner_id": "INTEGER",
-            "name": "TEXT"
-        }, {
-            "owner_id": ("people", "id")
-        })
+        LiteTable.create_table(
+            "dollar_bills",
+            {"owner_id": "INTEGER", "name": "TEXT"},
+            {"owner_id": ("people", "id")},
+        )
 
     @classmethod
     def tearDownClass(self):
         """Delete the test database"""
 
         Lite.disconnect()
-        
+
         # remove test database
         for file_name in glob.glob("*.sqlite*"):
             os.remove(file_name)
 
     def setUp(self):
-        self.person1 = Person.create({
-            'name': 'John Smith'
-        })
+        self.person1 = Person.create({"name": "John Smith"})
 
-        self.person2 = Person.create({
-            'name': 'Jane Smith'
-        })
+        self.person2 = Person.create({"name": "Jane Smith"})
 
-        self.person3 = Person.create({
-            'name': 'Jack Smith'
-        })
+        self.person3 = Person.create({"name": "Jack Smith"})
 
-        self.dollar_bills = LiteCollection([DollarBill.create({"name":n}) for n in range(4)])
+        self.dollar_bills = LiteCollection(
+            [DollarBill.create({"name": n}) for n in range(4)]
+        )
 
     def tearDown(self):
         self.person1.delete()
@@ -79,7 +73,6 @@ class TestLiteCollection(unittest.TestCase):
         self.dollar_bills.delete_all()
 
     def test_add(self):
-
         collection = LiteCollection()
         collection.add(self.person1)
 
@@ -96,11 +89,11 @@ class TestLiteCollection(unittest.TestCase):
         with self.assertRaises(TypeError):
             collection.add(Pet.create({"name": "Fido"}))
 
-    def test_attach_to_all(self):    
-            self.dollar_bills.attach_to_all(self.person1)
-    
-            assert len(self.person1.dollar_bills()) == 4
-            assert len(self.person2.dollar_bills()) == 0
+    def test_attach_to_all(self):
+        self.dollar_bills.attach_to_all(self.person1)
+
+        assert len(self.person1.dollar_bills()) == 4
+        assert len(self.person2.dollar_bills()) == 0
 
     def test_detach_from_all(self):
         self.dollar_bills.attach_to_all(self.person1)
@@ -127,9 +120,8 @@ class TestLiteCollection(unittest.TestCase):
         collection = LiteCollection([self.person1, self.person2])
 
         assert collection.last() == self.person2
-        
-    def test_intersection(self):
 
+    def test_intersection(self):
         collection1 = LiteCollection([self.person1, self.person2])
         collection2 = LiteCollection([self.person2, self.person3])
 
@@ -139,7 +131,6 @@ class TestLiteCollection(unittest.TestCase):
         assert intersection[0] == self.person2
 
     def test_difference(self):
-
         collection1 = LiteCollection([self.person1, self.person2])
         collection2 = LiteCollection([self.person2, self.person3])
 
@@ -150,30 +141,15 @@ class TestLiteCollection(unittest.TestCase):
 
     def test_where(self):
         # Create some data to query
-        person1 = Person.create({
-            'name': 'Alice',
-            'age': 25
-        })
+        person1 = Person.create({"name": "Alice", "age": 25})
 
-        person2 = Person.create({
-            'name': 'Bob',
-            'age': 30
-        })
+        person2 = Person.create({"name": "Bob", "age": 30})
 
-        person3 = Person.create({
-            'name': 'Axel',
-            'age': 3
-        })
+        person3 = Person.create({"name": "Axel", "age": 3})
 
-        person4 = Person.create({
-            'name': 'Toby',
-            'age': 55
-        })
+        person4 = Person.create({"name": "Toby", "age": 55})
 
-        person5 = Person.create({
-            'name': 'Rex',
-            'age': 42
-        })
+        person5 = Person.create({"name": "Rex", "age": 42})
 
         collection = LiteCollection([person1, person2, person3, person4, person5])
 
@@ -186,7 +162,7 @@ class TestLiteCollection(unittest.TestCase):
         results = collection.where("age").is_less_than(4).all()
         assert len(results) == 1
         assert results[0].name == "Axel"
-        
+
         # Query for results with age greater than or equal to 3
         results = collection.where("age").is_greater_than_or_equal_to(4).all()
         assert len(results) == 4
@@ -215,15 +191,15 @@ class TestLiteCollection(unittest.TestCase):
 
         # Test sorting
         result = collection.sort("age").first()
-        self.assertEqual(result, person3) # Fluffy is the youngest
+        self.assertEqual(result, person3)  # Fluffy is the youngest
 
         # Test sorting in reverse
         result = collection.sort("age", reverse=True).first()
-        self.assertEqual(result, person4) # Bob is the oldest
+        self.assertEqual(result, person4)  # Bob is the oldest
 
         # Test sorting by id
         result = collection.sort().last()
-        self.assertEqual(result, person5) # Bob should have highest id
+        self.assertEqual(result, person5)  # Bob should have highest id
 
         # Clean up
         person1.delete()
@@ -233,22 +209,19 @@ class TestLiteCollection(unittest.TestCase):
         person5.delete()
 
     def test_fresh(self):
-        person1 = Person.create({
-            'name': 'John Smith'
-        })
+        person1 = Person.create({"name": "John Smith"})
 
         collection = LiteCollection([person1])
-        person1.name = 'Mike'
+        person1.name = "Mike"
         person1.save()
         collection.fresh()
 
         assert len(collection) == 1
-        assert collection[0].name == 'Mike'
+        assert collection[0].name == "Mike"
 
         person1.delete()
 
     def test_delete_all(self):
-
         all_people = Person.all()
         all_people.delete_all()
 
@@ -256,15 +229,9 @@ class TestLiteCollection(unittest.TestCase):
 
     def test_model_keys(self):
         # Create some test data
-        person1 = Person.create({
-            'name': 'Alice',
-            'age': 25
-        })
+        person1 = Person.create({"name": "Alice", "age": 25})
 
-        person2 = Person.create({
-            'name': 'Bob',
-            'age': 30
-        })
+        person2 = Person.create({"name": "Bob", "age": 30})
 
         collection = LiteCollection([person1, person2])
 
@@ -276,15 +243,9 @@ class TestLiteCollection(unittest.TestCase):
         person2.delete()
 
     def test_join(self):
-        person1 = Person.create({
-            'name': 'Alice',
-            'age': 25
-        })
+        person1 = Person.create({"name": "Alice", "age": 25})
 
-        person2 = Person.create({
-            'name': 'Bob',
-            'age': 30
-        })
+        person2 = Person.create({"name": "Bob", "age": 30})
 
         collection1 = LiteCollection([person1])
         collection2 = LiteCollection([person2])
@@ -298,15 +259,9 @@ class TestLiteCollection(unittest.TestCase):
         person2.delete()
 
     def test_remove(self):
-        person1 = Person.create({
-            'name': 'Alice',
-            'age': 25
-        })
+        person1 = Person.create({"name": "Alice", "age": 25})
 
-        person2 = Person.create({
-            'name': 'Bob',
-            'age': 30
-        })
+        person2 = Person.create({"name": "Bob", "age": 30})
 
         collection = LiteCollection([person1, person2])
 
@@ -322,13 +277,9 @@ class TestLiteCollection(unittest.TestCase):
         person2.delete()
 
     def test_str(self):
-        person1 = Person.create({
-            'name': 'John Smith'
-        })
+        person1 = Person.create({"name": "John Smith"})
 
-        person2 = Person.create({
-            'name': 'Jane Smith'
-        })
+        person2 = Person.create({"name": "Jane Smith"})
 
         collection = LiteCollection([person1, person2])
 
@@ -339,26 +290,13 @@ class TestLiteCollection(unittest.TestCase):
         person2.delete()
 
     def test_operator_overloads(self):
+        person1 = Person.create({"name": "Alice", "age": 25})
 
-        person1 = Person.create({
-            'name': 'Alice',
-            'age': 25
-        })
+        person2 = Person.create({"name": "Bob", "age": 30})
 
-        person2 = Person.create({
-            'name': 'Bob',
-            'age': 30
-        })
+        person3 = Person.create({"name": "Charlie", "age": 35})
 
-        person3 = Person.create({
-            'name': 'Charlie',
-            'age': 35
-        })
-
-        person4 = Person.create({
-            'name': 'Dave',
-            'age': 40
-        })
+        person4 = Person.create({"name": "Dave", "age": 40})
 
         collection1 = LiteCollection([person1, person2])
         collection2 = LiteCollection([person3, person4])

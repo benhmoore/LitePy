@@ -4,7 +4,11 @@ import re
 from pathlib import Path
 from colorama import Fore
 from lite import LiteConnection
-from lite.liteexceptions import EnvFileNotFound, DatabaseNotFoundError, DatabaseAlreadyExists
+from lite.lite_exceptions import (
+    EnvFileNotFound,
+    DatabaseNotFoundError,
+    DatabaseAlreadyExists,
+)
 
 
 class Lite:
@@ -29,11 +33,11 @@ class Lite:
             dict: Dictionary containing the key-value pairings from the .env file.
         """
 
-        if not os.path.exists('.env'):
+        if not os.path.exists(".env"):
             raise EnvFileNotFound()
 
-        with open('.env', encoding="utf-8") as env:
-            env_dict = dict([line.split('=') for line in env])
+        with open(".env", encoding="utf-8") as env:
+            env_dict = dict([line.split("=") for line in env])
 
         return env_dict
 
@@ -48,14 +52,14 @@ class Lite:
             str: Database filepath
         """
 
-        db_path = os.environ.get('DB_DATABASE')
+        db_path = os.environ.get("DB_DATABASE")
         if db_path is not None:
             return db_path
 
         env = Lite.get_env()
-        if 'DB_DATABASE' in env:
-            return env['DB_DATABASE']
-        raise DatabaseNotFoundError('')
+        if "DB_DATABASE" in env:
+            return env["DB_DATABASE"]
+        raise DatabaseNotFoundError("")
 
     @staticmethod
     def create_database(database_path: str):
@@ -77,13 +81,13 @@ class Lite:
 
     @staticmethod
     def connect(lite_connection: LiteConnection):
-        """Connects to a database. """
+        """Connects to a database."""
         Lite.DEFAULT_CONNECTION = lite_connection
         print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
 
     @staticmethod
     def disconnect():
-        """Disconnects from the default connection. """
+        """Disconnects from the default connection."""
         if Lite.DEFAULT_CONNECTION is not None:
             Lite.DEFAULT_CONNECTION.close()
             Lite.DEFAULT_CONNECTION = None
@@ -91,7 +95,7 @@ class Lite:
 
     @staticmethod
     def declare_connection(label: str, lite_connection: LiteConnection):
-        """Declares a connection to a database. """
+        """Declares a connection to a database."""
         Lite.DATABASE_CONNECTIONS[label] = lite_connection
 
     class HelperFunctions:
@@ -110,10 +114,10 @@ class Lite:
             Returns:
                 str: Plural noun
             """
-            if re.search('[sxz]$', noun):
-                return re.sub('$', 'es', noun)
-            if re.search('[^aeioudgkprt]h$', noun):
-                return re.sub('$', 'es', noun)
-            if re.search('[^aeiou]y$', noun):
-                return re.sub('y$', 'ies', noun)
-            return f'{noun}s'
+            if re.search("[sxz]$", noun):
+                return re.sub("$", "es", noun)
+            if re.search("[^aeioudgkprt]h$", noun):
+                return re.sub("$", "es", noun)
+            if re.search("[^aeiou]y$", noun):
+                return re.sub("y$", "ies", noun)
+            return f"{noun}s"

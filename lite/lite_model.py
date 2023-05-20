@@ -1,7 +1,7 @@
 """Contains the LiteModel class definition"""
 import typing
 from lite import Lite, LiteTable, LiteCollection, LiteConnection, LiteQuery
-from lite.liteexceptions import ModelInstanceNotFoundError, RelationshipError
+from lite.lite_exceptions import ModelInstanceNotFoundError, RelationshipError
 
 
 class LiteModel:
@@ -32,20 +32,19 @@ class LiteModel:
 
     def __lt__(self, other):
         try:
-            return getattr(self, 'id') < getattr(other, 'id')
+            return getattr(self, "id") < getattr(other, "id")
         except Exception as exc:
             raise TypeError from exc
 
     def __eq__(self, other):
         base_classes = [b_c.__name__ for b_c in other.__class__.__bases__]
         if (
-            'LiteModel' in base_classes
+            "LiteModel" in base_classes
             and self.table.table_name == other.table.table_name
             and self.table_columns == other.table_columns
         ):
             return all(
-                getattr(self, col) == getattr(other, col)
-                for col in self.table_columns
+                getattr(self, col) == getattr(other, col) for col in self.table_columns
             )
         return False
 
@@ -83,7 +82,7 @@ class LiteModel:
             return self._foreign_key_map[model.table_name][0][1]
 
         # Get conventional foreign key name and table name
-        return f'{model.__class__.__name__.lower()}_id'
+        return f"{model.__class__.__name__.lower()}_id"
 
     def _get_pivot_name(self, model) -> str:
         """Returns the pivot table between `self` and the given LiteModel
@@ -100,10 +99,10 @@ class LiteModel:
         # that define relationships between these two models
         try:
             model_name = model.__class__.__name__
-            if model_name == 'type':
+            if model_name == "type":
                 raise AttributeError
         except AttributeError:
-            model_name = getattr(model, '__name__')
+            model_name = getattr(model, "__name__")
 
         return next(
             (
@@ -120,7 +119,8 @@ class LiteModel:
 
         # Get the names of all tables that have a foreign key reference to the current table
         referenced_tables = [
-            t for t in self.table.get_table_names()
+            t
+            for t in self.table.get_table_names()
             if self.table.table_name in LiteTable(t).get_foreign_key_references()
         ]
 
@@ -133,9 +133,11 @@ class LiteModel:
                 local_key_value = getattr(self, local_key)
 
                 if LiteTable.is_pivot_table(t_name):
-                    temp_table.delete([[foreign_key, '=', local_key_value]])
+                    temp_table.delete([[foreign_key, "=", local_key_value]])
                 else:
-                    temp_table.update({foreign_key: None}, [[foreign_key, '=', local_key_value]])
+                    temp_table.update(
+                        {foreign_key: None}, [[foreign_key, "=", local_key_value]]
+                    )
 
     def find_path_iter(self, open_n: list, closed_n: list, to_model_inst):
         """Internal method. Step function for .find_path()."""
@@ -149,7 +151,7 @@ class LiteModel:
 
         if current_node == to_model_inst:
             path = [current_node]
-            while (temp := getattr(current_node, 'parent')):
+            while temp := getattr(current_node, "parent"):
                 path.append(temp)
                 current_node = temp
 
@@ -163,7 +165,7 @@ class LiteModel:
                 relationship_models = relationship_models + result
 
         for model in relationship_models:
-            setattr(model, 'parent', current_node)
+            setattr(model, "parent", current_node)
             if model not in closed_n:
                 open_n.insert(0, model)
 
@@ -181,10 +183,14 @@ class LiteModel:
         """
 
         # Find all public attributes of this class
-        instance_variables = set(filter(lambda x: x.startswith('_') is False, dir(self)))
+        instance_variables = set(
+            filter(lambda x: x.startswith("_") is False, dir(self))
+        )
 
         # Find all public, *default* LiteModel attributes
-        default_variables = set(filter(lambda x: x.startswith('_') is False, dir(LiteModel)))
+        default_variables = set(
+            filter(lambda x: x.startswith("_") is False, dir(LiteModel))
+        )
 
         # Determine attributes unique to this particular class
         unique_variables = instance_variables - default_variables
@@ -193,7 +199,7 @@ class LiteModel:
         unique_methods = []
         for i_var in unique_variables:
             try:
-                getattr(getattr(self, i_var), '__call__')
+                getattr(getattr(self, i_var), "__call__")
                 unique_methods.append(i_var)
             except AttributeError:
                 continue
@@ -208,7 +214,7 @@ class LiteModel:
 
             # Make sure return type is specified by method,
             # and that it is a LiteCollection or LiteModel
-            if "return" in method_signature and method_signature['return'] in [
+            if "return" in method_signature and method_signature["return"] in [
                 LiteCollection,
                 LiteModel,
             ]:
@@ -216,11 +222,11 @@ class LiteModel:
         return relationship_definitions
 
     def __init__(
-            self,
-            _id: int = None,
-            _table: LiteTable = None,
-            _values: list = None,
-            _lite_conn: LiteConnection = None
+        self,
+        _id: int = None,
+        _table: LiteTable = None,
+        _values: list = None,
+        _lite_conn: LiteConnection = None,
     ):
         """LiteModel initializer.
         Parameters are used by internal methods and should not be provided."""
@@ -232,7 +238,7 @@ class LiteModel:
                 _lite_conn = Lite.DEFAULT_CONNECTION
 
         # Derive table name from class name
-        if not hasattr(self, 'table_name'):
+        if not hasattr(self, "table_name"):
             self.table_name = self._get_table_name()
 
         # Load table if not passed
@@ -245,9 +251,8 @@ class LiteModel:
         # Load model instance from database if an id is provided
         columns = self.table.get_column_names()
         if _id is not None:
-
             if not _values:
-                _values = self.table.select([['id', '=', _id]])
+                _values = self.table.select([["id", "=", _id]])
 
             # Add columns and values to python class instance as attributes
             for col in enumerate(columns):
@@ -259,14 +264,14 @@ class LiteModel:
 
     @classmethod
     def requires_table(
-            cls,
-            columns: dict[str, str],
-            foreign_keys: dict[str, list[str, str]] = None,
-            lite_connection: LiteConnection = None
+        cls,
+        columns: dict[str, str],
+        foreign_keys: dict[str, list[str, str]] = None,
+        lite_connection: LiteConnection = None,
     ):
         """
         Creates a database table for the LiteModel if it doesn't exist.
-        
+
         Args:
             table_name (str): Table name
             columns (dict): {
@@ -277,11 +282,13 @@ class LiteModel:
             }
         """
 
-        if not hasattr(cls, 'table_name'):
+        if not hasattr(cls, "table_name"):
             cls.table_name = cls._get_table_name(cls)
 
         if not LiteTable.exists(cls.table_name, lite_connection):
-            LiteTable.create_table(cls.table_name, columns, foreign_keys, lite_connection)
+            LiteTable.create_table(
+                cls.table_name, columns, foreign_keys, lite_connection
+            )
 
     @classmethod
     def find_or_fail(cls, _id: int):
@@ -304,11 +311,11 @@ class LiteModel:
             lite_connection = Lite.DEFAULT_CONNECTION
 
         table_name = Lite.HelperFunctions.pluralize_noun(cls.__name__.lower())
-        if hasattr(cls, 'table_name'):
+        if hasattr(cls, "table_name"):
             table_name = cls.table_name
 
         table = LiteTable(table_name, lite_connection)
-        rows = table.select([['id', '=', _id]])
+        rows = table.select([["id", "=", _id]])
 
         if len(rows) > 0:
             return cls(id, table, rows, lite_connection)
@@ -344,16 +351,16 @@ class LiteModel:
             lite_connection = Lite.DEFAULT_CONNECTION
 
         table_name = Lite.HelperFunctions.pluralize_noun(cls.__name__.lower())
-        if hasattr(cls, 'table_name'):
+        if hasattr(cls, "table_name"):
             table_name = cls.table_name
 
         table = LiteTable(table_name, lite_connection)
 
-        rows = table.select([], ['id'])
+        rows = table.select([], ["id"])
         return LiteCollection([cls.find_or_fail(row[0]) for row in rows])
 
     @classmethod
-    def where(cls, column_name:str) -> LiteQuery:
+    def where(cls, column_name: str) -> LiteQuery:
         """Returns a new LiteQuery instance.
 
         Args:
@@ -382,7 +389,7 @@ class LiteModel:
             lite_connection = Lite.DEFAULT_CONNECTION
 
         table_name = Lite.HelperFunctions.pluralize_noun(cls.__name__.lower())
-        if hasattr(cls, 'table_name'):
+        if hasattr(cls, "table_name"):
             table_name = cls.table_name
 
         # Insert into table
@@ -417,13 +424,15 @@ class LiteModel:
         return LiteCollection(model_list)
 
     @classmethod
-    def pivots_with(cls, other_model, table_name: str, lite_connection: LiteConnection = None):
-        """Notifies Lite of a many-to-many relationship. 
+    def pivots_with(
+        cls, other_model, table_name: str, lite_connection: LiteConnection = None
+    ):
+        """Notifies Lite of a many-to-many relationship.
 
         Args:
             other_model (LiteModel): The other model forming the many-to-many relationship.
             table_name (str): Name of the pivot table storing the relationships.
-            lite_connection (LiteConnection, optional): 
+            lite_connection (LiteConnection, optional):
                 A connection to the database in which the pivot table is stored. If the pivot table
                 exists in the same database as the models, this argument can be omitted.
         """
@@ -441,14 +450,14 @@ class LiteModel:
         """Declares the connection Lite should use for this model.
 
         Args:
-            lite_connection (LiteConnection): 
+            lite_connection (LiteConnection):
                 Connection pointed to the database in which this model is stored
         """
 
         cls.DEFAULT_CONNECTION = lite_connection
 
     def to_dict(self) -> dict:
-        """Converts LiteModel instance into human-readable dict, 
+        """Converts LiteModel instance into human-readable dict,
         truncating string values if necessary.
 
         Returns:
@@ -464,7 +473,7 @@ class LiteModel:
                 attribute = attribute.decode("utf-8")
 
             if isinstance(attribute, str) and len(attribute) > 50:
-                attribute = f'{attribute[:50]}...'
+                attribute = f"{attribute[:50]}..."
 
             print_dict[column] = attribute
 
@@ -494,9 +503,10 @@ class LiteModel:
             # user should provide a self and model foreign keys if the pivot
             # table associates two rows from the *same* table
             if not self_fkey or not model_fkey:
-
-                if (model_instance.table_name == self.table_name
-                        and len(foreign_keys[self.table_name]) > 1):
+                if (
+                    model_instance.table_name == self.table_name
+                    and len(foreign_keys[self.table_name]) > 1
+                ):
                     model_fkey = foreign_keys[model_instance.table_name][1][1]
                 else:
                     model_fkey = foreign_keys[model_instance.table_name][0][1]
@@ -504,17 +514,13 @@ class LiteModel:
                 self_fkey = foreign_keys[self.table_name][0][1]
 
             # Make sure this relationship doesn't already exist
-            relationships = pivot_table.select([
-                [self_fkey, '=', self.id],
-                [model_fkey, '=', model_instance.id]
-            ])
+            relationships = pivot_table.select(
+                [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
+            )
 
             # Insert relationship into pivot table
             if len(relationships) == 0:
-                pivot_table.insert({
-                    self_fkey: self.id,
-                    model_fkey: model_instance.id
-                })
+                pivot_table.insert({self_fkey: self.id, model_fkey: model_instance.id})
             else:
                 raise RelationshipError("This relationship already exists.")
 
@@ -538,7 +544,9 @@ class LiteModel:
                 )
             setattr(self, model_fkey, model_instance.id)
             self.save()
-        elif hasattr(model_instance, self_fkey): # model_instance contains foreign key reference
+        elif hasattr(
+            model_instance, self_fkey
+        ):  # model_instance contains foreign key reference
             if getattr(model_instance, self_fkey) is not None:
                 raise RelationshipError(
                     """There is a pre-existing relationship.
@@ -609,7 +617,9 @@ class LiteModel:
 
         return True
 
-    def _detach_from_pivot_table(self, pivot_table_name, lite_connection, model_instance):
+    def _detach_from_pivot_table(
+        self, pivot_table_name, lite_connection, model_instance
+    ):
         """Removes a relationship between two model instances from a pivot table."""
 
         pivot_table = LiteTable(pivot_table_name, lite_connection)
@@ -628,16 +638,19 @@ class LiteModel:
         self_fkey = foreign_keys[self.table_name][0][1]
 
         # Make sure this relationship doesn't already exist
-        if len(pivot_table.select([
-            [self_fkey, '=', self.id],
-            [model_fkey, '=', model_instance.id]
-        ])) < 1:
+        if (
+            len(
+                pivot_table.select(
+                    [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
+                )
+            )
+            < 1
+        ):
             raise RelationshipError("Relationship does not exist. Cannot detach.")
 
-        pivot_table.delete([
-            [self_fkey, '=', self.id],
-            [model_fkey, '=', model_instance.id]
-        ])
+        pivot_table.delete(
+            [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
+        )
 
         return True
 
@@ -656,7 +669,7 @@ class LiteModel:
 
     def delete(self):
         """Deletes the current model instance.
-        
+
         Raises:
             ModelInstanceNotFoundError: Model does not exist in database.
         """
@@ -667,9 +680,7 @@ class LiteModel:
         # Take care of attachments that stick around after deleting the model instance
         self._clean_attachments()
 
-        self.table.delete([
-            ['id', '=', self.id]
-        ])
+        self.table.delete([["id", "=", self.id]])
 
         for column in self.table_columns:
             setattr(self, column, None)
@@ -680,20 +691,22 @@ class LiteModel:
         update_columns = {
             column: getattr(self, column)
             for column in self.table_columns
-            if column not in ['id', 'created', 'updated']
+            if column not in ["id", "created", "updated"]
         }
 
         if self.id is None:  # Create model if no id is provided
             self.table.insert(update_columns)
-            self.id = self.__class__().all().sort("id").last().id # Get id of last inserted row
+            self.id = (
+                self.__class__().all().sort("id").last().id
+            )  # Get id of last inserted row
         else:
-            self.table.update(update_columns, [['id', '=', self.id]])
+            self.table.update(update_columns, [["id", "=", self.id]])
 
     def fresh(self):
         """Reloads the model's attributes from the database."""
 
         # Load model instance from database by primary key
-        values = self.table.select([['id', '=', self.id]])
+        values = self.table.select([["id", "=", self.id]])
 
         # Set attributes of Python class instance
         for index, column in enumerate(self.table_columns):
@@ -705,7 +718,7 @@ class LiteModel:
 
         Args:
             model (LiteModel): Parent model class
-            foreign_key (str, optional): Custom foreign key name. 
+            foreign_key (str, optional): Custom foreign key name.
                 Defaults to standard naming convention, 'model_id'.
 
         Returns:
@@ -724,7 +737,7 @@ class LiteModel:
     def get_pivot_table(self, model):
         """Returns the pivot table for a given sibling model."""
 
-        model_class_name = getattr(model, '__name__').lower()
+        model_class_name = getattr(model, "__name__").lower()
         if model_class_name not in self.PIVOT_TABLE_CACHE:
             pivot_table_name, lite_connection = self._get_pivot_name(model)
             pivot_table = LiteTable(pivot_table_name, lite_connection)
@@ -737,11 +750,17 @@ class LiteModel:
     def get_foreign_key_column_names(self, foreign_keys, model_instance):
         """Returns the foreign keys for a given model instance."""
 
-        if model_instance.table_name == self.table_name and len(foreign_keys[self.table_name]) > 1:
-            self_fkey = [foreign_keys[self.table_name][0][1], foreign_keys[self.table_name][1][1]]
+        if (
+            model_instance.table_name == self.table_name
+            and len(foreign_keys[self.table_name]) > 1
+        ):
+            self_fkey = [
+                foreign_keys[self.table_name][0][1],
+                foreign_keys[self.table_name][1][1],
+            ]
             model_fkey = [
                 foreign_keys[model_instance.table_name][1][1],
-                foreign_keys[model_instance.table_name][0][1]
+                foreign_keys[model_instance.table_name][0][1],
             ]
         else:
             self_fkey = foreign_keys[self.table_name][0][1]
@@ -749,7 +768,7 @@ class LiteModel:
         return self_fkey, model_fkey
 
     def get_relationships(self, pivot_table, self_fkey, model_fkey):
-        """Returns the many-to-many relationships for a given pivot table, 
+        """Returns the many-to-many relationships for a given pivot table,
         self foreign key, and model foreign key."""
 
         if not isinstance(self_fkey, list):
@@ -768,9 +787,7 @@ class LiteModel:
                 """
             for i in range(len(self_fkey))
         ]
-        return pivot_table.connection.execute(
-            ' UNION '.join(select_queries)
-        ).fetchall()
+        return pivot_table.connection.execute(" UNION ".join(select_queries)).fetchall()
 
     def belongs_to_many(self, model) -> LiteCollection:
         """Defines a many-to-many relationship between the current model instance and a model class.
@@ -785,7 +802,9 @@ class LiteModel:
         foreign_keys, pivot_table = self.get_pivot_table(model)
         model_instance = model()
 
-        self_fkey, model_fkey = self.get_foreign_key_column_names(foreign_keys, model_instance)
+        self_fkey, model_fkey = self.get_foreign_key_column_names(
+            foreign_keys, model_instance
+        )
 
         relationships = self.get_relationships(pivot_table, self_fkey, model_fkey)
 
@@ -797,12 +816,12 @@ class LiteModel:
         return LiteCollection(siblings_collection)
 
     def has_one(self, model, foreign_key: str = None):
-        """Reverse of belongs_to. 
+        """Reverse of belongs_to.
         Defines the current model instance as a parent of the passed model class.
 
         Args:
             model (LiteModel): Child model class
-            foreign_key (str, optional): 
+            foreign_key (str, optional):
                 Custom foreign key name. Defaults to standard naming convention, 'model_id'.
 
         Returns:
@@ -810,8 +829,10 @@ class LiteModel:
         """
 
         # Get table name of model
-        if not hasattr(model, 'table_name'):
-            model.table_name = Lite.HelperFunctions.pluralize_noun(model.__name__.lower())
+        if not hasattr(model, "table_name"):
+            model.table_name = Lite.HelperFunctions.pluralize_noun(
+                model.__name__.lower()
+            )
 
         # Derive foreign and local keys if none are provided
         model_instance = model()
@@ -819,9 +840,7 @@ class LiteModel:
             foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
         child_table = LiteTable(model.table_name)
-        child_ids = child_table.select([
-            [foreign_key, '=', self.id]
-        ], ['id'])
+        child_ids = child_table.select([[foreign_key, "=", self.id]], ["id"])
 
         return model.find(child_ids[0][0]) if len(child_ids) > 0 else None
 
@@ -830,7 +849,7 @@ class LiteModel:
 
         Args:
             model (LiteModel): Children model class
-            foreign_key (str, optional): 
+            foreign_key (str, optional):
                 Custom foreign key name. Defaults to standard naming convention, 'model_id'.
 
         Returns:
@@ -844,15 +863,13 @@ class LiteModel:
             foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
         child_table = LiteTable(model.table_name, model.DEFAULT_CONNECTION)
-        child_rows = child_table.select([
-            [foreign_key, '=', self.id]
-        ], ['id'])
+        child_rows = child_table.select([[foreign_key, "=", self.id]], ["id"])
 
         children_collection = [model.find(row[0]) for row in child_rows]
         return LiteCollection(children_collection)
 
     def find_path(self, to_model_instance, max_depth: int = 100):
-        """Attempts to find a path from the current model instance 
+        """Attempts to find a path from the current model instance
         to another using Bidirectional BFS.
 
         Args:
@@ -863,8 +880,8 @@ class LiteModel:
             LiteCollection or bool: Either the path or False for failure
         """
 
-        setattr(self, 'parent', None)
-        setattr(to_model_instance, 'parent', None)
+        setattr(self, "parent", None)
+        setattr(to_model_instance, "parent", None)
 
         open_nodes = [self]
         reversed_open_nodes = [to_model_instance]
@@ -877,9 +894,7 @@ class LiteModel:
                 return path
 
             reversed_path = to_model_instance.find_path_iter(
-                reversed_open_nodes,
-                reversed_closed_nodes,
-                self
+                reversed_open_nodes, reversed_closed_nodes, self
             )
             if reversed_path is not False:
                 return list(reversed(reversed_path))

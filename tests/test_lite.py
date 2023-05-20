@@ -6,8 +6,8 @@ from tests import *
 # define a SQLite connection
 TEST_DB_PATH = "test.sqlite"
 
-class TestLite(unittest.TestCase):
 
+class TestLite(unittest.TestCase):
     def setUp(self):
         """Create a test database"""
         Lite.create_database(TEST_DB_PATH)
@@ -21,7 +21,7 @@ class TestLite(unittest.TestCase):
 
     # Test Lite.get_env()
     def test_get_env(self):
-        os.remove('.env')
+        os.remove(".env")
         with self.assertRaises(EnvFileNotFound):
             env = Lite.get_env()
         with open(".env", "w") as env_file:
@@ -31,7 +31,7 @@ class TestLite(unittest.TestCase):
         self.assertIsInstance(env, dict)
         self.assertEqual(env, {"DB_DATABASE": "test.sqlite"})
 
-        os.remove('.env')
+        os.remove(".env")
 
     # Test Lite.get_database_path()
     def test_get_database_path(self):

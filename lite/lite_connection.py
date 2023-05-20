@@ -9,15 +9,12 @@ class LiteConnection:
     """This class is used to create a connection to a database and execute queries."""
 
     class TYPE(Enum):
-        """Enum for database types """
+        """Enum for database types"""
 
         SQLITE = 1
 
     def __init__(
-            self,
-            database_path: str = None,
-            isolation: bool = False,
-            wal: bool = True
+        self, database_path: str = None, isolation: bool = False, wal: bool = True
     ) -> None:
         self.connection_type = self.TYPE.SQLITE
         self.database_path = database_path
@@ -36,9 +33,9 @@ class LiteConnection:
 
         # Set journal mode
         if wal:
-            self.cursor.execute('PRAGMA journal_mode=wal;')
+            self.cursor.execute("PRAGMA journal_mode=wal;")
         else:
-            self.cursor.execute('PRAGMA journal_mode=delete;')
+            self.cursor.execute("PRAGMA journal_mode=delete;")
 
     class ExecuteResult:
         """An instance of this class is returned by a call to LiteDriver.execute().
