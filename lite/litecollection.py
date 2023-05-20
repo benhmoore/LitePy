@@ -33,7 +33,7 @@ class LiteCollection:
                     self_list.append(model)
         else:
             base_classes = [b_c.__name__ for b_c in other.__class__.__bases__]
-            if 'LiteModel' in base_classes and other not in self_list:
+            if "LiteModel" in base_classes and other not in self_list:
                 self_list.append(other)
             else:
                 raise DuplicateModelInstance(other)
@@ -44,7 +44,7 @@ class LiteCollection:
         return len(self.list)
 
     def __eq__(self, other):
-        if other.__class__.__name__ == 'LiteCollection':
+        if other.__class__.__name__ == "LiteCollection":
             return self.list == other.list
         return self.list == other
 
@@ -57,7 +57,7 @@ class LiteCollection:
 
         # If an integer
         if isinstance(item, int):
-            return any(getattr(model, 'id') == item for model in self.list)
+            return any(getattr(model, "id") == item for model in self.list)
 
         # If a LiteModel
         return item in self.list
@@ -70,8 +70,13 @@ class LiteCollection:
         the existing models in the collection."""
 
         # Check if table name matches existing models
-        if self.table is not None and model_instance.table.table_name != self.table.table_name:
-            raise TypeError("Model instance is not of the same type as existing models.")
+        if (
+            self.table is not None
+            and model_instance.table.table_name != self.table.table_name
+        ):
+            raise TypeError(
+                "Model instance is not of the same type as existing models."
+            )
 
         return True
 
@@ -127,7 +132,9 @@ class LiteCollection:
         for model in self.list:
             model.detach_many(model_instances)
 
-    def attach_to_all(self, model_instance, self_fkey: str = None, model_fkey: str = None):
+    def attach_to_all(
+        self, model_instance, self_fkey: str = None, model_fkey: str = None
+    ):
         """Attaches a model instance to the all model instances in the collection.
 
         Args:
