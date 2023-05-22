@@ -335,6 +335,8 @@ class LiteModel:
         try:
             return cls.find_or_fail(_id)
         except ModelInstanceNotFoundError:
+            if Lite.DEBUG_MODE:
+                print(f"Model instance with id {_id} not found.")
             return None
 
     @classmethod

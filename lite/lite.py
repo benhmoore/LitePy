@@ -21,6 +21,16 @@ class Lite:
 
     DATABASE_CONNECTIONS = {}
     DEFAULT_CONNECTION = None
+    DEBUG_MODE = False
+
+    @staticmethod
+    def set_debug_mode(debug_mode: bool = True):
+        """Sets debug mode. If True, Lite will print debug messages.
+
+        Args:
+            debug_mode (bool, optional): Defaults to True.
+        """
+        Lite.DEBUG_MODE = debug_mode
 
     @staticmethod
     def get_env() -> dict:
@@ -83,7 +93,9 @@ class Lite:
     def connect(lite_connection: LiteConnection):
         """Connects to a database."""
         Lite.DEFAULT_CONNECTION = lite_connection
-        print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
+
+        if Lite.DEBUG_MODE:
+            print(Fore.RED, "Declared default connection:", lite_connection, Fore.RESET)
 
     @staticmethod
     def disconnect():
@@ -91,7 +103,9 @@ class Lite:
         if Lite.DEFAULT_CONNECTION is not None:
             Lite.DEFAULT_CONNECTION.close()
             Lite.DEFAULT_CONNECTION = None
-        print(Fore.RED, "Disconnected from default connection", Fore.RESET)
+
+        if Lite.DEBUG_MODE:
+            print(Fore.RED, "Disconnected from default connection", Fore.RESET)
 
     @staticmethod
     def declare_connection(label: str, lite_connection: LiteConnection):
