@@ -84,6 +84,13 @@ To build from source, clone this repository and install a live, development vers
 
 `pip3 install -e [litepy_repo_directory]`
 
+## Distribution
+
+To build a distribution, run the following command from the root directory of the project:
+`python3 -m build --sdist .`
+
+Then, use Twine to upload the distribution to PyPI: https://twine.readthedocs.io/en/latest/
+
 ### Run Tests
 
 `coverage run --omit="*/tests/*" -m pytest tests`
@@ -92,4 +99,4 @@ To build from source, clone this repository and install a live, development vers
 
 ## Documentation
 
-Documentation is hosted on GitHub, right over here.
+Documentation is hosted on GitHub, coming soon.
