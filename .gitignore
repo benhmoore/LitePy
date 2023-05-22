@@ -1,10 +1,11 @@
 **/__pycache__
 .DS_Store
 .pytest_cache
-lite.egg-info
+*egg-info
 .vscode
 **.db
 **.sqlite
 **.sqlite-shm
 **.sqlite-wal
 .coverage
+**/dist
