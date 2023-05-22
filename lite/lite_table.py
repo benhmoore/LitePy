@@ -60,6 +60,8 @@ class LiteTable:
         try:
             LiteTable(table_name, lite_connection)
         except TableNotFoundError:
+            if Lite.DEBUG_MODE:
+                print(f"Table '{table_name}' not found in database.")
             return False
         return True
 
@@ -82,6 +84,8 @@ class LiteTable:
         try:
             temp_table = LiteTable(table_name, lite_connection)
         except TableNotFoundError:
+            if Lite.DEBUG_MODE:
+                print(f"Table '{table_name}' not found in database.")
             return False
 
         # Check that number of columns in table is equal to 2, not including 'id' field
