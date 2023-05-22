@@ -8,9 +8,8 @@ authors = [
 license = {file = "LICENSE.txt"}
 readme = "README.md"
 
+dependencies = ["colorama"]
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
-
-[project.dependencies]
-colorama = "*"
