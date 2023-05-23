@@ -56,8 +56,6 @@ alice = User.find(1)
 alice.name # Alice
 alice.email # a@email.com
 ```
-Don't worry if you don't understand the syntax yet, we'll cover it soon, but hopefully you can see how much more readable the PyLite version is. This is the power of models.
-
-As your commands become more complex, improvements to readability will become increasingly apparent.
+Don't worry if you don't understand the syntax yet, we'll cover it soon, but hopefully you can see how much more readable the PyLite version is. That's the beauty of models, and as your commands become more complex, improvements to readability will become increasingly apparent.
 
 
