@@ -1,6 +1,6 @@
 """Contains the LiteTable class """
-from lite import Lite, LiteConnection
-from lite.lite_exceptions import TableNotFoundError
+from pylite import Lite, LiteConnection
+from pylite.lite_exceptions import TableNotFoundError
 
 
 class LiteTable:

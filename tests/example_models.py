@@ -1,4 +1,4 @@
-from lite import *
+from pylite import *
 
 
 class Pet(LiteModel):
