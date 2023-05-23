@@ -8,10 +8,6 @@ This is an ongoing project to develop a better, pythonic, model-based system for
 
 The goal is to abstract away the necessity of writing SQL queries and maintaining complex relationships between tables. You can instead define readable model classes that represent tables, declare relationships between these models, and manipulate data in way that complements Python syntax.
 
-### Database Support
-
-PyLite currently supports SQLite (hence the name).
-
 ## Why use PyLite? A quick example.
 
 Consider a rudimentary system that maintains a database of authors and books for a library. An author may have written one book, multiple books, or none at all. We would like to be able to relate each book with an author. That way, we can ask the system for all books written by an author or for the author of a given book. Nice and simple, right?
@@ -49,7 +45,7 @@ class Book(LiteModel):
 
 ```
 
-...And that's it. Literally.
+...And that's it.
 
 Now, we can operate on our data in a beautifully abstract way:
 
@@ -79,6 +75,12 @@ Of course, most use cases are orders of magnitude more complex than this example
 If this example piqued your interest, continue on for all the gritty details.
 
 ## Installation
+
+### Environment Requirements
+| Python Version | Supported          |
+| -------------- | ------------------ |
+| <3.9           | :x:                |
+| >=3.9          | :white_check_mark: |
 
 To build from source, clone this repository and install a live, development version with pip:
 
