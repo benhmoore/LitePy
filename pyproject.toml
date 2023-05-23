@@ -1,6 +1,7 @@
 [project]
-name = "lite-py"
+name = "pylite"
 version = "0.0.1"
+requires-python = ">=3.9"
 description = "An SQLite ORM for Python, inspired by Laravel's Eloquent."
 authors = [
     {name = "Ben Moore", email = "ben@benhmoore.com"}
@@ -9,6 +10,9 @@ license = {file = "LICENSE.txt"}
 readme = "README.md"
 
 dependencies = ["colorama"]
+classifiers = [
+    "Programming Language :: Python :: 3.9"
+]
 
 [build-system]
 requires = ["setuptools"]

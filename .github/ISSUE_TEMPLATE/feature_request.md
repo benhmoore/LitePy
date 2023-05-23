@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for LitePy.
+about: Suggest an idea for PyLite.
 title: ''
 labels: enhancement
 assignees: ''

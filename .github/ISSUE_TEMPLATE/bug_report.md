@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help improve LitePy.
+about: Create a report to help improve PyLite.
 title: "[BUG]"
 labels: bug
 assignees: ''
