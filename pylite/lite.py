@@ -3,8 +3,8 @@ import os
 import re
 from pathlib import Path
 from colorama import Fore
-from lite import LiteConnection
-from lite.lite_exceptions import (
+from pylite import LiteConnection
+from pylite.lite_exceptions import (
     EnvFileNotFound,
     DatabaseNotFoundError,
     DatabaseAlreadyExists,

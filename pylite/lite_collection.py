@@ -1,5 +1,5 @@
 """Contains the LiteCollection class"""
-from lite.lite_exceptions import ModelInstanceNotFoundError, DuplicateModelInstance
+from pylite.lite_exceptions import ModelInstanceNotFoundError, DuplicateModelInstance
 
 
 class LiteCollection:

@@ -1,7 +1,7 @@
 """Contains the LiteModel class definition"""
 import typing
-from lite import Lite, LiteTable, LiteCollection, LiteConnection, LiteQuery
-from lite.lite_exceptions import ModelInstanceNotFoundError, RelationshipError
+from pylite import Lite, LiteTable, LiteCollection, LiteConnection, LiteQuery
+from pylite.lite_exceptions import ModelInstanceNotFoundError, RelationshipError
 
 
 class LiteModel:

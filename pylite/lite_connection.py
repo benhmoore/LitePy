@@ -2,7 +2,7 @@
 import os
 import sqlite3
 from enum import Enum
-from lite import DatabaseNotFoundError
+from pylite import DatabaseNotFoundError
 
 
 class LiteConnection:
