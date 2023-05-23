@@ -1,4 +1,4 @@
-"""Import all the modules and classes for LitePy. """
+"""Import all the modules and classes for PyLite. """
 
 from lite.lite_exceptions import (
     EnvFileNotFound,
