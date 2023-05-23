@@ -42,7 +42,7 @@ Let's say the `users` table looks like this:
 | 2  | Bob  | b@email.com |
 | 3  | Carol| c@email.com |
 
-Let's try a simple task of pulling the first user's name and email. Using the sqlite3 module, you might write something like this:
+Let's examine the simple task of pulling the first user's name and email. Using the sqlite3 module, you might write something like this:
 ```python
 sqlite3.execute("SELECT name, email FROM users WHERE id = 1")
 result = sqlite3.fetchone()
