@@ -134,15 +134,16 @@ class LiteQuery:
     def or_where(self, column_name):
         """Adds an OR clause to the query"""
 
-        self._check_single_word(column_name)
-        self.where_clause += f" OR {column_name}"
-        return self
+        return self._where_handler(column_name, " OR ")
 
     def and_where(self, column_name):
         """Adds an AND clause to the query"""
 
+        return self._where_handler(column_name, " AND ")
+
+    def _where_handler(self, column_name, arg1):
         self._check_single_word(column_name)
-        self.where_clause += f" AND {column_name}"
+        self.where_clause += f"{arg1}{column_name}"
         return self
 
     def all(self):
@@ -155,14 +156,14 @@ class LiteQuery:
 
     def first(self):
         """Executes the query and returns the first result"""
-        where_clause = self.where_clause
-        query = f"SELECT id FROM {self.table.table_name}{where_clause} LIMIT 1"
-        row = self.table.connection.execute(query, self.params).fetchone()
-        return self.model.find(row[0]) if row else None
+        return self._extents_handler(" LIMIT 1")
 
     def last(self):
         """Executes the query and returns the last result"""
+        return self._extents_handler(" ORDER BY id DESC LIMIT 1")
+
+    def _extents_handler(self, arg0):
         where_clause = self.where_clause
-        query = f"SELECT id FROM {self.table.table_name}{where_clause} ORDER BY id DESC LIMIT 1"
+        query = f"SELECT id FROM {self.table.table_name}{where_clause}{arg0}"
         row = self.table.connection.execute(query, self.params).fetchone()
         return self.model.find(row[0]) if row else None
