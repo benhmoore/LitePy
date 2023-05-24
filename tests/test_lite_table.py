@@ -16,12 +16,12 @@ class TestLiteTable(unittest.TestCase):
         table_name = "test_table"
         columns = {"name": "TEXT", "age": "INTEGER", "parent_id": "INTEGER"}
         foreign_keys = {"parent_id": ("parents", "id")}
-        LiteTable.create_table(table_name, columns, foreign_keys)
+        LiteTable.create(table_name, columns, foreign_keys)
         self.table = LiteTable(table_name)
 
     def tearDown(self):
         # test deleting the table
-        LiteTable.delete_table(self.table.table_name)
+        LiteTable.delete(self.table.table_name)
         self.assertFalse(LiteTable.exists(self.table.table_name))
 
         # remove test database
@@ -59,14 +59,14 @@ class TestLiteTable(unittest.TestCase):
 
     def test_delete_row(self):
         self.table.insert({"id": 1, "name": "John", "age": 25, "parent_id": None})
-        self.table.delete([("id", "=", 1)])
+        self.table.delete_row([("id", "=", 1)])
         self.assertListEqual(self.table.select([]), [])
 
     def test_delete_all(self):
         self.table.insert({"id": 1, "name": "John", "age": 25, "parent_id": None})
         self.table.insert({"id": 2, "name": "John", "age": 25, "parent_id": None})
         self.table.insert({"id": 3, "name": "John", "age": 25, "parent_id": None})
-        self.table.delete()
+        self.table.delete_row()
         self.assertListEqual(self.table.select([]), [])
 
 

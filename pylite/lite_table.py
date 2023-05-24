@@ -108,7 +108,7 @@ class LiteTable:
         return total_relations == 2
 
     @staticmethod
-    def create_table(
+    def create(
         table_name: str,
         columns: dict,
         foreign_keys: dict = None,
@@ -181,7 +181,7 @@ class LiteTable:
         return LiteTable(table_name, lite_connection)
 
     @staticmethod
-    def delete_table(table_name: str, lite_connection: LiteConnection = None):
+    def delete(table_name: str, lite_connection: LiteConnection = None):
         """Deletes a given table.
 
         Args:
@@ -309,7 +309,7 @@ class LiteTable:
 
         return self.connection.execute(sql_str, tuple(values_list)).fetchall()
 
-    def delete(self, where_columns: list = None):
+    def delete_row(self, where_columns: list = None):
         """Deletes rows from a database table. If where_columns is an empty list, deletes all rows.
 
         Args:

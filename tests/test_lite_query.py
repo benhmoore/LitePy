@@ -22,14 +22,14 @@ class TestLiteQuery(unittest.TestCase):
         )
 
         # Create Brain table
-        LiteTable.create_table(
+        LiteTable.create(
             "brains",
             {"name": "TEXT", "person_id": "INTEGER"},
             {"person_id": ("people", "id")},
         )
 
         # Create Person table
-        LiteTable.create_table(
+        LiteTable.create(
             "people",
             {
                 "name": "TEXT",
@@ -38,7 +38,7 @@ class TestLiteQuery(unittest.TestCase):
         )
 
         # Create Person table
-        LiteTable.create_table(
+        LiteTable.create(
             "memberships",
             {
                 "name": "TEXT",
@@ -46,13 +46,13 @@ class TestLiteQuery(unittest.TestCase):
         )
 
         # Create Dollar Bill table
-        LiteTable.create_table(
+        LiteTable.create(
             "dollar_bills",
             {"owner_id": "INTEGER", "name": "TEXT"},
             {"owner_id": ("people", "id")},
         )
 
-        LiteTable.create_table(
+        LiteTable.create(
             "membership_person",
             {
                 "person_id": "INTEGER",

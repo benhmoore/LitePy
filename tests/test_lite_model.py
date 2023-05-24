@@ -27,7 +27,7 @@ class TestLiteModel(unittest.TestCase):
         Car.DEFAULT_CONNECTION = LiteConnection(database_path="additional.sqlite")
 
         # Create Car table
-        LiteTable.create_table(
+        LiteTable.create(
             "cars",
             {"name": "TEXT", "owner_id": "INTEGER"},
             {"owner_id": ("people", "id")},
@@ -41,14 +41,14 @@ class TestLiteModel(unittest.TestCase):
         )
 
         # Create Brain table
-        LiteTable.create_table(
+        LiteTable.create(
             "brains",
             {"name": "TEXT", "person_id": "INTEGER"},
             {"person_id": ("people", "id")},
         )
 
         # Create Person table
-        LiteTable.create_table(
+        LiteTable.create(
             "people",
             {
                 "name": "TEXT",
@@ -57,7 +57,7 @@ class TestLiteModel(unittest.TestCase):
         )
 
         # Create Person table
-        LiteTable.create_table(
+        LiteTable.create(
             "memberships",
             {
                 "name": "TEXT",
@@ -65,13 +65,13 @@ class TestLiteModel(unittest.TestCase):
         )
 
         # Create Dollar Bill table
-        LiteTable.create_table(
+        LiteTable.create(
             "dollar_bills",
             {"owner_id": "INTEGER", "name": "TEXT"},
             {"owner_id": ("people", "id")},
         )
 
-        LiteTable.create_table(
+        LiteTable.create(
             "membership_person",
             {
                 "person_id": "INTEGER",
@@ -80,14 +80,14 @@ class TestLiteModel(unittest.TestCase):
             {"person_id": ["people", "id"], "membership_id": ["memberships", "id"]},
         )
 
-        LiteTable.create_table(
+        LiteTable.create(
             "siblings",
             {
                 "name": "TEXT",
             },
         )
 
-        LiteTable.create_table(
+        LiteTable.create(
             "sibling_sibling",
             {
                 "sibling_1_id": "INTEGER",
@@ -460,9 +460,9 @@ class TestLiteModel(unittest.TestCase):
         Lite.create_database("accessed_through.sqlite")
         conn = LiteConnection("accessed_through.sqlite")
 
-        LiteTable.create_table("computers", {"name": "text"}, {}, lite_connection=conn)
+        LiteTable.create("computers", {"name": "text"}, {}, lite_connection=conn)
 
-        LiteTable.create_table(
+        LiteTable.create(
             "users_computers",
             {"user_id": "integer", "computer_id": "integer"},
             {"user_id": ("people", "id"), "computer_id": ("computers", "id")},

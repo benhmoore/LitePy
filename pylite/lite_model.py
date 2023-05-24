@@ -133,7 +133,7 @@ class LiteModel:
                 local_key_value = getattr(self, local_key)
 
                 if LiteTable.is_pivot_table(t_name):
-                    temp_table.delete([[foreign_key, "=", local_key_value]])
+                    temp_table.delete_row([[foreign_key, "=", local_key_value]])
                 else:
                     temp_table.update(
                         {foreign_key: None}, [[foreign_key, "=", local_key_value]]
@@ -286,9 +286,7 @@ class LiteModel:
             cls.table_name = cls._get_table_name(cls)
 
         if not LiteTable.exists(cls.table_name, lite_connection):
-            LiteTable.create_table(
-                cls.table_name, columns, foreign_keys, lite_connection
-            )
+            LiteTable.create(cls.table_name, columns, foreign_keys, lite_connection)
 
     @classmethod
     def find_or_fail(cls, _id: int):
@@ -650,7 +648,7 @@ class LiteModel:
         ):
             raise RelationshipError("Relationship does not exist. Cannot detach.")
 
-        pivot_table.delete(
+        pivot_table.delete_row(
             [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
         )
 
@@ -682,7 +680,7 @@ class LiteModel:
         # Take care of attachments that stick around after deleting the model instance
         self._clean_attachments()
 
-        self.table.delete([["id", "=", self.id]])
+        self.table.delete_row([["id", "=", self.id]])
 
         for column in self.table_columns:
             setattr(self, column, None)
