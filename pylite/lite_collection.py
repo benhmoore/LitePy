@@ -14,13 +14,13 @@ class LiteCollection:
             for instance in model_instances:
                 self.add(instance)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return [model_instance.to_dict() for model_instance in self.list].__str__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self.list)
 
-    def __add__(self, other):
+    def __add__(self, other) -> "LiteCollection":
         self_list = self.list[:]
 
         def add_model(model):
@@ -42,15 +42,15 @@ class LiteCollection:
 
         return LiteCollection(self_list)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.list)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if other.__class__.__name__ == "LiteCollection":
             return self.list == other.list
         return self.list == other
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         """Used by 'in' Python comparison.
 
         Args:
@@ -64,10 +64,10 @@ class LiteCollection:
         # If a LiteModel
         return item in self.list
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> "LiteModel":
         return self.list[item]
 
-    def _model_is_consistent(self, model_instance):
+    def _model_is_consistent(self, model_instance) -> bool:
         """Checks if the model instance is the same type as
         the existing models in the collection."""
 
@@ -82,7 +82,7 @@ class LiteCollection:
 
         return True
 
-    def add(self, model_instance):
+    def add(self, model_instance) -> None:
         """Adds a LiteModel instance to the collection.
 
         Args:
@@ -105,7 +105,7 @@ class LiteCollection:
         if not self.table:
             self.table = model_instance.table
 
-    def attach_many_to_all(self, model_instances):
+    def attach_many_to_all(self, model_instances) -> None:
         """Attaches a list of model instances to the all model instances in the collection.
 
         Args:
@@ -118,7 +118,7 @@ class LiteCollection:
         for model in self.list:
             model.attach_many(model_instances)
 
-    def detach_many_from_all(self, model_instances):
+    def detach_many_from_all(self, model_instances) -> None:
         """Detaches a list of model instances from all the model instances in the collection.
 
         Args:
@@ -136,7 +136,7 @@ class LiteCollection:
 
     def attach_to_all(
         self, model_instance, self_fkey: str = None, model_fkey: str = None
-    ):
+    ) -> None:
         """Attaches a model instance to the all model instances in the collection.
 
         Args:
@@ -149,7 +149,7 @@ class LiteCollection:
         for model in self.list:
             model.attach(model_instance, self_fkey, model_fkey)
 
-    def detach_from_all(self, model_instance):
+    def detach_from_all(self, model_instance) -> None:
         """
         Detaches a given model instance from all the model instances in the collection.
 
@@ -164,17 +164,17 @@ class LiteCollection:
         for model in self.list:
             model.detach(model_instance)
 
-    def first(self):
+    def first(self) -> "LiteModel":
         """Returns the first model instance in the collection."""
 
         return self.list[0]
 
-    def last(self):
+    def last(self) -> "LiteModel":
         """Returns the last model instance in the collection."""
 
         return self.list[-1]
 
-    def sort(self, field: str = "id", reverse: bool = False):
+    def sort(self, field: str = "id", reverse: bool = False) -> "LiteCollection":
         """Sorts the collection by the given field. Defaults to model's id.
 
         Args:
@@ -185,13 +185,13 @@ class LiteCollection:
         self.list.sort(key=lambda x: getattr(x, field), reverse=reverse)
         return self
 
-    def fresh(self):
+    def fresh(self) -> None:
         """Retrieves a fresh copy of each model instance in the collection from the database."""
 
         for model in self.list:
             model.fresh()
 
-    def delete_all(self):
+    def delete_all(self) -> None:
         """Deletes all model instances in the collection from the database."""
 
         for model in self.list:
@@ -202,7 +202,7 @@ class LiteCollection:
 
         return [model.id for model in self.list]
 
-    def join(self, lite_collection):
+    def join(self, lite_collection) -> "LiteCollection":
         """Returns the union of two collections.
 
         Args:
@@ -211,7 +211,7 @@ class LiteCollection:
 
         return LiteCollection(self.list + lite_collection.list)
 
-    def intersection(self, lite_collection):
+    def intersection(self, lite_collection) -> "LiteCollection":
         """Returns the intersection of two collections.
 
         Args:
@@ -230,7 +230,7 @@ class LiteCollection:
             [model for model in self.list if model.id in intersection_keys]
         )
 
-    def difference(self, lite_collection):
+    def difference(self, lite_collection) -> "LiteCollection":
         """Returns all models not in the passed collection.
 
         Args:
@@ -245,7 +245,7 @@ class LiteCollection:
             [model for model in self.list if model.id in difference_keys]
         )
 
-    def remove(self, model_instance):
+    def remove(self, model_instance) -> None:
         """Removes a LiteModel instance from this collection.
 
         Args:
@@ -260,7 +260,7 @@ class LiteCollection:
         except ValueError as exc:
             raise ModelInstanceNotFoundError(model_instance.id) from exc
 
-    def where(self, column_name):
+    def where(self, column_name) -> "LiteCollection":
         """Simulates a select query on this collection.
 
         Args:
