@@ -1,11 +1,11 @@
 """Contains Exceptions specific for Lite """
 
 
-class EnvFileNotFound(Exception):
+class EnvFileNotFoundError(Exception):
     """Raised when the environment ('.env') file is not found within the working directory."""
 
     def __init__(self):
-        super().__init__('.env file not found in application directory.')
+        super().__init__(".env file not found in application directory.")
 
 
 class DatabaseNotFoundError(Exception):

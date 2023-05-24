@@ -22,7 +22,7 @@ class TestLite(unittest.TestCase):
     # Test Lite.get_env()
     def test_get_env(self):
         os.remove(".env")
-        with self.assertRaises(EnvFileNotFound):
+        with self.assertRaises(EnvFileNotFoundError):
             env = Lite.get_env()
         with open(".env", "w") as env_file:
             env_file.write("DB_DATABASE=test.sqlite")

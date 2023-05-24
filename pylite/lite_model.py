@@ -369,7 +369,7 @@ class LiteModel:
             column_name (str): Name of column to query
 
         Returns:
-            LiteCollection: Collection of matching model instances
+            LiteQuery: New LiteQuery instance
         """
 
         return LiteQuery(cls, column_name)

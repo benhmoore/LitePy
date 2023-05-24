@@ -118,31 +118,32 @@ class LiteQuery:
     def contains(self, value):
         """Checks if the column contains the value"""
 
-        self._check_single_word(value)
-        self.where_clause += " LIKE ?"
-        self.params.append(f"%{value}%")
-        return self
+        return self._contains_handler(value, " LIKE ?")
 
     def does_not_contain(self, value):
         """Checks if the column does not contain the value"""
 
+        return self._contains_handler(value, " NOT LIKE ?")
+
+    def _contains_handler(self, value, arg1):
         self._check_single_word(value)
-        self.where_clause += " NOT LIKE ?"
+        self.where_clause += arg1
         self.params.append(f"%{value}%")
         return self
 
     def or_where(self, column_name):
         """Adds an OR clause to the query"""
 
-        self._check_single_word(column_name)
-        self.where_clause += f" OR {column_name}"
-        return self
+        return self._where_handler(column_name, " OR ")
 
     def and_where(self, column_name):
         """Adds an AND clause to the query"""
 
+        return self._where_handler(column_name, " AND ")
+
+    def _where_handler(self, column_name, arg1):
         self._check_single_word(column_name)
-        self.where_clause += f" AND {column_name}"
+        self.where_clause += f"{arg1}{column_name}"
         return self
 
     def all(self):
@@ -155,10 +156,14 @@ class LiteQuery:
 
     def first(self):
         """Executes the query and returns the first result"""
-
-        return self.all().first()
+        return self._extents_handler(" LIMIT 1")
 
     def last(self):
         """Executes the query and returns the last result"""
+        return self._extents_handler(" ORDER BY id DESC LIMIT 1")
 
-        return self.all().last()
+    def _extents_handler(self, arg0):
+        where_clause = self.where_clause
+        query = f"SELECT id FROM {self.table.table_name}{where_clause}{arg0}"
+        row = self.table.connection.execute(query, self.params).fetchone()
+        return self.model.find(row[0]) if row else None

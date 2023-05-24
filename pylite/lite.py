@@ -3,9 +3,10 @@ import os
 import re
 from pathlib import Path
 from colorama import Fore
+import inflect
 from pylite import LiteConnection
 from pylite.lite_exceptions import (
-    EnvFileNotFound,
+    EnvFileNotFoundError,
     DatabaseNotFoundError,
     DatabaseAlreadyExists,
 )
@@ -15,7 +16,7 @@ class Lite:
     """Helper functions for other Lite classes.
 
     Raises:
-        EnvFileNotFound: Environment ('.env') file not found in script directory
+        EnvFileNotFoundError: Environment ('.env') file not found in script directory
         DatabaseNotFoundError: Database not specified by environment file or variables.
     """
 
@@ -37,14 +38,14 @@ class Lite:
         """Returns dict of values from .env file.
 
         Raises:
-            EnvFileNotFound: Environment ('.env') file not found in script directory
+            EnvFileNotFoundError: Environment ('.env') file not found in script directory
 
         Returns:
             dict: Dictionary containing the key-value pairings from the .env file.
         """
 
         if not os.path.exists(".env"):
-            raise EnvFileNotFound()
+            raise EnvFileNotFoundError()
 
         with open(".env", encoding="utf-8") as env:
             env_dict = dict([line.split("=") for line in env])
@@ -119,19 +120,11 @@ class Lite:
         def pluralize_noun(noun: str) -> str:
             """Returns plural form of noun. Used for table name derivations.
 
-            Algorithm sourced from:
-            https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
-
             Args:
                 noun (str): Singular noun
 
             Returns:
                 str: Plural noun
             """
-            if re.search("[sxz]$", noun):
-                return re.sub("$", "es", noun)
-            if re.search("[^aeioudgkprt]h$", noun):
-                return re.sub("$", "es", noun)
-            if re.search("[^aeiou]y$", noun):
-                return re.sub("y$", "ies", noun)
-            return f"{noun}s"
+            p = inflect.engine()
+            return p.plural(noun)

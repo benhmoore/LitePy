@@ -9,7 +9,7 @@ authors = [
 license = {file = "LICENSE.txt"}
 readme = "README.md"
 
-dependencies = ["colorama"]
+dependencies = ["colorama", "inflect"]
 classifiers = [
     "Programming Language :: Python :: 3.9"
 ]

@@ -9,7 +9,7 @@ TEST_DB_PATH = "test.sqlite"
 
 class TestLiteCollection(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create a test database"""
 
         Lite.create_database(TEST_DB_PATH)
@@ -45,7 +45,7 @@ class TestLiteCollection(unittest.TestCase):
         )
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """Delete the test database"""
 
         Lite.disconnect()
@@ -250,7 +250,7 @@ class TestLiteCollection(unittest.TestCase):
         collection1 = LiteCollection([person1])
         collection2 = LiteCollection([person2])
 
-        collection1.join(collection2)
+        collection1 = collection1.join(collection2)
 
         assert len(collection1) == 2
         assert collection1[1] == person2

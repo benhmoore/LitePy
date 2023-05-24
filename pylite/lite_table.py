@@ -131,18 +131,10 @@ class LiteTable:
         if not lite_connection:
             lite_connection = Lite.DEFAULT_CONNECTION
 
-        table_desc = (
-            []
-        )  # list of lines that will be combined to create SQL query string
-
-        # Create timestamp fields
-        if lite_connection.connection_type == LiteConnection.TYPE.SQLITE:
-            table_desc.extend(
-                (
-                    '"created" TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
-                    '"updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
-                )
-            )
+        table_desc = [
+            '"created" TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
+            '"updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
+        ]
 
         # Convert columns dict into lines for SQL query
         table_desc.extend(

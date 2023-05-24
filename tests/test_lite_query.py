@@ -9,7 +9,7 @@ TEST_DB_PATH = "test.sqlite"
 
 class TestLiteQuery(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create a test database"""
 
         Lite.create_database(TEST_DB_PATH)
@@ -62,7 +62,7 @@ class TestLiteQuery(unittest.TestCase):
         )
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """Delete the test database"""
         Lite.disconnect()
 
@@ -178,6 +178,17 @@ class TestLiteQuery(unittest.TestCase):
         person3 = Person.create({"name": "Billy", "age": 60})
         person4 = Person.create({"name": "Kendall", "age": 57})
 
+        # Test combination of or_where() and and_where()
+        assert (
+            Person.where("name")
+            .is_equal_to("Billy")
+            .or_where("name")
+            .is_equal_to("Kendall")
+            .and_where("age")
+            .is_greater_than(50)
+            .all()
+        ) == [person3, person4]
+
         # Test that an appropriate exception is raised if the query is invalid
         with self.assertRaises(ValueError):
             query = (
@@ -189,8 +200,6 @@ class TestLiteQuery(unittest.TestCase):
 
         # Test that an appropriate exception is raised if the query returns no results
         query = Person.where("age").is_equal_to(100)
-        with self.assertRaises(IndexError):
-            query.first()
-        with self.assertRaises(IndexError):
-            query.last()
+        assert query.first() is None
+        assert query.last() is None
         assert query.all() == []

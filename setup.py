@@ -21,5 +21,5 @@ setup(
         # Add other relevant classifiers
     ],
     packages=find_packages(),  # assuming your package is organized correctly
-    install_requires=["colorama"],
+    install_requires=["colorama", "inflect"],
 )
