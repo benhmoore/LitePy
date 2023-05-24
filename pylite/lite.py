@@ -3,6 +3,7 @@ import os
 import re
 from pathlib import Path
 from colorama import Fore
+import inflect
 from pylite import LiteConnection
 from pylite.lite_exceptions import (
     EnvFileNotFoundError,
@@ -119,19 +120,11 @@ class Lite:
         def pluralize_noun(noun: str) -> str:
             """Returns plural form of noun. Used for table name derivations.
 
-            Algorithm sourced from:
-            https://linux.die.net/diveintopython/html/dynamic_functions/stage1.html
-
             Args:
                 noun (str): Singular noun
 
             Returns:
                 str: Plural noun
             """
-            if re.search("[sxz]$", noun):
-                return re.sub("$", "es", noun)
-            if re.search("[^aeioudgkprt]h$", noun):
-                return re.sub("$", "es", noun)
-            if re.search("[^aeiou]y$", noun):
-                return re.sub("y$", "ies", noun)
-            return f"{noun}s"
+            p = inflect.engine()
+            return p.plural(noun)
