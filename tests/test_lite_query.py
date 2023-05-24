@@ -189,8 +189,6 @@ class TestLiteQuery(unittest.TestCase):
 
         # Test that an appropriate exception is raised if the query returns no results
         query = Person.where("age").is_equal_to(100)
-        with self.assertRaises(IndexError):
-            query.first()
-        with self.assertRaises(IndexError):
-            query.last()
+        assert query.first() is None
+        assert query.last() is None
         assert query.all() == []

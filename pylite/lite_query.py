@@ -155,10 +155,14 @@ class LiteQuery:
 
     def first(self):
         """Executes the query and returns the first result"""
-
-        return self.all().first()
+        where_clause = self.where_clause
+        query = f"SELECT id FROM {self.table.table_name}{where_clause} LIMIT 1"
+        row = self.table.connection.execute(query, self.params).fetchone()
+        return self.model.find(row[0]) if row else None
 
     def last(self):
         """Executes the query and returns the last result"""
-
-        return self.all().last()
+        where_clause = self.where_clause
+        query = f"SELECT id FROM {self.table.table_name}{where_clause} ORDER BY id DESC LIMIT 1"
+        row = self.table.connection.execute(query, self.params).fetchone()
+        return self.model.find(row[0]) if row else None
