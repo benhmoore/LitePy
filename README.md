@@ -99,6 +99,10 @@ Then, use Twine to upload the distribution to PyPI: https://twine.readthedocs.io
 
 `coverage report --show-missing`
 
+## Build API Reference
+
+`lazydocs .`
+
 ## Documentation
 
 Documentation is hosted on GitHub, coming soon.

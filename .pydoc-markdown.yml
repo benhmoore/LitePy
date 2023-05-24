@@ -1,0 +1,16 @@
+loaders:
+  - type: python
+    search_path: ["src"]
+processors:
+  - type: filter
+    actions:
+      - "public"
+  - type: python
+    class_tooltips: true
+  - type: markdown
+    insert_module_header: true
+    insert_class_member_module_header: true
+renderer:
+  type: files
+  directory: docs/api
+  format: markdown
