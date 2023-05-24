@@ -1,7 +1,7 @@
 """Import all the modules and classes for PyLite. """
 
 from pylite.lite_exceptions import (
-    EnvFileNotFound,
+    EnvFileNotFoundError,
     DatabaseNotFoundError,
     DatabaseAlreadyExists,
     TableNotFoundError,

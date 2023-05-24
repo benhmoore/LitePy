@@ -5,7 +5,7 @@ from pathlib import Path
 from colorama import Fore
 from pylite import LiteConnection
 from pylite.lite_exceptions import (
-    EnvFileNotFound,
+    EnvFileNotFoundError,
     DatabaseNotFoundError,
     DatabaseAlreadyExists,
 )
@@ -15,7 +15,7 @@ class Lite:
     """Helper functions for other Lite classes.
 
     Raises:
-        EnvFileNotFound: Environment ('.env') file not found in script directory
+        EnvFileNotFoundError: Environment ('.env') file not found in script directory
         DatabaseNotFoundError: Database not specified by environment file or variables.
     """
 
@@ -37,14 +37,14 @@ class Lite:
         """Returns dict of values from .env file.
 
         Raises:
-            EnvFileNotFound: Environment ('.env') file not found in script directory
+            EnvFileNotFoundError: Environment ('.env') file not found in script directory
 
         Returns:
             dict: Dictionary containing the key-value pairings from the .env file.
         """
 
         if not os.path.exists(".env"):
-            raise EnvFileNotFound()
+            raise EnvFileNotFoundError()
 
         with open(".env", encoding="utf-8") as env:
             env_dict = dict([line.split("=") for line in env])
