@@ -7,7 +7,7 @@ class LiteTable:
     """Facilitates common table operations on an SQLite database.
 
     Raises:
-        DatabaseAlreadyExists: Database already exists at filepath
+        DatabaseAlreadyExistsError: Database already exists at filepath
         DatabaseNotFoundError: Database not specified by environment file or variables.
         TableNotFoundError: Table not found within database
     """

@@ -1,5 +1,8 @@
 """Contains the LiteCollection class"""
-from pylite.lite_exceptions import ModelInstanceNotFoundError, DuplicateModelInstance
+from pylite.lite_exceptions import (
+    ModelInstanceNotFoundError,
+    DuplicateModelInstanceError,
+)
 
 
 class LiteCollection:
@@ -38,7 +41,7 @@ class LiteCollection:
             if "LiteModel" in base_classes and other not in self_list:
                 self_list.append(other)
             else:
-                raise DuplicateModelInstance(other)
+                raise DuplicateModelInstanceError(other)
 
         return LiteCollection(self_list)
 
@@ -89,13 +92,13 @@ class LiteCollection:
             model_instance (LiteModel): LiteModel instance
 
         Raises:
-            DuplicateModelInstance: Model instance already exists in LiteCollection.
+            DuplicateModelInstanceError: Model instance already exists in LiteCollection.
             WrongModelType: Model instance is not of the same type as existing models in the collection.
         """
 
         # Check if LiteModel instance is already in this collection
         if model_instance in self.list:
-            raise DuplicateModelInstance(model_instance)
+            raise DuplicateModelInstanceError(model_instance)
 
         # Check if model is consistent with the collection
         if self._model_is_consistent(model_instance):

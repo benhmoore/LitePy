@@ -15,7 +15,7 @@ class DatabaseNotFoundError(Exception):
         super().__init__(f'Database "{database_path}" does not exist.')
 
 
-class DatabaseAlreadyExists(Exception):
+class DatabaseAlreadyExistsError(Exception):
     """Raised when a database already exists at the specified filepath."""
 
     def __init__(self, database_path):
@@ -43,7 +43,7 @@ class RelationshipError(Exception):
         super().__init__(message)
 
 
-class DuplicateModelInstance(Exception):
+class DuplicateModelInstanceError(Exception):
     """Raised when more than one of the same model instance is added to a collection."""
 
     def __init__(self, message):

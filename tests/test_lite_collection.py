@@ -80,9 +80,9 @@ class TestLiteCollection(unittest.TestCase):
         assert collection[0] == self.person1
 
         # Test adding a duplicate
-        with self.assertRaises(DuplicateModelInstance):
+        with self.assertRaises(DuplicateModelInstanceError):
             collection = collection + self.person1
-        with self.assertRaises(DuplicateModelInstance):
+        with self.assertRaises(DuplicateModelInstanceError):
             collection.add(self.person1)
 
         # Test adding incompatible model type to existing collection
