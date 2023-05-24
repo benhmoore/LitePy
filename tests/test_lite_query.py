@@ -9,7 +9,7 @@ TEST_DB_PATH = "test.sqlite"
 
 class TestLiteQuery(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create a test database"""
 
         Lite.create_database(TEST_DB_PATH)
@@ -62,7 +62,7 @@ class TestLiteQuery(unittest.TestCase):
         )
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """Delete the test database"""
         Lite.disconnect()
 
