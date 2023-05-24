@@ -178,6 +178,17 @@ class TestLiteQuery(unittest.TestCase):
         person3 = Person.create({"name": "Billy", "age": 60})
         person4 = Person.create({"name": "Kendall", "age": 57})
 
+        # Test combination of or_where() and and_where()
+        assert (
+            Person.where("name")
+            .is_equal_to("Billy")
+            .or_where("name")
+            .is_equal_to("Kendall")
+            .and_where("age")
+            .is_greater_than(50)
+            .all()
+        ) == [person3, person4]
+
         # Test that an appropriate exception is raised if the query is invalid
         with self.assertRaises(ValueError):
             query = (
