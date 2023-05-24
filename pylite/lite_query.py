@@ -118,16 +118,16 @@ class LiteQuery:
     def contains(self, value):
         """Checks if the column contains the value"""
 
-        self._check_single_word(value)
-        self.where_clause += " LIKE ?"
-        self.params.append(f"%{value}%")
-        return self
+        return self._contains_handler(value, " LIKE ?")
 
     def does_not_contain(self, value):
         """Checks if the column does not contain the value"""
 
+        return self._contains_handler(value, " NOT LIKE ?")
+
+    def _contains_handler(self, value, arg1):
         self._check_single_word(value)
-        self.where_clause += " NOT LIKE ?"
+        self.where_clause += arg1
         self.params.append(f"%{value}%")
         return self
 
