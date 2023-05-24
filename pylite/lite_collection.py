@@ -23,14 +23,16 @@ class LiteCollection:
     def __add__(self, other):
         self_list = self.list[:]
 
+        def add_model(model):
+            if model not in self_list and self._model_is_consistent(model):
+                self_list.append(model)
+
         if isinstance(other, LiteCollection):
             for model in other.list:
-                if model not in self_list and self._model_is_consistent(model):
-                    self_list.append(model)
+                add_model(model)
         elif isinstance(other, list):
             for model in other:
-                if model not in self_list and self._model_is_consistent(model):
-                    self_list.append(model)
+                add_model(model)
         else:
             base_classes = [b_c.__name__ for b_c in other.__class__.__bases__]
             if "LiteModel" in base_classes and other not in self_list:
@@ -75,7 +77,7 @@ class LiteCollection:
             and model_instance.table.table_name != self.table.table_name
         ):
             raise TypeError(
-                "Model instance is not of the same type as existing models."
+                "Model instance is not of the same type as existing models in this collection."
             )
 
         return True
@@ -87,8 +89,8 @@ class LiteCollection:
             model_instance (LiteModel): LiteModel instance
 
         Raises:
-            DuplicateModelInstance: Model instance already exists in LiteCollection
-            WrongModelType: Model instance has a different table name than the existing models
+            DuplicateModelInstance: Model instance already exists in LiteCollection.
+            WrongModelType: Model instance is not of the same type as existing models in the collection.
         """
 
         # Check if LiteModel instance is already in this collection
@@ -201,13 +203,13 @@ class LiteCollection:
         return [model.id for model in self.list]
 
     def join(self, lite_collection):
-        """Merges two LiteCollection instances.
+        """Returns the union of two collections.
 
         Args:
             lite_collection (LiteCollection): LiteCollection instance
         """
 
-        self.list += lite_collection.list
+        return LiteCollection(self.list + lite_collection.list)
 
     def intersection(self, lite_collection):
         """Returns the intersection of two collections.
@@ -238,12 +240,10 @@ class LiteCollection:
             LiteCollection: Collection of LiteModel instances forming intersection
         """
 
-        difference = LiteCollection()
-        for model in self.list:
-            if model not in lite_collection:
-                difference.add(model)
-
-        return difference
+        difference_keys = set(self.model_keys()) - set(lite_collection.model_keys())
+        return LiteCollection(
+            [model for model in self.list if model.id in difference_keys]
+        )
 
     def remove(self, model_instance):
         """Removes a LiteModel instance from this collection.

@@ -250,7 +250,7 @@ class TestLiteCollection(unittest.TestCase):
         collection1 = LiteCollection([person1])
         collection2 = LiteCollection([person2])
 
-        collection1.join(collection2)
+        collection1 = collection1.join(collection2)
 
         assert len(collection1) == 2
         assert collection1[1] == person2
