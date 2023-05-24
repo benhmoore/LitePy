@@ -3,11 +3,11 @@
 from pylite.lite_exceptions import (
     EnvFileNotFoundError,
     DatabaseNotFoundError,
-    DatabaseAlreadyExists,
+    DatabaseAlreadyExistsError,
     TableNotFoundError,
     ModelInstanceNotFoundError,
     RelationshipError,
-    DuplicateModelInstance,
+    DuplicateModelInstanceError,
 )
 from pylite.lite_connection import LiteConnection
 from pylite.lite import Lite

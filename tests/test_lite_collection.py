@@ -22,14 +22,14 @@ class TestLiteCollection(unittest.TestCase):
         )
 
         # Create Brain table
-        LiteTable.create_table(
+        LiteTable.create(
             "brains",
             {"name": "TEXT", "person_id": "INTEGER"},
             {"person_id": ("people", "id")},
         )
 
         # Create Person table
-        LiteTable.create_table(
+        LiteTable.create(
             "people",
             {
                 "name": "TEXT",
@@ -38,7 +38,7 @@ class TestLiteCollection(unittest.TestCase):
         )
 
         # Create Dollar Bill table
-        LiteTable.create_table(
+        LiteTable.create(
             "dollar_bills",
             {"owner_id": "INTEGER", "name": "TEXT"},
             {"owner_id": ("people", "id")},
@@ -80,9 +80,9 @@ class TestLiteCollection(unittest.TestCase):
         assert collection[0] == self.person1
 
         # Test adding a duplicate
-        with self.assertRaises(DuplicateModelInstance):
+        with self.assertRaises(DuplicateModelInstanceError):
             collection = collection + self.person1
-        with self.assertRaises(DuplicateModelInstance):
+        with self.assertRaises(DuplicateModelInstanceError):
             collection.add(self.person1)
 
         # Test adding incompatible model type to existing collection

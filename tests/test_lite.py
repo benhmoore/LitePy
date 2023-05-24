@@ -54,7 +54,7 @@ class TestLite(unittest.TestCase):
     # Test Lite.create_database()
     def test_create_database(self):
         self.assertTrue(os.path.exists(TEST_DB_PATH))
-        with self.assertRaises(DatabaseAlreadyExists):
+        with self.assertRaises(DatabaseAlreadyExistsError):
             Lite.create_database(TEST_DB_PATH)
 
     # Test Lite.connect()

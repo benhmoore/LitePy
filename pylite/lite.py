@@ -8,7 +8,7 @@ from pylite import LiteConnection
 from pylite.lite_exceptions import (
     EnvFileNotFoundError,
     DatabaseNotFoundError,
-    DatabaseAlreadyExists,
+    DatabaseAlreadyExistsError,
 )
 
 
@@ -80,12 +80,12 @@ class Lite:
             database_path (str): Desired database location
 
         Raises:
-            DatabaseAlreadyExists: Database already exists at given filepath.
+            DatabaseAlreadyExistsError: Database already exists at given filepath.
         """
 
         # Raise error if database already exists
         if os.path.exists(database_path):
-            raise DatabaseAlreadyExists(database_path)
+            raise DatabaseAlreadyExistsError(database_path)
 
         # Create database
         Path(database_path).touch()
