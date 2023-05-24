@@ -113,7 +113,7 @@ class LiteTable:
         columns: dict,
         foreign_keys: dict = None,
         lite_connection: LiteConnection = None,
-    ):
+    ) -> "LiteTable":
         """Creates a table within the database.
 
         Args:
@@ -181,7 +181,7 @@ class LiteTable:
         return LiteTable(table_name, lite_connection)
 
     @staticmethod
-    def delete(table_name: str, lite_connection: LiteConnection = None):
+    def delete(table_name: str, lite_connection: LiteConnection = None) -> None:
         """Deletes a given table.
 
         Args:
@@ -227,7 +227,7 @@ class LiteTable:
             ).fetchall()
         ]
 
-    def insert_row(self, columns, or_ignore=False):
+    def insert_row(self, columns, or_ignore=False) -> None:
         """Inserts row into database table.
 
         Args:
@@ -252,7 +252,7 @@ class LiteTable:
 
     def update_row(
         self, update_columns: dict, where_columns: list, or_ignore: bool = False
-    ):
+    ) -> None:
         """Updates a row in database table.
 
         Args:
@@ -309,7 +309,7 @@ class LiteTable:
 
         return self.connection.execute(sql_str, tuple(values_list)).fetchall()
 
-    def delete_rows(self, where_columns: list = None):
+    def delete_rows(self, where_columns: list = None) -> None:
         """Deletes rows from a database table. If where_columns is an empty list, deletes all rows.
 
         Args:
@@ -413,5 +413,4 @@ class LiteTable:
             raise TableNotFoundError(table_name)
 
         # Store database and table attributes for later use
-        # self.database_path = lite_connection.database_path
         self.table_name = table_name
