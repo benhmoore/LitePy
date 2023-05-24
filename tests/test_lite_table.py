@@ -43,31 +43,31 @@ class TestLiteTable(unittest.TestCase):
 
     def test_insert_row(self):
         row = {"id": 1, "name": "John", "age": 25, "parent_id": None}
-        self.table.insert(row)
+        self.table.insert_row(row)
         self.assertListEqual(
-            self.table.select([], ["id", "name", "age", "parent_id"]),
+            self.table.select_rows([], ["id", "name", "age", "parent_id"]),
             [(1, "John", 25, None)],
         )
 
     def test_update_row(self):
-        self.table.insert({"id": 1, "name": "John", "age": 25, "parent_id": None})
-        self.table.update({"age": 26}, [("id", "=", 1)])
+        self.table.insert_row({"id": 1, "name": "John", "age": 25, "parent_id": None})
+        self.table.update_row({"age": 26}, [("id", "=", 1)])
         self.assertListEqual(
-            self.table.select([], ["id", "name", "age", "parent_id"]),
+            self.table.select_rows([], ["id", "name", "age", "parent_id"]),
             [(1, "John", 26, None)],
         )
 
     def test_delete_row(self):
-        self.table.insert({"id": 1, "name": "John", "age": 25, "parent_id": None})
-        self.table.delete_row([("id", "=", 1)])
-        self.assertListEqual(self.table.select([]), [])
+        self.table.insert_row({"id": 1, "name": "John", "age": 25, "parent_id": None})
+        self.table.delete_rows([("id", "=", 1)])
+        self.assertListEqual(self.table.select_rows([]), [])
 
     def test_delete_all(self):
-        self.table.insert({"id": 1, "name": "John", "age": 25, "parent_id": None})
-        self.table.insert({"id": 2, "name": "John", "age": 25, "parent_id": None})
-        self.table.insert({"id": 3, "name": "John", "age": 25, "parent_id": None})
-        self.table.delete_row()
-        self.assertListEqual(self.table.select([]), [])
+        self.table.insert_row({"id": 1, "name": "John", "age": 25, "parent_id": None})
+        self.table.insert_row({"id": 2, "name": "John", "age": 25, "parent_id": None})
+        self.table.insert_row({"id": 3, "name": "John", "age": 25, "parent_id": None})
+        self.table.delete_rows()
+        self.assertListEqual(self.table.select_rows([]), [])
 
 
 if __name__ == "__main__":

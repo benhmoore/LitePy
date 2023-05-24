@@ -133,9 +133,9 @@ class LiteModel:
                 local_key_value = getattr(self, local_key)
 
                 if LiteTable.is_pivot_table(t_name):
-                    temp_table.delete_row([[foreign_key, "=", local_key_value]])
+                    temp_table.delete_rows([[foreign_key, "=", local_key_value]])
                 else:
-                    temp_table.update(
+                    temp_table.update_row(
                         {foreign_key: None}, [[foreign_key, "=", local_key_value]]
                     )
 
@@ -252,7 +252,7 @@ class LiteModel:
         columns = self.table.get_column_names()
         if _id is not None:
             if not _values:
-                _values = self.table.select([["id", "=", _id]])
+                _values = self.table.select_rows([["id", "=", _id]])
 
             # Add columns and values to python class instance as attributes
             for col in enumerate(columns):
@@ -313,7 +313,7 @@ class LiteModel:
             table_name = cls.table_name
 
         table = LiteTable(table_name, lite_connection)
-        rows = table.select([["id", "=", _id]])
+        rows = table.select_rows([["id", "=", _id]])
 
         if len(rows) > 0:
             return cls(id, table, rows, lite_connection)
@@ -356,7 +356,7 @@ class LiteModel:
 
         table = LiteTable(table_name, lite_connection)
 
-        rows = table.select([], ["id"])
+        rows = table.select_rows([], ["id"])
         return LiteCollection([cls.find_or_fail(row[0]) for row in rows])
 
     @classmethod
@@ -394,7 +394,7 @@ class LiteModel:
 
         # Insert into table
         table = LiteTable(table_name, lite_connection)
-        table.insert(column_values)
+        table.insert_row(column_values)
 
         # Get latest instance with this id
         sql_str = f"""
@@ -514,13 +514,15 @@ class LiteModel:
                 self_fkey = foreign_keys[self.table_name][0][1]
 
             # Make sure this relationship doesn't already exist
-            relationships = pivot_table.select(
+            relationships = pivot_table.select_rows(
                 [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
             )
 
             # Insert relationship into pivot table
             if len(relationships) == 0:
-                pivot_table.insert({self_fkey: self.id, model_fkey: model_instance.id})
+                pivot_table.insert_row(
+                    {self_fkey: self.id, model_fkey: model_instance.id}
+                )
             else:
                 raise RelationshipError("This relationship already exists.")
 
@@ -640,7 +642,7 @@ class LiteModel:
         # Make sure this relationship doesn't already exist
         if (
             len(
-                pivot_table.select(
+                pivot_table.select_rows(
                     [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
                 )
             )
@@ -648,7 +650,7 @@ class LiteModel:
         ):
             raise RelationshipError("Relationship does not exist. Cannot detach.")
 
-        pivot_table.delete_row(
+        pivot_table.delete_rows(
             [[self_fkey, "=", self.id], [model_fkey, "=", model_instance.id]]
         )
 
@@ -680,7 +682,7 @@ class LiteModel:
         # Take care of attachments that stick around after deleting the model instance
         self._clean_attachments()
 
-        self.table.delete_row([["id", "=", self.id]])
+        self.table.delete_rows([["id", "=", self.id]])
 
         for column in self.table_columns:
             setattr(self, column, None)
@@ -695,18 +697,18 @@ class LiteModel:
         }
 
         if self.id is None:  # Create model if no id is provided
-            self.table.insert(update_columns)
+            self.table.insert_row(update_columns)
             self.id = (
                 self.__class__().all().sort("id").last().id
             )  # Get id of last inserted row
         else:
-            self.table.update(update_columns, [["id", "=", self.id]])
+            self.table.update_row(update_columns, [["id", "=", self.id]])
 
     def fresh(self):
         """Reloads the model's attributes from the database."""
 
         # Load model instance from database by primary key
-        values = self.table.select([["id", "=", self.id]])
+        values = self.table.select_rows([["id", "=", self.id]])
 
         # Set attributes of Python class instance
         for index, column in enumerate(self.table_columns):
@@ -840,7 +842,7 @@ class LiteModel:
             foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
         child_table = LiteTable(model.table_name)
-        child_ids = child_table.select([[foreign_key, "=", self.id]], ["id"])
+        child_ids = child_table.select_rows([[foreign_key, "=", self.id]], ["id"])
 
         return model.find(child_ids[0][0]) if len(child_ids) > 0 else None
 
@@ -863,7 +865,7 @@ class LiteModel:
             foreign_key = model_instance.get_foreign_key_column_for_model(self)
 
         child_table = LiteTable(model.table_name, model.DEFAULT_CONNECTION)
-        child_rows = child_table.select([[foreign_key, "=", self.id]], ["id"])
+        child_rows = child_table.select_rows([[foreign_key, "=", self.id]], ["id"])
 
         children_collection = [model.find(row[0]) for row in child_rows]
         return LiteCollection(children_collection)

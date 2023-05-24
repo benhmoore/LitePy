@@ -227,7 +227,7 @@ class LiteTable:
             ).fetchall()
         ]
 
-    def insert(self, columns, or_ignore=False):
+    def insert_row(self, columns, or_ignore=False):
         """Inserts row into database table.
 
         Args:
@@ -250,7 +250,7 @@ class LiteTable:
         """
         self.connection.execute(insert_sql, tuple(values_list)).commit()
 
-    def update(
+    def update_row(
         self, update_columns: dict, where_columns: list, or_ignore: bool = False
     ):
         """Updates a row in database table.
@@ -283,7 +283,7 @@ class LiteTable:
             tuple(values_list),
         ).commit()
 
-    def select(self, where_columns: list, result_columns: list = None) -> list:
+    def select_rows(self, where_columns: list, result_columns: list = None) -> list:
         """Executes a select statement on database table.
 
         Args:
@@ -309,7 +309,7 @@ class LiteTable:
 
         return self.connection.execute(sql_str, tuple(values_list)).fetchall()
 
-    def delete_row(self, where_columns: list = None):
+    def delete_rows(self, where_columns: list = None):
         """Deletes rows from a database table. If where_columns is an empty list, deletes all rows.
 
         Args:
