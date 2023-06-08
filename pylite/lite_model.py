@@ -357,7 +357,11 @@ class LiteModel:
         table = LiteTable(table_name, lite_connection)
 
         rows = table.select_rows([], ["id"])
-        return LiteCollection([cls.find_or_fail(row[0]) for row in rows])
+        collected_models = []
+        for row in rows:
+            if collected_model := cls.find(row[0]):
+                collected_models.append(collected_model)
+        return LiteCollection(collected_models)
 
     @classmethod
     def where(cls, column_name: str) -> LiteQuery:
